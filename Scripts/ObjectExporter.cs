@@ -117,7 +117,15 @@ public static class ObjectExporter {
             Directory.CreateDirectory(dir);
     }
 
-    private static GameObject[] GetObjects(bool selectedOnly) => !selectedOnly ? UnityEngine.Object.FindObjectsOfType<GameObject>() : Selection.gameObjects.SelectMany(e => e.Children()).Distinct().ToArray();
+    private static GameObject[] GetObjects(bool selectedOnly) {
+        if (!selectedOnly)
+            return UnityEngine.Object.FindObjectsOfType<GameObject>();
+        var list = new List<GameObject>();
+        foreach (var o in Selection.gameObjects)
+            if (!list.Contains(o))
+                list.AddRange(o.WithAllChildren());
+        return list.ToArray();
+    }
 
     private static bool TaggedAsIgnored(GameObject gameObject) {
         var root = gameObject.transform.root.gameObject;
@@ -193,7 +201,7 @@ public static class ObjectExporter {
 
     public static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, Dictionary<int, MeshRenderer> renderers) {
         Log("Found MeshRenderer " + meshRenderer.name);
-        renderers.Add(o.GetInstanceID(), meshRenderer);
+        renderers[o.GetInstanceID()] = meshRenderer;
         return false;
     }
 
