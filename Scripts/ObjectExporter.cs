@@ -24,11 +24,12 @@ public static class ObjectExporter {
         {"Quad", ObjectType.Quad}
     }.ToDictionary(k => new Regex($"{k.Key}(?:(?: Instance)+)?"), v => v.Value);
 
-    public static void Init(bool debug, string filePath) {
+    public static bool Init(bool debug, string filePath) {
         if (_inProgress)
-            return;
+            return false;
         _debug = debug;
         _fileName = filePath;
+        return true;
     }
 
     private static bool _debug;
@@ -37,9 +38,9 @@ public static class ObjectExporter {
 
     private static bool _inProgress;
 
-    public static void TryExport(bool selectedOnly) {
-        if (string.IsNullOrEmpty(_fileName)) {
-            EditorUtility.DisplayDialog("slocImporter", "You must specify a file to import!", "OK");
+    public static void TryExport(bool selectedOnly, Action<string, float> updateProgress = null) {
+        if (_inProgress) {
+            EditorUtility.DisplayDialog("slocExporter", "Export is already in progress", "OK");
             return;
         }
 
@@ -50,7 +51,7 @@ public static class ObjectExporter {
 
         _inProgress = true;
         try {
-            DoExport(selectedOnly, out var exportedCount);
+            DoExport(selectedOnly, out var exportedCount, updateProgress);
             _inProgress = false;
             EditorUtility.DisplayDialog("slocExporter", $"Export complete.\nsloc created with {exportedCount} GameObject(s).", "OK");
         } catch (Exception e) {
@@ -60,18 +61,25 @@ public static class ObjectExporter {
         }
     }
 
-    private static void DoExport(bool selectedOnly, out int exportedCount) {
+    private static void DoExport(bool selectedOnly, out int exportedCount, Action<string, float> updateProgress = null) {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         EnsureDirectoryExists(file);
         LogWarning($"[slocExporter] Starting export to {file}");
+        updateProgress?.Invoke("Detecting objects", -1f);
         var allObjects = GetObjects(selectedOnly);
         var objectsById = new Dictionary<int, slocGameObject>();
         var renderers = new Dictionary<int, MeshRenderer>();
-        Log($"Found {allObjects.Length} objects in total. ");
-        foreach (var o in allObjects) {
+        var allObjectsCount = allObjects.Length;
+        var floatObjectsCount = (float) allObjectsCount;
+        Log($"Found {allObjectsCount} objects in total.");
+        for (var i = 0; i < allObjectsCount; i++) {
+            var o = allObjects[i];
+            var progressString = $"Processing objects ({i + 1} of {allObjectsCount})";
+            var progressValue = i / floatObjectsCount;
             if (TaggedAsIgnored(o)) {
                 Log($"Skipped object {o.name} because it's tagged as {ExporterIgnoredTag}");
+                updateProgress?.Invoke(progressString, progressValue);
                 continue;
             }
 
@@ -88,31 +96,18 @@ public static class ObjectExporter {
                 Log($"Skipped object {o.name}");
                 break;
             }
+
+            updateProgress?.Invoke(progressString, progressValue);
         }
 
         Log("Processing material colors...");
-        RenderersToMaterials(renderers, objectsById);
+        RenderersToMaterials(renderers, objectsById, updateProgress);
         var nonEmpty = objectsById.Where(e => e.Value is {IsEmpty: false}).ToList();
-        WriteObjects(file, nonEmpty);
+        Log("Writing file...");
+        WriteObjects(file, nonEmpty, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file}");
         exportedCount = nonEmpty.Count;
     }
-
-    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty) {
-        var writer = new BinaryWriter(File.OpenWrite(file), Encoding.UTF8);
-        writer.Write(API.slocVersion);
-        writer.Write(nonEmpty.Count);
-        foreach (var obj in nonEmpty)
-            obj.Value.WriteTo(writer);
-        writer.Close();
-    }
-
-    private static bool TaggedAsIgnored(GameObject gameObject) {
-        var root = gameObject.transform.root.gameObject;
-        return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
-    }
-
-    private static GameObject[] GetObjects(bool selectedOnly) => selectedOnly ? Selection.gameObjects : UnityEngine.Object.FindObjectsOfType<GameObject>();
 
     private static void EnsureDirectoryExists(string file) {
         if (string.IsNullOrEmpty(file))
@@ -122,8 +117,30 @@ public static class ObjectExporter {
             Directory.CreateDirectory(dir);
     }
 
-    public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList) {
-        foreach (var pair in renderers) {
+    private static GameObject[] GetObjects(bool selectedOnly) =>
+        selectedOnly
+            ? Selection.gameObjects.SelectMany(e => e.WithAllChildren()).ToArray()
+            : UnityEngine.Object.FindObjectsOfType<GameObject>();
+
+    private static bool TaggedAsIgnored(GameObject gameObject) {
+        var root = gameObject.transform.root.gameObject;
+        return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
+    }
+
+    private static bool IgnoreObject(GameObject gameObject, Dictionary<int, slocGameObject> objectsById) {
+        Log($"{gameObject.name} is flagged as ExporterIgnored");
+        objectsById.Remove(gameObject.GetInstanceID());
+        return true;
+    }
+
+    public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList, Action<string, float> updateProgress = null) {
+        updateProgress?.Invoke("Setting materials", 0);
+        var list = renderers.ToList();
+        var count = list.Count;
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
+            var pair = list[i];
             var r = pair.Value;
             var mat = r.sharedMaterial;
             var id = pair.Key;
@@ -134,6 +151,22 @@ public static class ObjectExporter {
         }
     }
 
+    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, Action<string, float> updateProgress = null) {
+        updateProgress?.Invoke("Writing objects", 0);
+        var writer = new BinaryWriter(File.OpenWrite(file), Encoding.UTF8);
+        writer.Write(API.slocVersion);
+        writer.Write(nonEmpty.Count);
+        var count = nonEmpty.Count;
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            var obj = nonEmpty[i];
+            obj.Value.WriteTo(writer);
+            updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
+        }
+
+        writer.Close();
+    }
+
     public static void Log(object o) {
         if (_debug)
             UnityEngine.Debug.Log(o);
@@ -142,12 +175,6 @@ public static class ObjectExporter {
     public static void LogWarning(object o) {
         if (_debug)
             UnityEngine.Debug.LogWarning(o);
-    }
-
-    private static bool IgnoreObject(GameObject gameObject, Dictionary<int, slocGameObject> objectsById) {
-        Log($"{gameObject.name} is flagged with ExporterIgnored");
-        objectsById.Remove(gameObject.GetInstanceID());
-        return true;
     }
 
     public static bool ProcessLight(GameObject o, Light l, Dictionary<int, slocGameObject> objectList) {

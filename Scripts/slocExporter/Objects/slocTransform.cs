@@ -9,8 +9,6 @@ namespace slocExporter.Objects {
         public Vector3 Scale;
         public Quaternion Rotation;
 
-        public override string ToString() => $"{Position};{Scale};{Rotation}";
-
         public void WriteTo(BinaryWriter writer) {
             writer.Write(Position.x);
             writer.Write(Position.y);

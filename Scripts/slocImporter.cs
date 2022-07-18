@@ -6,16 +6,18 @@ using UnityEngine;
 
 public static class slocImporter {
 
-    public static void Init(string filePath) {
-        if (!_inProgress)
-            _filePath = filePath;
+    public static bool Init(string filePath) {
+        if (_inProgress)
+            return false;
+        _filePath = filePath;
+        return true;
     }
 
     private static string _filePath = "";
 
     private static bool _inProgress;
 
-    public static void TryImport() {
+    public static void TryImport(Action<string, float> updateProgress = null) {
         if (_inProgress) {
             EditorUtility.DisplayDialog("slocImporter", "Import is already in progress", "OK");
             return;
@@ -29,7 +31,7 @@ public static class slocImporter {
         _inProgress = true;
 
         try {
-            DoImport(out var importedCount, out var objectName);
+            DoImport(out var importedCount, out var objectName, updateProgress);
             EditorUtility.DisplayDialog("Import complete", $"Imported {importedCount} GameObjects as {objectName}", "OK");
         } catch (Exception e) {
             Debug.LogError(e);
@@ -38,7 +40,7 @@ public static class slocImporter {
         }
     }
 
-    private static void DoImport(out int importedCount, out string objectName) {
+    private static void DoImport(out int importedCount, out string objectName, Action<string, float> updateProgress = null) {
         EnsureDirectory();
         API.SkipForAll = false;
         API.CreateForAll = false;

@@ -8,35 +8,45 @@ namespace Editor.sloc {
 
     public class ExporterWindow : EditorWindow {
 
+        private const string ProgressbarTitle = "slocExporter";
+
         [MenuItem("Window/sloc/Export")]
         public static void ShowWindow() => GetWindow(typeof(ExporterWindow), true, "Export to sloc");
 
-        internal static string FilePath = @"%appdata%\EXILED\Plugins\sloc\Objects\MyObject";
+        private static string _filePath = @"%appdata%\EXILED\Plugins\sloc\Objects\MyObject";
 
-        internal static bool Debug;
+        private static bool _debug;
 
         private void OnGUI() {
             GUILayout.Label("File", EditorStyles.boldLabel);
-            FilePath = EditorGUILayout.TextField("Path", FilePath);
+            _filePath = EditorGUILayout.TextField("Path", _filePath);
             if (GUILayout.Button("Select File")) {
                 var sceneName = SceneManager.GetActiveScene().name;
-                var path = EditorUtility.SaveFilePanel("Save sloc file", Path.GetDirectoryName(FilePath.ToFullAppDataPath()), string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName, "sloc");
+                var path = EditorUtility.SaveFilePanel("Save sloc file", Path.GetDirectoryName(_filePath.ToFullAppDataPath()), string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName, "sloc");
                 if (!string.IsNullOrEmpty(path))
-                    FilePath = path;
+                    _filePath = path;
             }
 
             GUILayout.Label("Export", EditorStyles.boldLabel);
-            Debug = EditorGUILayout.Toggle("Show Debug", Debug);
-            if (GUILayout.Button("Export All")) {
-                ObjectExporter.Init(Debug, FilePath);
-                ObjectExporter.TryExport(false);
+            _debug = EditorGUILayout.Toggle("Show Debug", _debug);
+            if (GUILayout.Button("Export All"))
+                Export(false);
+            if (GUILayout.Button("Export Selected"))
+                Export(true);
+        }
+
+        private static void Export(bool selectedOnly) {
+            if (!ObjectExporter.Init(_debug, _filePath)) {
+                EditorUtility.DisplayDialog(ProgressbarTitle, "Export is already in progress", "OK");
+                return;
             }
 
-            if (GUILayout.Button("Export Selected")) {
-                ObjectExporter.Init(Debug, FilePath);
-                ObjectExporter.TryExport(true);
-            }
+            EditorUtility.DisplayProgressBar(ProgressbarTitle, "Starting export", -1f);
+            ObjectExporter.TryExport(selectedOnly, ProgressbarUpdate);
+            EditorUtility.ClearProgressBar();
         }
+
+        private static void ProgressbarUpdate(string info, float progress) => EditorUtility.DisplayProgressBar(ProgressbarTitle, info, progress);
 
     }
 

@@ -6,6 +6,8 @@ Use the [slocLoader](https://github.com/Axwabo/slocLoader/) plugin to load them 
 
 ![Logo](https://github.com/Axwabo/slocLoader/blob/main/logo%20small.png?raw=true)
 
+[Watch the tutorial](https://youtu.be/0ssdcpPzO4U)
+
 # MapEditorReborn
 
 Before this project was started, I had no knowledge of the MapEditorReborn plugin.
@@ -59,7 +61,7 @@ download [the room assets you need](https://drive.google.com/drive/folders/1693L
 2. Put the room you need into the scene from the RoomPrefabs folder.
 3. Make sure the prefab's position is `0, 0, 0`
 4. Position the objects accordingly.
-5. Ensure that the room's root object is tagged either `Room` or `slocExporter Ignored`
+5. Ensure that the room's root object is tagged either as `Room` or `slocExporter Ignored`
 6. Export the objects as detailed in **Setup**.
 
 # Versioning

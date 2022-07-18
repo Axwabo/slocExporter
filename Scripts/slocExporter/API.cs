@@ -26,16 +26,19 @@ namespace slocExporter {
 
         public static IObjectReader GetReader(uint version) => TryGetReader(version, out var reader) ? reader : DefaultReader;
 
-        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true) {
+        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, Action<string, float> updateProgress = null) {
             var objects = new List<slocGameObject>();
             var binaryReader = new BinaryReader(stream);
             var version = binaryReader.ReadUInt32();
+            updateProgress?.Invoke("Reading objects", 0);
             var reader = GetReader(version);
             var count = binaryReader.ReadInt32();
+            var floatCount = (float) count;
             for (var i = 0; i < count; i++) {
                 var obj = ReadObject(binaryReader, version, reader);
                 if (!obj.IsEmpty)
                     objects.Add(obj);
+                updateProgress?.Invoke($"Reading objects ({i + 1} of {count})", i / floatCount);
             }
 
             if (autoClose)
@@ -43,24 +46,37 @@ namespace slocExporter {
             return objects;
         }
 
-        public static List<slocGameObject> ReadObjectsFromFile(string path) => ReadObjects(File.OpenRead(path));
+        public static List<slocGameObject> ReadObjectsFromFile(string path, Action<string, float> updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default) => CreateObjects(objects, out _, position, rotation);
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default) {
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) {
             var go = new GameObject {
                 transform = {
                     position = position,
                     rotation = rotation,
                 }
             };
-            createdAmount = objects.Count(o => o.CreateObject(go, throwOnError: false) != null);
+            var created = 0;
+            var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
+            var processed = 0;
+            var isCountKnown = total > 0;
+            var floatTotal = (float) total;
+            updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
+            foreach (var o in objects) {
+                if (o.CreateObject(go, false) != null)
+                    created++;
+                processed++;
+                updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", processed / floatTotal);
+            }
+
+            createdAmount = created;
             return go;
         }
 
-        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation);
+        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
 
-        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default) => CreateObjects(ReadObjectsFromFile(path), out spawnedAmount, position, rotation);
+        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path), out spawnedAmount, position, rotation, updateProgress);
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) {
             switch (obj) {
@@ -144,12 +160,11 @@ namespace slocExporter {
             return objectReader.Read(stream);
         }
 
-        public static slocTransform ReadTransform(this BinaryReader reader) =>
-            new slocTransform {
-                Position = reader.ReadVector(),
-                Scale = reader.ReadVector(),
-                Rotation = reader.ReadQuaternion()
-            };
+        public static slocTransform ReadTransform(this BinaryReader reader) => new slocTransform {
+            Position = reader.ReadVector(),
+            Scale = reader.ReadVector(),
+            Rotation = reader.ReadQuaternion()
+        };
 
         public static Vector3 ReadVector(this BinaryReader reader) => new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
@@ -184,6 +199,8 @@ namespace slocExporter {
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
+
+        public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
 
     }
 
