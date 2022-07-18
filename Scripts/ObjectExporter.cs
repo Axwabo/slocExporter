@@ -117,10 +117,7 @@ public static class ObjectExporter {
             Directory.CreateDirectory(dir);
     }
 
-    private static GameObject[] GetObjects(bool selectedOnly) =>
-        selectedOnly
-            ? Selection.gameObjects.SelectMany(e => e.WithAllChildren()).ToArray()
-            : UnityEngine.Object.FindObjectsOfType<GameObject>();
+    private static GameObject[] GetObjects(bool selectedOnly) => !selectedOnly ? UnityEngine.Object.FindObjectsOfType<GameObject>() : Selection.gameObjects.SelectMany(e => e.Children()).Distinct().ToArray();
 
     private static bool TaggedAsIgnored(GameObject gameObject) {
         var root = gameObject.transform.root.gameObject;

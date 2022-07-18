@@ -200,7 +200,13 @@ namespace slocExporter {
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
 
-        public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
+        public static IEnumerable<GameObject> Children(this GameObject o) {
+            var t = o.transform;
+            var array = new GameObject[t.childCount];
+            for (var i = 0; i < t.childCount; i++)
+                array[i] = t.GetChild(i).gameObject;
+            return array;
+        }
 
     }
 
