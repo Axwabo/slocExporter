@@ -47,7 +47,7 @@ public static class slocImporter {
         var lastView = SceneView.lastActiveSceneView;
         var cam = lastView ? lastView.camera : null;
         var camTransform = cam ? cam.transform : null;
-        var parent = API.CreateObjectsFromFile(_filePath, out var spawned, camTransform ? camTransform.position + camTransform.forward * 3f : Vector3.zero);
+        var parent = API.CreateObjectsFromFile(_filePath, out var spawned, camTransform ? camTransform.position + camTransform.forward * 3f : Vector3.zero, updateProgress: updateProgress);
         objectName = Path.GetFileNameWithoutExtension(_filePath);
         parent.name = $"Imported-{objectName}";
         _inProgress = false;

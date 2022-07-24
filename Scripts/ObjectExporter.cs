@@ -102,7 +102,7 @@ public static class ObjectExporter {
 
         Log("Processing material colors...");
         RenderersToMaterials(renderers, objectsById, updateProgress);
-        var nonEmpty = objectsById.Where(e => e.Value is {IsEmpty: false}).ToList();
+        var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
         Log("Writing file...");
         WriteObjects(file, nonEmpty, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file}");
@@ -118,9 +118,18 @@ public static class ObjectExporter {
     }
 
     private static GameObject[] GetObjects(bool selectedOnly) {
-        if (!selectedOnly)
-            return UnityEngine.Object.FindObjectsOfType<GameObject>();
         var list = new List<GameObject>();
+        if (!selectedOnly) {
+            foreach (var obj in UnityEngine.Object.FindObjectsOfType<GameObject>()) {
+                if (obj.transform.parent != null)
+                    continue;
+                list.Add(obj);
+                list.AddRange(obj.Children());
+            }
+
+            return list.ToArray();
+        }
+
         foreach (var o in Selection.gameObjects)
             if (!list.Contains(o))
                 list.AddRange(o.WithAllChildren());
@@ -158,7 +167,7 @@ public static class ObjectExporter {
 
     private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, Action<string, float> updateProgress = null) {
         updateProgress?.Invoke("Writing objects", 0);
-        var writer = new BinaryWriter(File.OpenWrite(file), Encoding.UTF8);
+        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
         writer.Write(nonEmpty.Count);
         var count = nonEmpty.Count;
@@ -186,12 +195,13 @@ public static class ObjectExporter {
         Log("Found light " + l.name);
         var oTransform = o.transform;
         var id = o.GetInstanceID();
+        var parent = oTransform.parent;
         objectList.Add(id, new LightObject(id) {
-            ParentId = oTransform.parent.GetInstanceID(),
+            ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
             Transform = {
-                Position = oTransform.position,
-                Rotation = oTransform.rotation,
-                Scale = oTransform.lossyScale
+                Position = oTransform.localPosition,
+                Rotation = oTransform.localRotation,
+                Scale = oTransform.localScale
             },
             LightColor = l.color,
             Intensity = l.intensity,
@@ -208,10 +218,16 @@ public static class ObjectExporter {
     }
 
     public static bool ProcessMeshFilter(GameObject o, MeshFilter filter, Dictionary<int, slocGameObject> objectList) {
-        var meshName = filter.sharedMesh.name;
+        var mesh = filter.sharedMesh;
+        if (mesh == null) {
+            LogWarning($"{o.name} has no mesh");
+            return true;
+        }
+
+        var meshName = mesh.name;
         Log($"Found MeshFilter with mesh name {meshName}");
         var type = PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
-        if (type is ObjectType.None) {
+        if (type == ObjectType.None) {
             Log("Mesh does not match any known primitive type, skipping GameObject " + o.name);
             return true;
         }
@@ -219,12 +235,13 @@ public static class ObjectExporter {
         Log($"Added PrimitiveObject with type {type}");
         var oTransform = o.transform;
         var id = o.GetInstanceID();
+        var parent = oTransform.parent;
         objectList.Add(id, new PrimitiveObject(id, type) {
-            ParentId = oTransform.parent.GetInstanceID(),
+            ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
             Transform = {
-                Position = oTransform.position,
-                Rotation = oTransform.rotation,
-                Scale = oTransform.lossyScale
+                Position = oTransform.localPosition,
+                Rotation = oTransform.localRotation,
+                Scale = oTransform.localScale
             }
         });
         return false;

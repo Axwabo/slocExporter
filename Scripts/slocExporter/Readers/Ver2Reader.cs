@@ -5,15 +5,18 @@ namespace slocExporter.Readers {
 
     public class Ver2Reader : IObjectReader {
 
-        public slocGameObject Read(BinaryReader stream) => (ObjectType) stream.ReadByte() switch {
-            ObjectType.Cube => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
-            ObjectType.Sphere => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
-            ObjectType.Cylinder => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
-            ObjectType.Plane => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
-            ObjectType.Capsule => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
-            ObjectType.Light => ReadLight(stream),
-            _ => null
-        };
+        public slocGameObject Read(BinaryReader stream) {
+            var objectType = (ObjectType) stream.ReadByte();
+            return objectType switch {
+                ObjectType.Cube => ReadPrimitive(stream, objectType),
+                ObjectType.Sphere => ReadPrimitive(stream, objectType),
+                ObjectType.Cylinder => ReadPrimitive(stream, objectType),
+                ObjectType.Plane => ReadPrimitive(stream, objectType),
+                ObjectType.Capsule => ReadPrimitive(stream, objectType),
+                ObjectType.Light => ReadLight(stream),
+                _ => null
+            };
+        }
 
         private static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type) => new PrimitiveObject(stream.ReadInt32(), type) {
             ParentId = stream.ReadInt32(),
