@@ -11,12 +11,13 @@ namespace slocExporter {
 
     public static class API {
 
-        public const uint slocVersion = 1;
+        public const uint slocVersion = 2;
 
-        public static readonly IObjectReader DefaultReader = new Ver1Reader();
+        public static readonly IObjectReader DefaultReader = new Ver2Reader();
 
         private static readonly Dictionary<uint, IObjectReader> VersionReaders = new Dictionary<uint, IObjectReader> {
             {1, new Ver1Reader()},
+            {2, new Ver2Reader()}
         };
 
         public static bool CreateForAll;

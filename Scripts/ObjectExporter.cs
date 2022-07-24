@@ -185,7 +185,9 @@ public static class ObjectExporter {
     public static bool ProcessLight(GameObject o, Light l, Dictionary<int, slocGameObject> objectList) {
         Log("Found light " + l.name);
         var oTransform = o.transform;
-        objectList.Add(o.GetInstanceID(), new LightObject {
+        var id = o.GetInstanceID();
+        objectList.Add(id, new LightObject(id) {
+            ParentId = oTransform.parent.GetInstanceID(),
             Transform = {
                 Position = oTransform.position,
                 Rotation = oTransform.rotation,
@@ -216,7 +218,9 @@ public static class ObjectExporter {
 
         Log($"Added PrimitiveObject with type {type}");
         var oTransform = o.transform;
-        objectList.Add(o.GetInstanceID(), new PrimitiveObject(type) {
+        var id = o.GetInstanceID();
+        objectList.Add(id, new PrimitiveObject(id, type) {
+            ParentId = oTransform.parent.GetInstanceID(),
             Transform = {
                 Position = oTransform.position,
                 Rotation = oTransform.rotation,

@@ -3,7 +3,7 @@ using slocExporter.Objects;
 
 namespace slocExporter.Readers {
 
-    public class Ver1Reader : IObjectReader {
+    public class Ver2Reader : IObjectReader {
 
         public slocGameObject Read(BinaryReader stream) => (ObjectType) stream.ReadByte() switch {
             ObjectType.Cube => ReadPrimitive(stream, (ObjectType) stream.ReadByte()),
@@ -15,12 +15,14 @@ namespace slocExporter.Readers {
             _ => null
         };
 
-        private static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type) => new PrimitiveObject(0, type) {
+        private static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type) => new PrimitiveObject(stream.ReadInt32(), type) {
+            ParentId = stream.ReadInt32(),
             Transform = stream.ReadTransform(),
             MaterialColor = stream.ReadColor()
         };
 
-        private static slocGameObject ReadLight(BinaryReader stream) => new LightObject(0) {
+        private static slocGameObject ReadLight(BinaryReader stream) => new LightObject(stream.ReadInt32()) {
+            ParentId = stream.ReadInt32(),
             Transform = stream.ReadTransform(),
             LightColor = stream.ReadColor(),
             Shadows = stream.ReadBoolean(),
