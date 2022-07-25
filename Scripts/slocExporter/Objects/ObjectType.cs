@@ -10,7 +10,7 @@
         Cylinder = 5,
         Plane = 6,
         Quad = 7,
-        Empty = 8 // TODO: Add support for this object type
+        Empty = 8
 
     }
 

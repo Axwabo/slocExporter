@@ -97,6 +97,7 @@ public static class ObjectExporter {
                 break;
             }
 
+            CheckIfEmpty(o, objectsById);
             updateProgress?.Invoke(progressString, progressValue);
         }
 
@@ -123,8 +124,7 @@ public static class ObjectExporter {
             foreach (var obj in UnityEngine.Object.FindObjectsOfType<GameObject>()) {
                 if (obj.transform.parent != null)
                     continue;
-                list.Add(obj);
-                list.AddRange(obj.Children());
+                list.AddRange(obj.WithAllChildren());
             }
 
             return list.ToArray();
@@ -198,11 +198,7 @@ public static class ObjectExporter {
         var parent = oTransform.parent;
         objectList.Add(id, new LightObject(id) {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-            Transform = {
-                Position = oTransform.localPosition,
-                Rotation = oTransform.localRotation,
-                Scale = oTransform.localScale
-            },
+            Transform = oTransform,
             LightColor = l.color,
             Intensity = l.intensity,
             Range = l.range,
@@ -236,15 +232,24 @@ public static class ObjectExporter {
         var oTransform = o.transform;
         var id = o.GetInstanceID();
         var parent = oTransform.parent;
-        objectList.Add(id, new PrimitiveObject(id, type) {
+        objectList[id] = new PrimitiveObject(id, type) {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-            Transform = {
-                Position = oTransform.localPosition,
-                Rotation = oTransform.localRotation,
-                Scale = oTransform.localScale
-            }
-        });
+            Transform = oTransform
+        };
         return false;
+    }
+
+    public static void CheckIfEmpty(GameObject o, Dictionary<int, slocGameObject> objectList) {
+        var id = o.GetInstanceID();
+        if (objectList.ContainsKey(id))
+            return;
+        var oTransform = o.transform;
+        var parent = oTransform.parent;
+        if (oTransform.childCount > 0)
+            objectList[id] = new EmptyObject(id) {
+                ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+                Transform = oTransform
+            };
     }
 
 }

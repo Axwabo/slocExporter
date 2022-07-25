@@ -14,6 +14,7 @@ namespace slocExporter.Readers {
                 ObjectType.Plane => ReadPrimitive(stream, objectType),
                 ObjectType.Capsule => ReadPrimitive(stream, objectType),
                 ObjectType.Light => ReadLight(stream),
+                ObjectType.Empty => ReadEmpty(stream),
                 _ => null
             };
         }
@@ -31,6 +32,11 @@ namespace slocExporter.Readers {
             Shadows = stream.ReadBoolean(),
             Range = stream.ReadSingle(),
             Intensity = stream.ReadSingle(),
+        };
+
+        private static slocGameObject ReadEmpty(BinaryReader stream) => new EmptyObject(stream.ReadInt32()) {
+            ParentId = stream.ReadInt32(),
+            Transform = stream.ReadTransform()
         };
 
     }

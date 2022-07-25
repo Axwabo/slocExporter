@@ -110,6 +110,12 @@ namespace slocExporter {
                     toy.SetLocalTransform(obj.Transform);
                     return toy;
                 }
+                case EmptyObject _: {
+                    var emptyObject = new GameObject("Empty");
+                    emptyObject.SetAbsoluteTransformFrom(parent);
+                    emptyObject.SetLocalTransform(obj.Transform);
+                    return emptyObject;
+                }
                 default:
                     if (throwOnError)
                         throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type");
@@ -185,15 +191,15 @@ namespace slocExporter {
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "A non-primitive type was supplied")
         };
 
-        public static void SetAbsoluteTransformFrom(this GameObject component, GameObject parent) {
+        public static void SetAbsoluteTransformFrom(this GameObject o, GameObject parent) {
             if (parent != null)
-                component.transform.SetParent(parent.transform, false);
+                o.transform.SetParent(parent.transform, false);
         }
 
-        public static void SetLocalTransform(this GameObject component, slocTransform transform) {
-            if (component == null)
+        public static void SetLocalTransform(this GameObject o, slocTransform transform) {
+            if (o == null)
                 return;
-            var t = component.transform;
+            var t = o.transform;
             t.localPosition = transform.Position;
             t.localScale = transform.Scale;
             t.localRotation = transform.Rotation;
@@ -202,12 +208,6 @@ namespace slocExporter {
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
-
-        public static IEnumerable<GameObject> Children(this GameObject o) {
-            var children = o.transform.childCount;
-            for (var i = 0; i < children; i++)
-                yield return o.transform.GetChild(i).gameObject;
-        }
 
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
 
