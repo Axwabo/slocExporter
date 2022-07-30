@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Runtime.InteropServices;
 using slocExporter;
 using UnityEditor;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace Editor.sloc {
 
         private static bool _debug;
 
+        private static bool _lossyColor;
+
         private void OnGUI() {
             GUILayout.Label("File", EditorStyles.boldLabel);
             _filePath = EditorGUILayout.TextField("Path", _filePath);
@@ -27,6 +30,8 @@ namespace Editor.sloc {
                     _filePath = path.ToShortAppDataPath();
             }
 
+            GUILayout.Label("Attributes", EditorStyles.boldLabel);
+            _lossyColor = EditorGUILayout.Toggle(new GUIContent("Lossy Colors", "Uses a single 8-bit integer for colors instead of 4 8-bit floats. This reduces file size but limits the RGB color range to 0-255 and therefore loses precision."), _lossyColor);
             GUILayout.Label("Export", EditorStyles.boldLabel);
             _debug = EditorGUILayout.Toggle("Show Debug", _debug);
             if (GUILayout.Button("Export All"))
@@ -36,7 +41,7 @@ namespace Editor.sloc {
         }
 
         private static void Export(bool selectedOnly) {
-            if (!ObjectExporter.Init(_debug, _filePath, slocAttributes.None)) {
+            if (!ObjectExporter.Init(_debug, _filePath, CreateAttributes())) {
                 EditorUtility.DisplayDialog(ProgressbarTitle, "Export is already in progress", "OK");
                 return;
             }
@@ -44,6 +49,13 @@ namespace Editor.sloc {
             EditorUtility.DisplayProgressBar(ProgressbarTitle, "Starting export", -1f);
             ObjectExporter.TryExport(selectedOnly, ProgressbarUpdate);
             EditorUtility.ClearProgressBar();
+        }
+
+        private static slocAttributes CreateAttributes() {
+            var attribute = slocAttributes.None;
+            if (_lossyColor)
+                attribute |= slocAttributes.LossyColors;
+            return attribute;
         }
 
         private static void ProgressbarUpdate(string info, float progress) => EditorUtility.DisplayProgressBar(ProgressbarTitle, info, progress);

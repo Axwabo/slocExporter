@@ -16,6 +16,11 @@ namespace slocExporter.Objects {
 
         public override void WriteTo(BinaryWriter writer, slocAttributes attributes) {
             base.WriteTo(writer, attributes);
+            if (attributes.HasFlagFast(slocAttributes.LossyColors)) {
+                writer.Write(MaterialColor.ToLossyColor());
+                return;
+            }
+
             writer.Write(MaterialColor.r);
             writer.Write(MaterialColor.g);
             writer.Write(MaterialColor.b);

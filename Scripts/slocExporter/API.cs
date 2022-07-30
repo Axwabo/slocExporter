@@ -11,13 +11,16 @@ namespace slocExporter {
 
     public static class API {
 
-        public const uint slocVersion = 2;
+        public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public static readonly IObjectReader DefaultReader = new Ver2Reader();
+        public const uint slocVersion = 3;
+
+        public static readonly IObjectReader DefaultReader = new Ver3Reader();
 
         private static readonly Dictionary<uint, IObjectReader> VersionReaders = new() {
             {1, new Ver1Reader()},
-            {2, new Ver2Reader()}
+            {2, new Ver2Reader()},
+            {3, new Ver3Reader()}
         };
 
         public static bool CreateForAll;
@@ -33,10 +36,11 @@ namespace slocExporter {
             var version = binaryReader.ReadUInt32();
             updateProgress?.Invoke("Reading objects", 0);
             var reader = GetReader(version);
-            var count = binaryReader.ReadInt32();
+            var header = reader.ReadHeader(binaryReader);
+            var count = header.ObjectCount;
             var floatCount = (float) count;
             for (var i = 0; i < count; i++) {
-                var obj = ReadObject(binaryReader, version, reader);
+                var obj = ReadObject(binaryReader, version, reader, header.Attributes);
                 if (obj is {IsValid: true})
                     objects.Add(obj);
                 updateProgress?.Invoke($"Reading objects ({i + 1} of {count})", (i + 1) / floatCount);
@@ -181,6 +185,15 @@ namespace slocExporter {
 
         public static Color ReadColor(this BinaryReader reader) => new(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
+        public static Color ReadLossyColor(this BinaryReader reader) {
+            var color = reader.ReadInt32();
+            var red = color >> 24 & 0xFF;
+            var green = color >> 16 & 0xFF;
+            var blue = color >> 8 & 0xFF;
+            var alpha = color & 0xFF;
+            return new Color(red * ColorDivisionMultiplier, green * ColorDivisionMultiplier, blue * ColorDivisionMultiplier, alpha * ColorDivisionMultiplier);
+        }
+
         public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
             ObjectType.Cube => PrimitiveType.Cube,
             ObjectType.Sphere => PrimitiveType.Sphere,
@@ -212,6 +225,12 @@ namespace slocExporter {
         public static string ToShortAppDataPath(this string path) => path.Replace('/', '\\').Replace(AppData, "%appdata%");
 
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
+
+        public static bool HasFlagFast(this slocAttributes attributes, slocAttributes flag) => (attributes & flag) == flag;
+
+        public static int ToRgbRange(this float f) => Mathf.FloorToInt(Mathf.Clamp01(f) * 255f);
+
+        public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
 
     }
 

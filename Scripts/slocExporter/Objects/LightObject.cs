@@ -17,10 +17,15 @@ namespace slocExporter.Objects {
 
         public override void WriteTo(BinaryWriter writer, slocAttributes attributes) {
             base.WriteTo(writer, attributes);
-            writer.Write(LightColor.r);
-            writer.Write(LightColor.g);
-            writer.Write(LightColor.b);
-            writer.Write(LightColor.a);
+            if (attributes.HasFlagFast(slocAttributes.LossyColors))
+                writer.Write(LightColor.ToLossyColor());
+            else {
+                writer.Write(LightColor.r);
+                writer.Write(LightColor.g);
+                writer.Write(LightColor.b);
+                writer.Write(LightColor.a);
+            }
+
             writer.Write(Shadows);
             writer.Write(Range);
             writer.Write(Intensity);
