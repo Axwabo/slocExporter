@@ -11,12 +11,13 @@ namespace slocExporter {
 
     public static class API {
 
-        public const uint slocVersion = 1;
+        public const uint slocVersion = 2;
 
-        public static readonly IObjectReader DefaultReader = new Ver1Reader();
+        public static readonly IObjectReader DefaultReader = new Ver2Reader();
 
         private static readonly Dictionary<uint, IObjectReader> VersionReaders = new Dictionary<uint, IObjectReader> {
             {1, new Ver1Reader()},
+            {2, new Ver2Reader()}
         };
 
         public static bool CreateForAll;
@@ -36,9 +37,9 @@ namespace slocExporter {
             var floatCount = (float) count;
             for (var i = 0; i < count; i++) {
                 var obj = ReadObject(binaryReader, version, reader);
-                if (!obj.IsEmpty)
+                if (obj is {IsValid: true})
                     objects.Add(obj);
-                updateProgress?.Invoke($"Reading objects ({i + 1} of {count})", i / floatCount);
+                updateProgress?.Invoke($"Reading objects ({i + 1} of {count})", (i + 1) / floatCount);
             }
 
             if (autoClose)
@@ -54,7 +55,7 @@ namespace slocExporter {
             var go = new GameObject {
                 transform = {
                     position = position,
-                    rotation = rotation,
+                    rotation = rotation
                 }
             };
             var created = 0;
@@ -62,12 +63,17 @@ namespace slocExporter {
             var processed = 0;
             var isCountKnown = total > 0;
             var floatTotal = (float) total;
+            var createdInstances = new Dictionary<int, GameObject>();
             updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
             foreach (var o in objects) {
-                if (o.CreateObject(go, false) != null)
+                var gameObject = o.CreateObject(o.HasParent && createdInstances.TryGetValue(o.ParentId, out var parentInstance) ? parentInstance : go, false);
+                if (gameObject != null) {
+                    createdInstances[o.InstanceId] = gameObject;
                     created++;
+                }
+
                 processed++;
-                updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", processed / floatTotal);
+                updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
             }
 
             createdAmount = created;
@@ -76,7 +82,7 @@ namespace slocExporter {
 
         public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
 
-        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path), out spawnedAmount, position, rotation, updateProgress);
+        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) {
             switch (obj) {
@@ -94,7 +100,7 @@ namespace slocExporter {
                     return toy;
                 }
                 case LightObject light: {
-                    var toy = new GameObject("Spotlight");
+                    var toy = new GameObject("Point Light");
                     var lightComponent = toy.AddComponent<Light>();
                     lightComponent.color = light.LightColor;
                     lightComponent.intensity = light.Intensity;
@@ -103,6 +109,12 @@ namespace slocExporter {
                     toy.SetAbsoluteTransformFrom(parent);
                     toy.SetLocalTransform(obj.Transform);
                     return toy;
+                }
+                case EmptyObject _: {
+                    var emptyObject = new GameObject("Empty");
+                    emptyObject.SetAbsoluteTransformFrom(parent);
+                    emptyObject.SetLocalTransform(obj.Transform);
+                    return emptyObject;
                 }
                 default:
                     if (throwOnError)
@@ -135,7 +147,7 @@ namespace slocExporter {
             handle = true;
             material = AssetDatabase.FindAssets("t:material", null)
                 .Select(e => AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(e)))
-                .FirstOrDefault(m => m.color.Equals(color));
+                .Where(e => !e.mainTexture).FirstOrDefault(m => m.color.Equals(color));
             if (material != null)
                 return true;
 
@@ -155,10 +167,7 @@ namespace slocExporter {
             AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
         }
 
-        public static slocGameObject ReadObject(this BinaryReader stream, uint version = 0, IObjectReader objectReader = null) {
-            objectReader ??= GetReader(version);
-            return objectReader.Read(stream);
-        }
+        public static slocGameObject ReadObject(this BinaryReader stream, uint version = 0, IObjectReader objectReader = null) => (objectReader ?? GetReader(version)).Read(stream);
 
         public static slocTransform ReadTransform(this BinaryReader reader) => new slocTransform {
             Position = reader.ReadVector(),
@@ -182,15 +191,15 @@ namespace slocExporter {
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "A non-primitive type was supplied")
         };
 
-        public static void SetAbsoluteTransformFrom(this GameObject component, GameObject parent) {
+        public static void SetAbsoluteTransformFrom(this GameObject o, GameObject parent) {
             if (parent != null)
-                component.transform.SetParent(parent.transform, false);
+                o.transform.SetParent(parent.transform, false);
         }
 
-        public static void SetLocalTransform(this GameObject component, slocTransform transform) {
-            if (component == null)
+        public static void SetLocalTransform(this GameObject o, slocTransform transform) {
+            if (o == null)
                 return;
-            var t = component.transform;
+            var t = o.transform;
             t.localPosition = transform.Position;
             t.localScale = transform.Scale;
             t.localRotation = transform.Rotation;
@@ -199,6 +208,8 @@ namespace slocExporter {
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
+
+        public static string ToShortAppDataPath(this string path) => path.Replace('/', '\\').Replace(AppData, "%appdata%");
 
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
 

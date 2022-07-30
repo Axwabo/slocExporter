@@ -6,9 +6,9 @@ namespace slocExporter.Objects {
 
     public class PrimitiveObject : slocGameObject {
 
-        public PrimitiveObject(ObjectType type) {
+        public PrimitiveObject(int instanceId, ObjectType type) : base(instanceId) {
             if (type == ObjectType.None || type == ObjectType.Light)
-                throw new ArgumentException("PrimitiveObject cannot be of type None or Light");
+                throw new ArgumentException("Invalid primitive type", nameof(type));
             Type = type;
         }
 

@@ -65,7 +65,7 @@ public static class ObjectExporter {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         EnsureDirectoryExists(file);
-        LogWarning($"[slocExporter] Starting export to {file}");
+        LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
         var allObjects = GetObjects(selectedOnly);
         var objectsById = new Dictionary<int, slocGameObject>();
@@ -85,7 +85,7 @@ public static class ObjectExporter {
 
             foreach (var component in o.GetComponents<Component>()) {
                 var skip = component switch {
-                    ExporterIgnored _ => IgnoreObject(o, objectsById),
+                    ExporterIgnored => IgnoreObject(o, objectsById),
                     MeshFilter meshFilter => ProcessMeshFilter(o, meshFilter, objectsById),
                     MeshRenderer meshRenderer => ProcessRenderer(o, meshRenderer, renderers),
                     Light light => ProcessLight(o, light, objectsById),
@@ -97,15 +97,16 @@ public static class ObjectExporter {
                 break;
             }
 
+            CheckIfEmpty(o, objectsById);
             updateProgress?.Invoke(progressString, progressValue);
         }
 
         Log("Processing material colors...");
         RenderersToMaterials(renderers, objectsById, updateProgress);
-        var nonEmpty = objectsById.Where(e => e.Value is {IsEmpty: false}).ToList();
+        var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
         Log("Writing file...");
         WriteObjects(file, nonEmpty, updateProgress);
-        LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file}");
+        LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
         exportedCount = nonEmpty.Count;
     }
 
@@ -118,9 +119,17 @@ public static class ObjectExporter {
     }
 
     private static GameObject[] GetObjects(bool selectedOnly) {
-        if (!selectedOnly)
-            return UnityEngine.Object.FindObjectsOfType<GameObject>();
         var list = new List<GameObject>();
+        if (!selectedOnly) {
+            foreach (var obj in UnityEngine.Object.FindObjectsOfType<GameObject>()) {
+                if (obj.transform.parent != null)
+                    continue;
+                list.AddRange(obj.WithAllChildren());
+            }
+
+            return list.ToArray();
+        }
+
         foreach (var o in Selection.gameObjects)
             if (!list.Contains(o))
                 list.AddRange(o.WithAllChildren());
@@ -158,7 +167,7 @@ public static class ObjectExporter {
 
     private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, Action<string, float> updateProgress = null) {
         updateProgress?.Invoke("Writing objects", 0);
-        var writer = new BinaryWriter(File.OpenWrite(file), Encoding.UTF8);
+        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
         writer.Write(nonEmpty.Count);
         var count = nonEmpty.Count;
@@ -185,12 +194,11 @@ public static class ObjectExporter {
     public static bool ProcessLight(GameObject o, Light l, Dictionary<int, slocGameObject> objectList) {
         Log("Found light " + l.name);
         var oTransform = o.transform;
-        objectList.Add(o.GetInstanceID(), new LightObject {
-            Transform = {
-                Position = oTransform.position,
-                Rotation = oTransform.rotation,
-                Scale = oTransform.lossyScale
-            },
+        var id = o.GetInstanceID();
+        var parent = oTransform.parent;
+        objectList.Add(id, new LightObject(id) {
+            ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+            Transform = oTransform,
             LightColor = l.color,
             Intensity = l.intensity,
             Range = l.range,
@@ -206,24 +214,42 @@ public static class ObjectExporter {
     }
 
     public static bool ProcessMeshFilter(GameObject o, MeshFilter filter, Dictionary<int, slocGameObject> objectList) {
-        var meshName = filter.sharedMesh.name;
+        var mesh = filter.sharedMesh;
+        if (mesh == null) {
+            LogWarning($"{o.name} has no mesh");
+            return true;
+        }
+
+        var meshName = mesh.name;
         Log($"Found MeshFilter with mesh name {meshName}");
         var type = PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
-        if (type is ObjectType.None) {
+        if (type == ObjectType.None) {
             Log("Mesh does not match any known primitive type, skipping GameObject " + o.name);
             return true;
         }
 
         Log($"Added PrimitiveObject with type {type}");
         var oTransform = o.transform;
-        objectList.Add(o.GetInstanceID(), new PrimitiveObject(type) {
-            Transform = {
-                Position = oTransform.position,
-                Rotation = oTransform.rotation,
-                Scale = oTransform.lossyScale
-            }
-        });
+        var id = o.GetInstanceID();
+        var parent = oTransform.parent;
+        objectList[id] = new PrimitiveObject(id, type) {
+            ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+            Transform = oTransform
+        };
         return false;
+    }
+
+    public static void CheckIfEmpty(GameObject o, Dictionary<int, slocGameObject> objectList) {
+        var id = o.GetInstanceID();
+        if (objectList.ContainsKey(id))
+            return;
+        var oTransform = o.transform;
+        var parent = oTransform.parent;
+        if (oTransform.childCount > 0)
+            objectList[id] = new EmptyObject(id) {
+                ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+                Transform = oTransform
+            };
     }
 
 }

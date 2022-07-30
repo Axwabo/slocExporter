@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using slocExporter;
+using UnityEditor;
 using UnityEngine;
 
 namespace Editor.sloc {
@@ -15,7 +16,7 @@ namespace Editor.sloc {
         private void OnGUI() {
             _filePath = EditorGUILayout.TextField("File Path:", _filePath);
             if (GUILayout.Button("Select File"))
-                _filePath = EditorUtility.OpenFilePanel("Select sloc file to import", _filePath, "sloc");
+                _filePath = EditorUtility.OpenFilePanel("Select sloc file to import", _filePath, "sloc").ToShortAppDataPath();
             if (!GUILayout.Button("Import Objects"))
                 return;
             if (!slocImporter.Init(_filePath)) {
