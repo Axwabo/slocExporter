@@ -31,7 +31,7 @@ namespace Editor.sloc {
             }
 
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
-            _lossyColor = EditorGUILayout.Toggle(new GUIContent("Lossy Colors", "Uses a single 8-bit integer for colors instead of 4 8-bit floats. This reduces file size but limits the RGB color range to 0-255 and therefore loses precision."), _lossyColor);
+            _lossyColor = EditorGUILayout.Toggle(new GUIContent("Lossy Colors", "Uses a single 32-bit integer for colors instead of four 32-bit floats (16 bytes). This reduces file size but limits the RGB color range to 0-255 and therefore loses precision."), _lossyColor);
             GUILayout.Label("Export", EditorStyles.boldLabel);
             _debug = EditorGUILayout.Toggle("Show Debug", _debug);
             if (GUILayout.Button("Export All"))
