@@ -6,14 +6,20 @@ using UnityEngine;
 
 public static class slocImporter {
 
-    public static bool Init(string filePath) {
+    public static bool Init(string filePath, bool useExistingMaterials, bool colorsFolderOnly) {
         if (_inProgress)
             return false;
         _filePath = filePath;
+        UseExistingMaterials = useExistingMaterials;
+        SearchInColorsFolderOnly = colorsFolderOnly;
         return true;
     }
 
     private static string _filePath = "";
+
+    public static bool UseExistingMaterials = true;
+    
+    public static bool SearchInColorsFolderOnly;
 
     private static bool _inProgress;
 

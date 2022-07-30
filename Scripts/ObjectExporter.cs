@@ -173,6 +173,7 @@ public static class ObjectExporter {
         writer.Write(API.slocVersion);
         var count = nonEmpty.Count;
         writer.Write(count);
+        writer.Write((byte) attributes);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             var obj = nonEmpty[i];

@@ -55,6 +55,7 @@ namespace slocExporter {
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
+
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) {
             var go = new GameObject {
                 transform = {
@@ -149,12 +150,20 @@ namespace slocExporter {
 
         public static bool TryGetMaterial(Color color, out Material material, out bool handle) {
             handle = true;
-            material = AssetDatabase.FindAssets("t:material", null)
-                .Select(e => AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(e)))
-                .Where(e => !e.mainTexture).FirstOrDefault(m => m.color.Equals(color));
+            material = null;
+            if (slocImporter.UseExistingMaterials)
+                foreach (var e in AssetDatabase.FindAssets("t:material", slocImporter.SearchInColorsFolderOnly ? new[] {"Assets/Colors"} : null)) {
+                    var asset = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(e));
+                    if (!asset.mainTexture && asset.color == color) {
+                        material = asset;
+                        break;
+                    }
+
+                    EditorUtility.UnloadUnusedAssetsImmediate();
+                }
+
             if (material != null)
                 return true;
-
             if (SkipForAll || !CreateForAll) {
                 handle = !CreateForAll;
                 return false;
@@ -187,9 +196,9 @@ namespace slocExporter {
 
         public static Color ReadLossyColor(this BinaryReader reader) {
             var color = reader.ReadInt32();
-            var red = color >> 24 & 0xFF;
-            var green = color >> 16 & 0xFF;
-            var blue = color >> 8 & 0xFF;
+            var red = (color >> 24) & 0xFF;
+            var green = (color >> 16) & 0xFF;
+            var blue = (color >> 8) & 0xFF;
             var alpha = color & 0xFF;
             return new Color(red * ColorDivisionMultiplier, green * ColorDivisionMultiplier, blue * ColorDivisionMultiplier, alpha * ColorDivisionMultiplier);
         }
