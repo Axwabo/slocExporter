@@ -65,7 +65,7 @@ public static class ObjectExporter {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         EnsureDirectoryExists(file);
-        LogWarning($"[slocExporter] Starting export to {file}");
+        LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
         var allObjects = GetObjects(selectedOnly);
         var objectsById = new Dictionary<int, slocGameObject>();
@@ -85,7 +85,7 @@ public static class ObjectExporter {
 
             foreach (var component in o.GetComponents<Component>()) {
                 var skip = component switch {
-                    ExporterIgnored _ => IgnoreObject(o, objectsById),
+                    ExporterIgnored => IgnoreObject(o, objectsById),
                     MeshFilter meshFilter => ProcessMeshFilter(o, meshFilter, objectsById),
                     MeshRenderer meshRenderer => ProcessRenderer(o, meshRenderer, renderers),
                     Light light => ProcessLight(o, light, objectsById),
@@ -106,7 +106,7 @@ public static class ObjectExporter {
         var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
         Log("Writing file...");
         WriteObjects(file, nonEmpty, updateProgress);
-        LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file}");
+        LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
         exportedCount = nonEmpty.Count;
     }
 

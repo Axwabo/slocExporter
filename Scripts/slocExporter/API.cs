@@ -209,18 +209,9 @@ namespace slocExporter {
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
 
+        public static string ToShortAppDataPath(this string path) => path.Replace('/', '\\').Replace(AppData, "%appdata%");
+
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
-
-        public static int NestedLevel(this GameObject gameObject) {
-            var transform = gameObject.transform;
-            var level = 0;
-            while (transform.parent != null) {
-                transform = transform.parent;
-                level++;
-            }
-
-            return level;
-        }
 
     }
 
