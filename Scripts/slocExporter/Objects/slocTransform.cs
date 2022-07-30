@@ -22,7 +22,7 @@ namespace slocExporter.Objects {
             writer.Write(Rotation.w);
         }
 
-        public static implicit operator slocTransform(Transform transform) => new slocTransform {
+        public static implicit operator slocTransform(Transform transform) => new() {
             Position = transform.localPosition,
             Scale = transform.localScale,
             Rotation = transform.localRotation

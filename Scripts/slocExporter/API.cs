@@ -15,7 +15,7 @@ namespace slocExporter {
 
         public static readonly IObjectReader DefaultReader = new Ver2Reader();
 
-        private static readonly Dictionary<uint, IObjectReader> VersionReaders = new Dictionary<uint, IObjectReader> {
+        private static readonly Dictionary<uint, IObjectReader> VersionReaders = new() {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()}
         };
@@ -167,19 +167,19 @@ namespace slocExporter {
             AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
         }
 
-        public static slocGameObject ReadObject(this BinaryReader stream, uint version = 0, IObjectReader objectReader = null) => (objectReader ?? GetReader(version)).Read(stream);
+        public static slocGameObject ReadObject(this BinaryReader stream, uint version = 0, IObjectReader objectReader = null, slocAttributes attributes = slocAttributes.None) => (objectReader ?? GetReader(version)).Read(stream, attributes);
 
-        public static slocTransform ReadTransform(this BinaryReader reader) => new slocTransform {
+        public static slocTransform ReadTransform(this BinaryReader reader) => new() {
             Position = reader.ReadVector(),
             Scale = reader.ReadVector(),
             Rotation = reader.ReadQuaternion()
         };
 
-        public static Vector3 ReadVector(this BinaryReader reader) => new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        public static Vector3 ReadVector(this BinaryReader reader) => new(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
-        public static Quaternion ReadQuaternion(this BinaryReader reader) => new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        public static Quaternion ReadQuaternion(this BinaryReader reader) => new(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
-        public static Color ReadColor(this BinaryReader reader) => new Color(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        public static Color ReadColor(this BinaryReader reader) => new(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
         public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
             ObjectType.Cube => PrimitiveType.Cube,

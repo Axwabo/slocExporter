@@ -36,7 +36,7 @@ namespace Editor.sloc {
         }
 
         private static void Export(bool selectedOnly) {
-            if (!ObjectExporter.Init(_debug, _filePath)) {
+            if (!ObjectExporter.Init(_debug, _filePath, slocAttributes.None)) {
                 EditorUtility.DisplayDialog(ProgressbarTitle, "Export is already in progress", "OK");
                 return;
             }

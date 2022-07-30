@@ -24,17 +24,20 @@ public static class ObjectExporter {
         {"Quad", ObjectType.Quad}
     }.ToDictionary(k => new Regex($"{k.Key}(?:(?: Instance)+)?"), v => v.Value);
 
-    public static bool Init(bool debug, string filePath) {
+    public static bool Init(bool debug, string filePath, slocAttributes attributes) {
         if (_inProgress)
             return false;
         _debug = debug;
         _fileName = filePath;
+        _attributes = attributes;
         return true;
     }
 
     private static bool _debug;
 
     private static string _fileName = @"%appdata%\EXILED\Plugins\sloc\objects\MyObject";
+
+    private static slocAttributes _attributes;
 
     private static bool _inProgress;
 
@@ -64,6 +67,7 @@ public static class ObjectExporter {
     private static void DoExport(bool selectedOnly, out int exportedCount, Action<string, float> updateProgress = null) {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
+        var attributes = _attributes;
         EnsureDirectoryExists(file);
         LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
@@ -105,7 +109,7 @@ public static class ObjectExporter {
         RenderersToMaterials(renderers, objectsById, updateProgress);
         var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
         Log("Writing file...");
-        WriteObjects(file, nonEmpty, updateProgress);
+        WriteObjects(file, nonEmpty, attributes, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
         exportedCount = nonEmpty.Count;
     }
@@ -154,27 +158,25 @@ public static class ObjectExporter {
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
-            var pair = list[i];
-            var r = pair.Value;
+            var (id, r) = list[i];
             var mat = r.sharedMaterial;
-            var id = pair.Key;
-            if (mat == null || !objectList.TryGetValue(id, out var obj) || !(obj is PrimitiveObject p))
+            if (mat == null || !objectList.TryGetValue(id, out var obj) || obj is not PrimitiveObject p)
                 continue;
             p.MaterialColor = mat.color;
             Log($"Set material color for {id} to {mat.color}");
         }
     }
 
-    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, Action<string, float> updateProgress = null) {
+    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, Action<string, float> updateProgress = null) {
         updateProgress?.Invoke("Writing objects", 0);
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
-        writer.Write(nonEmpty.Count);
         var count = nonEmpty.Count;
+        writer.Write(count);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             var obj = nonEmpty[i];
-            obj.Value.WriteTo(writer);
+            obj.Value.WriteTo(writer, attributes);
             updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
         }
 
