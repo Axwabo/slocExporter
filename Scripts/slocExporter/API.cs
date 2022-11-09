@@ -14,7 +14,7 @@ namespace slocExporter {
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const uint slocVersion = 3;
+        public const ushort slocVersion = 3;
 
         #region Reader Declarations
 
@@ -74,43 +74,47 @@ namespace slocExporter {
 
         #region Create
 
-        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) {
-            switch (obj) {
-                case PrimitiveObject primitive: {
-                    var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
-                    toy.SetAbsoluteTransformFrom(parent);
-                    toy.SetLocalTransform(obj.Transform);
-                    if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
-                        if (handle)
-                            HandleNoMaterial(primitive, toy);
-                        return toy;
-                    }
+        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch {
+            PrimitiveObject primitive => CreatePrimitive(obj, parent, primitive),
+            LightObject light => CreateLight(obj, parent, light),
+            EmptyObject => CreateEmpty(obj, parent),
+            _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
+        };
 
-                    toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                    return toy;
-                }
-                case LightObject light: {
-                    var toy = new GameObject("Point Light");
-                    var lightComponent = toy.AddComponent<Light>();
-                    lightComponent.color = light.LightColor;
-                    lightComponent.intensity = light.Intensity;
-                    lightComponent.range = light.Range;
-                    lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
-                    toy.SetAbsoluteTransformFrom(parent);
-                    toy.SetLocalTransform(obj.Transform);
-                    return toy;
-                }
-                case EmptyObject: {
-                    var emptyObject = new GameObject("Empty");
-                    emptyObject.SetAbsoluteTransformFrom(parent);
-                    emptyObject.SetLocalTransform(obj.Transform);
-                    return emptyObject;
-                }
-                default:
-                    if (throwOnError)
-                        throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type");
-                    return null;
+        private static GameObject CreatePrimitive(slocGameObject obj, GameObject parent, PrimitiveObject primitive) {
+            var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
+            toy.SetAbsoluteTransformFrom(parent);
+            toy.SetLocalTransform(obj.Transform);
+            var colliderMode = primitive.ColliderMode;
+            if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
+                toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
+            if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
+                if (handle)
+                    HandleNoMaterial(primitive, toy);
+                return toy;
             }
+
+            toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            return toy;
+        }
+
+        private static GameObject CreateLight(slocGameObject obj, GameObject parent, LightObject light) {
+            var toy = new GameObject("Point Light");
+            var lightComponent = toy.AddComponent<Light>();
+            lightComponent.color = light.LightColor;
+            lightComponent.intensity = light.Intensity;
+            lightComponent.range = light.Range;
+            lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
+            toy.SetAbsoluteTransformFrom(parent);
+            toy.SetLocalTransform(obj.Transform);
+            return toy;
+        }
+
+        private static GameObject CreateEmpty(slocGameObject obj, GameObject parent) {
+            var emptyObject = new GameObject("Empty");
+            emptyObject.SetAbsoluteTransformFrom(parent);
+            emptyObject.SetLocalTransform(obj.Transform);
+            return emptyObject;
         }
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);

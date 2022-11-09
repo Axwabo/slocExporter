@@ -69,7 +69,7 @@ namespace Editor.sloc {
             if (_lossyColor)
                 attribute |= slocAttributes.LossyColors;
             if (_collider != PrimitiveObject.ColliderCreationMode.Unset)
-                attribute |= slocAttributes.ForcedColliderMode;
+                attribute |= slocAttributes.DefaultColliderMode;
             return attribute;
         }
 

@@ -6,7 +6,7 @@ namespace slocExporter {
     [DisallowMultipleComponent]
     public sealed class ColliderModeSetter : MonoBehaviour {
 
-        public PrimitiveObject.ColliderCreationMode mode = PrimitiveObject.ColliderCreationMode.Both;
+        public PrimitiveObject.ColliderCreationMode mode = PrimitiveObject.ColliderCreationMode.Unset;
 
         public static string ModeToString(PrimitiveObject.ColliderCreationMode mode) => mode switch {
             PrimitiveObject.ColliderCreationMode.NoCollider => "No Collider",

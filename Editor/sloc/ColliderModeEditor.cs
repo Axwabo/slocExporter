@@ -14,7 +14,6 @@ namespace Editor.sloc {
 
         private static readonly List<string> Options = Enum.GetValues(typeof(PrimitiveObject.ColliderCreationMode))
             .Cast<PrimitiveObject.ColliderCreationMode>()
-            .Where(e => e != PrimitiveObject.ColliderCreationMode.Unset)
             .Select(ModeToString).ToList();
 
         private static readonly string[] OptionsArray = Options.ToArray();
