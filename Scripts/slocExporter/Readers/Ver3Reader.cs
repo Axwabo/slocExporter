@@ -1,40 +1,62 @@
 ﻿using System.IO;
 using slocExporter.Objects;
+using UnityEngine;
 
 namespace slocExporter.Readers {
 
-    public class Ver3Reader : IObjectReader {
+    public sealed class Ver3Reader : IObjectReader {
 
-        public slocHeader ReadHeader(BinaryReader stream) => new(stream.ReadInt32(), stream.ReadByte());
+        public slocHeader ReadHeader(BinaryReader stream) {
+            var count = stream.ReadObjectCount();
+            var attributes = (slocAttributes) stream.ReadByte();
+            return new slocHeader(count,
+                attributes,
+                attributes.HasFlagFast(slocAttributes.ForcedColliderMode)
+                    ? (PrimitiveObject.ColliderCreationMode) stream.ReadByte()
+                    : PrimitiveObject.ColliderCreationMode.Unset
+            );
+        }
 
-        public slocGameObject Read(BinaryReader stream, slocAttributes attributes) {
+        public slocGameObject Read(BinaryReader stream, slocHeader header) {
             var objectType = (ObjectType) stream.ReadByte();
             return objectType switch {
-                ObjectType.Cube => ReadPrimitive(stream, objectType, attributes),
-                ObjectType.Sphere => ReadPrimitive(stream, objectType, attributes),
-                ObjectType.Cylinder => ReadPrimitive(stream, objectType, attributes),
-                ObjectType.Plane => ReadPrimitive(stream, objectType, attributes),
-                ObjectType.Capsule => ReadPrimitive(stream, objectType, attributes),
-                ObjectType.Light => ReadLight(stream, attributes),
+                ObjectType.Cube => ReadPrimitive(stream, objectType, header),
+                ObjectType.Sphere => ReadPrimitive(stream, objectType, header),
+                ObjectType.Cylinder => ReadPrimitive(stream, objectType, header),
+                ObjectType.Plane => ReadPrimitive(stream, objectType, header),
+                ObjectType.Capsule => ReadPrimitive(stream, objectType, header),
+                ObjectType.Light => ReadLight(stream, header),
                 ObjectType.Empty => ReadEmpty(stream),
                 _ => null
             };
         }
 
-        public static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type, slocAttributes attributes) => new PrimitiveObject(stream.ReadInt32(), type) {
-            ParentId = stream.ReadInt32(),
-            Transform = stream.ReadTransform(),
-            MaterialColor = attributes.HasFlagFast(slocAttributes.LossyColors) ? stream.ReadLossyColor() : stream.ReadColor()
-        };
+        public static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header) {
+            var instanceId = stream.ReadInt32();
+            var parentId = stream.ReadInt32();
+            var slocTransform = stream.ReadTransform();
+            var color = ReadColor(stream, header.HasAttribute(slocAttributes.LossyColors));
+            var creationMode = header.HasAttribute(slocAttributes.ForcedColliderMode)
+                ? header.DefaultColliderMode
+                : (PrimitiveObject.ColliderCreationMode) stream.ReadByte();
+            return new PrimitiveObject(instanceId, type) {
+                ParentId = parentId,
+                Transform = slocTransform,
+                MaterialColor = color,
+                ColliderMode = creationMode
+            };
+        }
 
-        public static slocGameObject ReadLight(BinaryReader stream, slocAttributes attributes) => new LightObject(stream.ReadInt32()) {
+        public static slocGameObject ReadLight(BinaryReader stream, slocHeader header) => new LightObject(stream.ReadInt32()) {
             ParentId = stream.ReadInt32(),
             Transform = stream.ReadTransform(),
-            LightColor = attributes.HasFlagFast(slocAttributes.LossyColors) ? stream.ReadLossyColor() : stream.ReadColor(),
+            LightColor = ReadColor(stream, header.HasAttribute(slocAttributes.LossyColors)),
             Shadows = stream.ReadBoolean(),
             Range = stream.ReadSingle(),
             Intensity = stream.ReadSingle(),
         };
+
+        public static Color ReadColor(BinaryReader stream, bool lossy) => lossy ? stream.ReadLossyColor() : stream.ReadColor();
 
         public static slocGameObject ReadEmpty(BinaryReader stream) => new EmptyObject(stream.ReadInt32()) {
             ParentId = stream.ReadInt32(),

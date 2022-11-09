@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Editor.sloc {
 
-    public class ImporterWindow : EditorWindow {
+    public sealed class ImporterWindow : EditorWindow {
 
         private const string ProgressbarTitle = "slocImporter";
 

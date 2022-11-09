@@ -1,9 +1,10 @@
 ﻿using System.IO;
+using slocExporter.Readers;
 using UnityEngine;
 
 namespace slocExporter.Objects {
 
-    public class LightObject : slocGameObject {
+    public sealed class LightObject : slocGameObject {
 
         public LightObject(int instanceId) : base(instanceId) => Type = ObjectType.Light;
 
@@ -15,9 +16,9 @@ namespace slocExporter.Objects {
 
         public float Intensity = 1;
 
-        public override void WriteTo(BinaryWriter writer, slocAttributes attributes) {
-            base.WriteTo(writer, attributes);
-            if (attributes.HasFlagFast(slocAttributes.LossyColors))
+        public override void WriteTo(BinaryWriter writer, slocHeader header) {
+            base.WriteTo(writer, header);
+            if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(LightColor.ToLossyColor());
             else {
                 writer.Write(LightColor.r);

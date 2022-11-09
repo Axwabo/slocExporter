@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using slocExporter.Readers;
 
 namespace slocExporter.Objects {
 
@@ -17,7 +18,7 @@ namespace slocExporter.Objects {
 
         public virtual bool IsValid => Type != ObjectType.None;
 
-        public virtual void WriteTo(BinaryWriter writer, slocAttributes attributes) {
+        public virtual void WriteTo(BinaryWriter writer, slocHeader header) {
             writer.Write((byte) Type);
             writer.Write(InstanceId);
             writer.Write(ParentId);

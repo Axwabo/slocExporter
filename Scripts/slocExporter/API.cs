@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using slocExporter.Objects;
 using slocExporter.Readers;
 using UnityEditor;
@@ -15,32 +16,48 @@ namespace slocExporter {
 
         public const uint slocVersion = 3;
 
+        #region Reader Declarations
+
         public static readonly IObjectReader DefaultReader = new Ver3Reader();
 
-        private static readonly Dictionary<uint, IObjectReader> VersionReaders = new() {
+        private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new() {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
             {3, new Ver3Reader()}
         };
 
-        public static bool CreateForAll;
-        public static bool SkipForAll;
+        public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
 
-        public static bool TryGetReader(uint version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
+        public static IObjectReader GetReader(ushort version) => TryGetReader(version, out var reader) ? reader : DefaultReader;
 
-        public static IObjectReader GetReader(uint version) => TryGetReader(version, out var reader) ? reader : DefaultReader;
+        #endregion
+
+        #region Read
+
+        private static readonly FieldInfo ReadPosField = typeof(BinaryReader).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // starting from v3, the version is only a ushort instead of a uint
+        private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader) {
+            var newVersion = binaryReader.ReadUInt16();
+            var oldVersion = binaryReader.ReadUInt16();
+            if (oldVersion is not 0)
+                return (ushort) (newVersion | (uint) oldVersion << 16);
+            ReadPosField.SetValue(buffered, (int) ReadPosField.GetValue(buffered) - sizeof(ushort)); // rewind the buffer by two bytes, so the whole stream won't be malformed data
+            return newVersion;
+        }
 
         public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, Action<string, float> updateProgress = null) {
             var objects = new List<slocGameObject>();
-            var binaryReader = new BinaryReader(stream);
-            var version = binaryReader.ReadUInt32();
+            using var buffered = new BufferedStream(stream, 4);
+            var binaryReader = new BinaryReader(buffered);
+            var version = ReadVersionSafe(buffered, binaryReader);
             updateProgress?.Invoke("Reading objects", 0);
             var reader = GetReader(version);
             var header = reader.ReadHeader(binaryReader);
             var count = header.ObjectCount;
             var floatCount = (float) count;
             for (var i = 0; i < count; i++) {
-                var obj = ReadObject(binaryReader, version, reader, header.Attributes);
+                var obj = ReadObject(binaryReader, header, version, reader);
                 if (obj is {IsValid: true})
                     objects.Add(obj);
                 updateProgress?.Invoke($"Reading objects ({i + 1} of {count})", (i + 1) / floatCount);
@@ -53,8 +70,50 @@ namespace slocExporter {
 
         public static List<slocGameObject> ReadObjectsFromFile(string path, Action<string, float> updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
+        #endregion
 
+        #region Create
+
+        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) {
+            switch (obj) {
+                case PrimitiveObject primitive: {
+                    var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
+                    toy.SetAbsoluteTransformFrom(parent);
+                    toy.SetLocalTransform(obj.Transform);
+                    if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
+                        if (handle)
+                            HandleNoMaterial(primitive, toy);
+                        return toy;
+                    }
+
+                    toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                    return toy;
+                }
+                case LightObject light: {
+                    var toy = new GameObject("Point Light");
+                    var lightComponent = toy.AddComponent<Light>();
+                    lightComponent.color = light.LightColor;
+                    lightComponent.intensity = light.Intensity;
+                    lightComponent.range = light.Range;
+                    lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
+                    toy.SetAbsoluteTransformFrom(parent);
+                    toy.SetLocalTransform(obj.Transform);
+                    return toy;
+                }
+                case EmptyObject: {
+                    var emptyObject = new GameObject("Empty");
+                    emptyObject.SetAbsoluteTransformFrom(parent);
+                    emptyObject.SetLocalTransform(obj.Transform);
+                    return emptyObject;
+                }
+                default:
+                    if (throwOnError)
+                        throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type");
+                    return null;
+            }
+        }
+
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) {
             var go = new GameObject {
@@ -89,44 +148,12 @@ namespace slocExporter {
 
         public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
 
-        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) {
-            switch (obj) {
-                case PrimitiveObject primitive: {
-                    var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
-                    toy.SetAbsoluteTransformFrom(parent);
-                    toy.SetLocalTransform(obj.Transform);
-                    if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
-                        if (handle)
-                            HandleNoMaterial(primitive, toy);
-                        return toy;
-                    }
+        #endregion
 
-                    toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                    return toy;
-                }
-                case LightObject light: {
-                    var toy = new GameObject("Point Light");
-                    var lightComponent = toy.AddComponent<Light>();
-                    lightComponent.color = light.LightColor;
-                    lightComponent.intensity = light.Intensity;
-                    lightComponent.range = light.Range;
-                    lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
-                    toy.SetAbsoluteTransformFrom(parent);
-                    toy.SetLocalTransform(obj.Transform);
-                    return toy;
-                }
-                case EmptyObject _: {
-                    var emptyObject = new GameObject("Empty");
-                    emptyObject.SetAbsoluteTransformFrom(parent);
-                    emptyObject.SetLocalTransform(obj.Transform);
-                    return emptyObject;
-                }
-                default:
-                    if (throwOnError)
-                        throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type");
-                    return null;
-            }
-        }
+        #region Material Handling
+
+        public static bool CreateForAll;
+        public static bool SkipForAll;
 
         public static void HandleNoMaterial(PrimitiveObject primitive, GameObject created) {
             if (SkipForAll)
@@ -180,7 +207,14 @@ namespace slocExporter {
             AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
         }
 
-        public static slocGameObject ReadObject(this BinaryReader stream, uint version = 0, IObjectReader objectReader = null, slocAttributes attributes = slocAttributes.None) => (objectReader ?? GetReader(version)).Read(stream, attributes);
+        #endregion
+
+        #region BinaryReader Extensions
+
+        public static slocGameObject ReadObject(this BinaryReader stream, slocHeader header, ushort version = 0, IObjectReader objectReader = null) {
+            objectReader ??= GetReader(version);
+            return objectReader.Read(stream, header);
+        }
 
         public static slocTransform ReadTransform(this BinaryReader reader) => new() {
             Position = reader.ReadVector(),
@@ -196,12 +230,19 @@ namespace slocExporter {
 
         public static Color ReadLossyColor(this BinaryReader reader) {
             var color = reader.ReadInt32();
-            var red = (color >> 24) & 0xFF;
-            var green = (color >> 16) & 0xFF;
-            var blue = (color >> 8) & 0xFF;
+            var red = color >> 24 & 0xFF;
+            var green = color >> 16 & 0xFF;
+            var blue = color >> 8 & 0xFF;
             var alpha = color & 0xFF;
             return new Color(red * ColorDivisionMultiplier, green * ColorDivisionMultiplier, blue * ColorDivisionMultiplier, alpha * ColorDivisionMultiplier);
         }
+
+        public static int ReadObjectCount(this BinaryReader reader) {
+            var count = reader.ReadInt32();
+            return count < 0 ? 0 : count;
+        }
+
+        #endregion
 
         public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
             ObjectType.Cube => PrimitiveType.Cube,
@@ -240,6 +281,8 @@ namespace slocExporter {
         public static int ToRgbRange(this float f) => Mathf.FloorToInt(Mathf.Clamp01(f) * 255f);
 
         public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
+
+        public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
 
     }
 

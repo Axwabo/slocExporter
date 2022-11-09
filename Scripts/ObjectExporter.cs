@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using slocExporter;
 using slocExporter.Objects;
+using slocExporter.Readers;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,12 +25,13 @@ public static class ObjectExporter {
         {"Quad", ObjectType.Quad}
     }.ToDictionary(k => new Regex($"{k.Key}(?:(?: Instance)+)?"), v => v.Value);
 
-    public static bool Init(bool debug, string filePath, slocAttributes attributes) {
+    public static bool Init(bool debug, string filePath, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderCreationMode) {
         if (_inProgress)
             return false;
         _debug = debug;
         _fileName = filePath;
         _attributes = attributes;
+        _colliderCreationMode = colliderCreationMode;
         return true;
     }
 
@@ -38,6 +40,8 @@ public static class ObjectExporter {
     private static string _fileName = @"%appdata%\EXILED\Plugins\sloc\objects\MyObject";
 
     private static slocAttributes _attributes;
+
+    private static PrimitiveObject.ColliderCreationMode _colliderCreationMode = PrimitiveObject.ColliderCreationMode.Unset;
 
     private static bool _inProgress;
 
@@ -68,6 +72,7 @@ public static class ObjectExporter {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         var attributes = _attributes;
+        var collider = _colliderCreationMode;
         EnsureDirectoryExists(file);
         LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
@@ -109,7 +114,7 @@ public static class ObjectExporter {
         RenderersToMaterials(renderers, objectsById, updateProgress);
         var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
         Log("Writing file...");
-        WriteObjects(file, nonEmpty, attributes, updateProgress);
+        WriteObjects(file, nonEmpty, attributes, collider, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
         exportedCount = nonEmpty.Count;
     }
@@ -167,17 +172,17 @@ public static class ObjectExporter {
         }
     }
 
-    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, Action<string, float> updateProgress = null) {
+    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, Action<string, float> updateProgress = null) {
         updateProgress?.Invoke("Writing objects", 0);
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
         var count = nonEmpty.Count;
         writer.Write(count);
-        writer.Write((byte) attributes);
+        var header = new slocHeader(count, attributes, colliderMode);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             var obj = nonEmpty[i];
-            obj.Value.WriteTo(writer, attributes);
+            obj.Value.WriteTo(writer, header);
             updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
         }
 

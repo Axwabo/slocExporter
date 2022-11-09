@@ -3,11 +3,11 @@ using slocExporter.Objects;
 
 namespace slocExporter.Readers {
 
-    public class Ver2Reader : IObjectReader {
+    public sealed class Ver2Reader : IObjectReader {
 
-        public slocHeader ReadHeader(BinaryReader stream) => new(stream.ReadInt32());
+        public slocHeader ReadHeader(BinaryReader stream) => new(stream.ReadObjectCount());
 
-        public slocGameObject Read(BinaryReader stream, slocAttributes attributes) {
+        public slocGameObject Read(BinaryReader stream, slocHeader header) {
             var objectType = (ObjectType) stream.ReadByte();
             return objectType switch {
                 ObjectType.Cube => ReadPrimitive(stream, objectType),

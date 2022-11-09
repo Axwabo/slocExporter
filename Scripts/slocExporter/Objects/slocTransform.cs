@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace slocExporter.Objects {
 
-    public class slocTransform {
+    public sealed class slocTransform {
 
         public Vector3 Position = Vector3.zero;
         public Vector3 Scale = Vector3.one;
@@ -22,7 +22,7 @@ namespace slocExporter.Objects {
             writer.Write(Rotation.w);
         }
 
-        public static implicit operator slocTransform(Transform transform) => new() {
+        public static implicit operator slocTransform(Transform transform) => new slocTransform {
             Position = transform.localPosition,
             Scale = transform.localScale,
             Rotation = transform.localRotation
