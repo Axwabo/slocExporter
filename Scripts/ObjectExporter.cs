@@ -177,8 +177,8 @@ public static class ObjectExporter {
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
         var count = nonEmpty.Count;
-        writer.Write(count);
         var header = new slocHeader(count, attributes, colliderMode);
+        header.WriteTo(writer);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             var obj = nonEmpty[i];
