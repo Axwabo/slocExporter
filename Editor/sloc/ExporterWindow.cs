@@ -39,7 +39,7 @@ namespace Editor.sloc {
             _filePath = EditorGUILayout.TextField("Path", _filePath);
             if (GUILayout.Button("Select File")) {
                 var sceneName = SceneManager.GetActiveScene().name;
-                var path = EditorUtility.SaveFilePanel("Save sloc file", Path.GetDirectoryName(_filePath.ToFullAppDataPath()), string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName, "sloc");
+                var path = EditorUtility.SaveFilePanel("Save sloc file", string.IsNullOrEmpty(_filePath) ? null : Path.GetDirectoryName(_filePath.ToFullAppDataPath()), string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName, "sloc");
                 if (!string.IsNullOrEmpty(path))
                     _filePath = path.ToShortAppDataPath();
             }

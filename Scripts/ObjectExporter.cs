@@ -11,6 +11,7 @@ using slocExporter.Readers;
 using UnityEditor;
 using UnityEngine;
 
+// ReSharper disable SuggestBaseTypeForParameter
 public static class ObjectExporter {
 
     public const string ExporterIgnoredTag = "slocExporter Ignored";
@@ -79,6 +80,7 @@ public static class ObjectExporter {
         var allObjects = GetObjects(selectedOnly);
         var objectsById = new Dictionary<int, slocGameObject>();
         var renderers = new Dictionary<int, MeshRenderer>();
+        var colliders = new Dictionary<int, PrimitiveObject.ColliderCreationMode>();
         var allObjectsCount = allObjects.Length;
         var floatObjectsCount = (float) allObjectsCount;
         Log($"Found {allObjectsCount} objects in total.");
@@ -86,7 +88,7 @@ public static class ObjectExporter {
             var o = allObjects[i];
             var progressString = $"Processing objects ({i + 1} of {allObjectsCount})";
             var progressValue = i / floatObjectsCount;
-            if (TaggedAsIgnored(o)) {
+            if (IsTaggedAsIgnored(o)) {
                 Log($"Skipped object {o.name} because it's tagged as {ExporterIgnoredTag}");
                 updateProgress?.Invoke(progressString, progressValue);
                 continue;
@@ -94,6 +96,7 @@ public static class ObjectExporter {
 
             foreach (var component in o.GetComponents<Component>()) {
                 var skip = component switch {
+                    ColliderModeSetter setter => SetMode(o, setter, colliders),
                     ExporterIgnored => IgnoreObject(o, objectsById),
                     MeshFilter meshFilter => ProcessMeshFilter(o, meshFilter, objectsById),
                     MeshRenderer meshRenderer => ProcessRenderer(o, meshRenderer, renderers),
@@ -113,6 +116,8 @@ public static class ObjectExporter {
         Log("Processing material colors...");
         RenderersToMaterials(renderers, objectsById, updateProgress);
         var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
+        Log("Setting collider modes...");
+        SetColliderModes(nonEmpty, colliders, updateProgress);
         Log("Writing file...");
         WriteObjects(file, nonEmpty, attributes, collider, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
@@ -145,58 +150,25 @@ public static class ObjectExporter {
         return list.ToArray();
     }
 
-    private static bool TaggedAsIgnored(GameObject gameObject) {
+    private static bool IsTaggedAsIgnored(GameObject gameObject) {
         var root = gameObject.transform.root.gameObject;
         return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
+    }
+
+    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, Dictionary<int, PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
+        var mode = setter.mode;
+        if (mode is PrimitiveObject.ColliderCreationMode.Unset)
+            return false;
+        var id = gameObject.GetInstanceID();
+        Log("Setting collider mode for " + id + " to " + mode);
+        colliderCreationModes[id] = mode;
+        return false;
     }
 
     private static bool IgnoreObject(GameObject gameObject, Dictionary<int, slocGameObject> objectsById) {
         Log($"{gameObject.name} is flagged as ExporterIgnored");
         objectsById.Remove(gameObject.GetInstanceID());
         return true;
-    }
-
-    public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList, Action<string, float> updateProgress = null) {
-        updateProgress?.Invoke("Setting materials", 0);
-        var list = renderers.ToList();
-        var count = list.Count;
-        var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
-            updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
-            var (id, r) = list[i];
-            var mat = r.sharedMaterial;
-            if (mat == null || !objectList.TryGetValue(id, out var obj) || obj is not PrimitiveObject p)
-                continue;
-            p.MaterialColor = mat.color;
-            Log($"Set material color for {id} to {mat.color}");
-        }
-    }
-
-    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, Action<string, float> updateProgress = null) {
-        updateProgress?.Invoke("Writing objects", 0);
-        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
-        writer.Write(API.slocVersion);
-        var count = nonEmpty.Count;
-        var header = new slocHeader(count, attributes, colliderMode);
-        header.WriteTo(writer);
-        var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
-            var obj = nonEmpty[i];
-            obj.Value.WriteTo(writer, header);
-            updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
-        }
-
-        writer.Close();
-    }
-
-    public static void Log(object o) {
-        if (_debug)
-            UnityEngine.Debug.Log(o);
-    }
-
-    public static void LogWarning(object o) {
-        if (_debug)
-            UnityEngine.Debug.LogWarning(o);
     }
 
     public static bool ProcessLight(GameObject o, Light l, Dictionary<int, slocGameObject> objectList) {
@@ -245,6 +217,62 @@ public static class ObjectExporter {
             Transform = oTransform
         };
         return false;
+    }
+
+    public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList, Action<string, float> updateProgress = null) {
+        updateProgress?.Invoke("Setting materials", 0);
+        var list = renderers.ToList();
+        var count = list.Count;
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
+            var (id, r) = list[i];
+            var mat = r.sharedMaterial;
+            if (mat == null || !objectList.TryGetValue(id, out var obj) || obj is not PrimitiveObject p)
+                continue;
+            p.MaterialColor = mat.color;
+            Log($"Set material color for {id} to {mat.color}");
+        }
+    }
+
+    private static void SetColliderModes(List<KeyValuePair<int, slocGameObject>> objects, Dictionary<int, PrimitiveObject.ColliderCreationMode> modes, Action<string, float> updateProgress) {
+        var count = objects.Count;
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            updateProgress?.Invoke($"Setting collider modes ({i + 1} of {count})", i / floatCount);
+            var (id, obj) = objects[i];
+            if (obj is not PrimitiveObject p)
+                continue;
+            if (modes.TryGetValue(id, out var mode))
+                p.ColliderMode = mode;
+        }
+    }
+
+    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, Action<string, float> updateProgress = null) {
+        updateProgress?.Invoke("Writing objects", 0);
+        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
+        writer.Write(API.slocVersion);
+        var count = nonEmpty.Count;
+        var header = new slocHeader(count, attributes, colliderMode);
+        header.WriteTo(writer);
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            var obj = nonEmpty[i];
+            obj.Value.WriteTo(writer, header);
+            updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
+        }
+
+        writer.Close();
+    }
+
+    public static void Log(object o) {
+        if (_debug)
+            UnityEngine.Debug.Log(o);
+    }
+
+    public static void LogWarning(object o) {
+        if (_debug)
+            UnityEngine.Debug.LogWarning(o);
     }
 
     public static void CheckIfEmpty(GameObject o, Dictionary<int, slocGameObject> objectList) {
