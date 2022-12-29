@@ -40,9 +40,10 @@ namespace slocExporter {
         private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader) {
             var newVersion = binaryReader.ReadUInt16();
             var oldVersion = binaryReader.ReadUInt16();
-            if (oldVersion is not 0)
+            if (oldVersion is 0)
                 return (ushort) (newVersion | (uint) oldVersion << 16);
-            ReadPosField.SetValue(buffered, (int) ReadPosField.GetValue(buffered) - sizeof(ushort)); // rewind the buffer by two bytes, so the whole stream won't be malformed data
+            var newPos = (int) ReadPosField.GetValue(buffered) - sizeof(ushort);
+            ReadPosField.SetValue(buffered, newPos); // rewind the buffer by two bytes, so the whole stream won't be malformed data
             return newVersion;
         }
 

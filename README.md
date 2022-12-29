@@ -2,7 +2,7 @@
 
 Allows for exporting primitive objects in Unity scenes to use in SCP: Secret Laboratory.
 
-Use the [slocLoader](https://github.com/Axwabo/slocLoader/) plugin to load them in game.
+Use the [slocLoader](https://github.com/Axwabo/slocLoader/) plugin to load them in the game.
 
 ![Logo](https://github.com/Axwabo/slocLoader/blob/main/logo%20small.png?raw=true)
 
