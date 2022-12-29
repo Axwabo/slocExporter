@@ -3,14 +3,14 @@
 namespace Editor {
 
     [InitializeOnLoad]
-    public class RegisterTag {
+    public sealed class RegisterTag {
 
         static RegisterTag() => AddTag(ObjectExporter.ExporterIgnoredTag);
 
         private static void AddTag(string tagName) {
             var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             var tagsProp = tagManager.FindProperty("tags");
-            if (PropertyExists(tagsProp, 0, tagsProp.arraySize, tagName)) 
+            if (PropertyExists(tagsProp, 0, tagsProp.arraySize, tagName))
                 return;
             var index = tagsProp.arraySize;
             tagsProp.InsertArrayElementAtIndex(index);

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace slocExporter.Objects {
 
-    public class slocTransform {
+    public sealed class slocTransform {
 
         public Vector3 Position = Vector3.zero;
         public Vector3 Scale = Vector3.one;
