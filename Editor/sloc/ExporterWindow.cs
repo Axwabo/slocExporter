@@ -36,14 +36,21 @@ namespace Editor.sloc {
 
         private void OnGUI() {
             GUILayout.Label("File", EditorStyles.boldLabel);
-            _filePath = EditorGUILayout.TextField("Path", _filePath);
+            var filePath = _filePath;
             if (GUILayout.Button("Select File")) {
                 var sceneName = SceneManager.GetActiveScene().name;
-                var path = EditorUtility.SaveFilePanel("Save sloc file", string.IsNullOrEmpty(_filePath) ? null : Path.GetDirectoryName(_filePath.ToFullAppDataPath()), string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName, "sloc");
+                var path = EditorUtility.SaveFilePanel(
+                    "Save sloc file", string.IsNullOrEmpty(_filePath) || !Directory.Exists(_filePath.ToFullAppDataPath())
+                        ? null
+                        : Path.GetDirectoryName(_filePath.ToFullAppDataPath()),
+                    string.IsNullOrEmpty(sceneName) ? "MyObject" : sceneName,
+                    "sloc"
+                );
                 if (!string.IsNullOrEmpty(path))
-                    _filePath = path.ToShortAppDataPath();
+                    filePath = path.ToShortAppDataPath();
             }
 
+            _filePath = EditorGUILayout.TextField("Path", filePath);
             GUILayout.Space(10);
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
             _lossyColor = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColor);
@@ -57,6 +64,8 @@ namespace Editor.sloc {
                 Export(true);
             GUILayout.Space(20);
             GUILayout.Label(Asterisk, EditorStyles.centeredGreyMiniLabel);
+            if (filePath != _filePath)
+                Repaint();
         }
 
         private static void Export(bool selectedOnly) {
