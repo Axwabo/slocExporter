@@ -9,7 +9,7 @@ namespace slocExporter.TriggerActions {
 
         public const ushort MinVersion = 4;
 
-        private static ITriggerActionDataReader DefaultReader = new Ver4ActionDataReader();
+        private static readonly ITriggerActionDataReader DefaultReader = new Ver4ActionDataReader();
 
         private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new() {
             {4, new Ver4ActionDataReader()}
@@ -30,8 +30,6 @@ namespace slocExporter.TriggerActions {
             foreach (var data in actions)
                 data.WriteTo(writer);
         }
-
-        public static BaseTriggerActionData Read(BinaryReader stream, ushort version) => GetReader(version).Read(stream);
 
         public static void ReadTypes(BinaryReader reader, out TargetType targetType, out TriggerActionType actionType) {
             targetType = (TargetType) reader.ReadByte();

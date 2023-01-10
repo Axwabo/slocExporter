@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using slocExporter.Readers;
+using slocExporter.TriggerActions;
+using slocExporter.TriggerActions.Data;
 using UnityEngine;
 
 namespace slocExporter.Objects {
@@ -15,7 +17,9 @@ namespace slocExporter.Objects {
 
         public Color MaterialColor = Color.gray;
 
-        public ColliderCreationMode ColliderMode { get; set; } = ColliderCreationMode.Both;
+        public ColliderCreationMode ColliderMode = ColliderCreationMode.Both;
+
+        public BaseTriggerActionData[] TriggerActions = Array.Empty<BaseTriggerActionData>();
 
         public ColliderCreationMode GetNonUnsetColliderMode() => ColliderMode is ColliderCreationMode.Unset ? ColliderCreationMode.Both : ColliderMode;
 
@@ -31,6 +35,8 @@ namespace slocExporter.Objects {
             writer.Write(MaterialColor.b);
             writer.Write(MaterialColor.a);
             writer.Write((byte) ColliderMode);
+            if (ColliderMode.IsTrigger())
+                ActionManager.WriteActions(writer, TriggerActions);
         }
 
         public enum ColliderCreationMode : byte {

@@ -253,7 +253,7 @@ public static class ObjectExporter {
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
         var count = nonEmpty.Count;
-        var header = new slocHeader(count, attributes, colliderMode);
+        var header = new slocHeader(API.slocVersion, count, attributes, colliderMode);
         header.WriteTo(writer);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
