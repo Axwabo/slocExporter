@@ -14,7 +14,7 @@ namespace slocExporter {
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 3;
+        public const ushort slocVersion = 4;
 
         #region Reader Declarations
 
@@ -286,6 +286,8 @@ namespace slocExporter {
         public static int ToRgbRange(this float f) => Mathf.FloorToInt(Mathf.Clamp01(f) * 255f);
 
         public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
+
+        public static bool IsTrigger(this PrimitiveObject.ColliderCreationMode colliderMode) => colliderMode is PrimitiveObject.ColliderCreationMode.Trigger or PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger;
 
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
 
