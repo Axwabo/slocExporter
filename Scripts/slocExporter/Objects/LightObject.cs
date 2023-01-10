@@ -16,8 +16,7 @@ namespace slocExporter.Objects {
 
         public float Intensity = 1;
 
-        public override void WriteTo(BinaryWriter writer, slocHeader header) {
-            base.WriteTo(writer, header);
+        protected override void WriteData(BinaryWriter writer, slocHeader header) {
             if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(LightColor.ToLossyColor());
             else {

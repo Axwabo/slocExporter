@@ -19,8 +19,7 @@ namespace slocExporter.Objects {
 
         public ColliderCreationMode GetNonUnsetColliderMode() => ColliderMode is ColliderCreationMode.Unset ? ColliderCreationMode.Both : ColliderMode;
 
-        public override void WriteTo(BinaryWriter writer, slocHeader header) {
-            base.WriteTo(writer, header);
+        protected override void WriteData(BinaryWriter writer, slocHeader header) {
             if (header.HasAttribute(slocAttributes.LossyColors)) {
                 writer.Write(MaterialColor.ToLossyColor());
                 writer.Write((byte) ColliderMode);

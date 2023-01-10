@@ -18,11 +18,15 @@ namespace slocExporter.Objects {
 
         public virtual bool IsValid => Type != ObjectType.None;
 
-        public virtual void WriteTo(BinaryWriter writer, slocHeader header) {
+        public void WriteTo(BinaryWriter writer, slocHeader header) {
             writer.Write((byte) Type);
             writer.Write(InstanceId);
             writer.Write(ParentId);
             Transform.WriteTo(writer);
+            WriteData(writer, header);
+        }
+
+        protected virtual void WriteData(BinaryWriter writer, slocHeader header) {
         }
 
     }

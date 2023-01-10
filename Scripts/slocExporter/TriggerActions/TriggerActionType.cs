@@ -1,11 +1,12 @@
 ﻿namespace slocExporter.TriggerActions {
 
-    public enum TriggerActionType {
+    public enum TriggerActionType : byte {
 
-        TeleportToPosition,
-        TeleportToSpawnedObject,
-        TeleportToRoom,
-        KillPlayer
+        None = 0,
+        TeleportToPosition = 1,
+        TeleportToSpawnedObject = 2,
+        TeleportToRoom = 3,
+        KillPlayer = 4
 
     }
 
