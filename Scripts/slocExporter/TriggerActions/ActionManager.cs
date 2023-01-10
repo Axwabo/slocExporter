@@ -31,10 +31,27 @@ namespace slocExporter.TriggerActions {
                 data.WriteTo(writer);
         }
 
+        public static BaseTriggerActionData[] ReadActions(BinaryReader stream, ITriggerActionDataReader reader) {
+            var actionCount = stream.ReadInt32();
+            var actions = new List<BaseTriggerActionData>();
+            for (var i = 0; i < actionCount; i++) {
+                var action = reader.Read(stream);
+                if (action != null)
+                    actions.Add(action);
+            }
+
+            var array = actions.ToArray();
+            return array;
+        }
+
         public static void ReadTypes(BinaryReader reader, out TargetType targetType, out TriggerActionType actionType) {
             targetType = (TargetType) reader.ReadByte();
-            actionType = (TriggerActionType) reader.ReadByte();
+            actionType = (TriggerActionType) reader.ReadUInt16();
         }
+
+        public static bool HasFlagFast(this TargetType targetType, TargetType flag) => (targetType & flag) == flag;
+
+        public static bool Is(this TargetType type, TargetType isType) => type is TargetType.All || type.HasFlagFast(isType);
 
     }
 

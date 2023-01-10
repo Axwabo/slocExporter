@@ -14,7 +14,8 @@ namespace slocExporter.TriggerActions.Data {
             WriteData(writer);
         }
 
-        protected abstract void WriteData(BinaryWriter writer);
+        protected virtual void WriteData(BinaryWriter writer) {
+        }
 
     }
 

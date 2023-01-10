@@ -249,6 +249,16 @@ namespace slocExporter {
 
         #endregion
 
+        #region BinaryWriter Extensions
+
+        public static void WriteVector(this BinaryWriter writer, Vector3 vector3) {
+            writer.Write(vector3.x);
+            writer.Write(vector3.y);
+            writer.Write(vector3.z);
+        }
+
+        #endregion
+
         public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
             ObjectType.Cube => PrimitiveType.Cube,
             ObjectType.Sphere => PrimitiveType.Sphere,
