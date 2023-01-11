@@ -5,9 +5,9 @@ using UnityEngine;
 namespace slocExporter.TriggerActions.Data {
 
     [Serializable]
-    public class TeleportToPositionData : BaseTriggerActionData {
+    public sealed class TeleportToPositionData : BaseTriggerActionData {
 
-        public sealed override TargetType TargetType => TargetType.All;
+        public override TargetType TargetType => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.TeleportToPosition;
 

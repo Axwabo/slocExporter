@@ -14,6 +14,7 @@ namespace slocExporter.Objects {
         public bool HasParent => ParentId != InstanceId;
 
         public ObjectType Type { get; protected set; } = ObjectType.None;
+
         public slocTransform Transform = new();
 
         public virtual bool IsValid => Type != ObjectType.None;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Readers;
@@ -33,6 +34,8 @@ namespace slocExporter.TriggerActions {
 
         public static BaseTriggerActionData[] ReadActions(BinaryReader stream, ITriggerActionDataReader reader) {
             var actionCount = stream.ReadInt32();
+            if(actionCount < 1)
+                return Array.Empty<BaseTriggerActionData>();
             var actions = new List<BaseTriggerActionData>();
             for (var i = 0; i < actionCount; i++) {
                 var action = reader.Read(stream);

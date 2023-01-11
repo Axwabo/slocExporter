@@ -24,7 +24,9 @@ namespace Editor.sloc {
 
         private static bool _debug;
 
-        private static bool _lossyColor;
+        private static bool _lossyColors;
+
+        private static bool _exportAllTriggerActions;
 
         private static PrimitiveObject.ColliderCreationMode _collider;
 
@@ -53,8 +55,9 @@ namespace Editor.sloc {
             _filePath = EditorGUILayout.TextField("Path", filePath);
             GUILayout.Space(10);
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
-            _lossyColor = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColor);
+            _lossyColors = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColors);
             _collider = StringToMode(OptionsArray[EditorGUILayout.Popup(new GUIContent("Default Collider Mode*", "The default collider creation mode to use for primitive objects.\n" + GetModeDescription(_collider, true)), Options.IndexOf(ModeToString(_collider)), OptionsArray)]);
+            _exportAllTriggerActions = EditorGUILayout.Toggle(new GUIContent("Export All Trigger Actions*", "Exports trigger actions for every primitive, even if their collider mode can't be considered a trigger."), _exportAllTriggerActions);
             GUILayout.Space(10);
             GUILayout.Label("Export", EditorStyles.boldLabel);
             _debug = EditorGUILayout.Toggle("Show Debug", _debug);
@@ -81,10 +84,12 @@ namespace Editor.sloc {
 
         private static slocAttributes CreateAttributes() {
             var attribute = slocAttributes.None;
-            if (_lossyColor)
+            if (_lossyColors)
                 attribute |= slocAttributes.LossyColors;
             if (_collider != PrimitiveObject.ColliderCreationMode.Unset)
                 attribute |= slocAttributes.DefaultColliderMode;
+            if (_exportAllTriggerActions)
+                attribute |= slocAttributes.ExportAllTriggerActions;
             return attribute;
         }
 

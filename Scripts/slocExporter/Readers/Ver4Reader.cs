@@ -25,6 +25,8 @@ namespace slocExporter.Readers {
 
         public static slocGameObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header) {
             var primitive = Ver3Reader.ReadPrimitive(stream, type, header);
+            if (!primitive.ColliderMode.IsTrigger() && !header.HasAttribute(slocAttributes.ExportAllTriggerActions))
+                return primitive;
             var reader = ActionManager.GetReader(header.Version);
             primitive.TriggerActions = ActionManager.ReadActions(stream, reader);
             return primitive;

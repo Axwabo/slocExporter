@@ -10,7 +10,7 @@ namespace slocExporter.TriggerActions.Data {
 
         public void WriteTo(BinaryWriter writer) {
             writer.Write((byte) TargetType);
-            writer.Write((byte) ActionType);
+            writer.Write((ushort) ActionType);
             WriteData(writer);
         }
 
