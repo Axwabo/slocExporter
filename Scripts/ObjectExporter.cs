@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using slocExporter;
 using slocExporter.Objects;
 using slocExporter.Readers;
+using slocExporter.TriggerActions;
+using slocExporter.TriggerActions.Data;
 using UnityEditor;
 using UnityEngine;
 
@@ -286,6 +288,11 @@ public static class ObjectExporter {
                 ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
                 Transform = oTransform
             };
+    }
+
+    public static TeleportToSpawnedObjectData ProcessSerializedTpToSpawnedObject(SerializableTeleportToSpawnedObjectData serialized) {
+        // TODO: add to a dict
+        return null;
     }
 
 }

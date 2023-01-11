@@ -1,13 +1,21 @@
+﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
 
-    public sealed class MoveRelativeToSelfData : TeleportToPositionData {
+    [Serializable]
+    public sealed class MoveRelativeToSelfData : BaseTriggerActionData {
+
+        public sealed override TargetType TargetType => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.MoveRelativeToSelf;
 
-        public MoveRelativeToSelfData(Vector3 position) : base(position) {
-        }
+        public Vector3 position;
+
+        public MoveRelativeToSelfData(Vector3 position) => this.position = position;
+
+        protected override void WriteData(BinaryWriter writer) => writer.WriteVector(position);
 
     }
 

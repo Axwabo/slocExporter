@@ -1,7 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace slocExporter.TriggerActions.Data {
 
+    [Serializable]
     public sealed class KillPlayerData : BaseTriggerActionData {
 
         public override TargetType TargetType => TargetType.Player;

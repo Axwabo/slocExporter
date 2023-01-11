@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
 
+    [Serializable]
     public sealed class TeleportToRoomData : BaseTriggerActionData {
 
         public override TargetType TargetType => TargetType.All;

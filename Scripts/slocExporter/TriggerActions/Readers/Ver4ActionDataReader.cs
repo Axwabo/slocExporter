@@ -40,7 +40,8 @@ namespace slocExporter.TriggerActions.Readers {
 
         public static TeleportToSpawnedObjectData ReadTpToSpawnedObject(BinaryReader reader) {
             var virtualInstanceId = reader.ReadInt32();
-            return new TeleportToSpawnedObjectData(virtualInstanceId);
+            var offset = reader.ReadVector();
+            return new TeleportToSpawnedObjectData(virtualInstanceId, offset);
         }
 
     }
