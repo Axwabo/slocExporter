@@ -50,8 +50,8 @@ public static class slocImporter {
 
     private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null) {
         EnsureDirectory();
-        API.SkipForAll = false;
-        API.CreateForAll = false;
+        MaterialHandler.SkipForAll = false;
+        MaterialHandler.CreateForAll = false;
         var lastView = SceneView.lastActiveSceneView;
         var cam = lastView ? lastView.camera : null;
         var camTransform = cam ? cam.transform : null;

@@ -7,8 +7,8 @@ using slocExporter.Objects;
 using slocExporter.Readers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
-using UnityEditor;
 using UnityEngine;
+using static slocExporter.MaterialHandler;
 
 namespace slocExporter {
 
@@ -94,7 +94,7 @@ namespace slocExporter {
                 toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
             AddTriggerActionComponents(primitive.TriggerActions, toy);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
-                if (handle)
+                if (handle) 
                     HandleNoMaterial(primitive, toy);
                 return toy;
             }
@@ -142,6 +142,7 @@ namespace slocExporter {
             var isCountKnown = total > 0;
             var floatTotal = (float) total;
             var createdInstances = new Dictionary<int, GameObject>();
+            ClearMaterialCache();
             updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
             foreach (var o in objects) {
                 var gameObject = o.CreateObject(o.HasParent && createdInstances.TryGetValue(o.ParentId, out var parentInstance) ? parentInstance : go, false);
@@ -154,6 +155,7 @@ namespace slocExporter {
                 updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
             }
 
+            ClearMaterialCache();
             createdAmount = created;
             return go;
         }
@@ -161,65 +163,6 @@ namespace slocExporter {
         public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
 
         public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
-
-        #endregion
-
-        #region Material Handling
-
-        public static bool CreateForAll;
-        public static bool SkipForAll;
-
-        public static void HandleNoMaterial(PrimitiveObject primitive, GameObject created) {
-            if (SkipForAll)
-                return;
-            var result = EditorUtility.DisplayDialogComplex("No Material", "No material found for color " + primitive.MaterialColor + ".\nCreate it now?", "Create", "Create for All", "Skip");
-            switch (result) {
-                case 0:
-                case 1:
-                    CreateMaterial(primitive.MaterialColor, out var mat);
-                    created.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                    break;
-                case 2:
-                    if (!EditorUtility.DisplayDialog("Skip", "Do you want to skip creating materials for all objects?", "Skip only this", "Skip for All"))
-                        SkipForAll = true;
-                    break;
-            }
-
-            if (result == 1)
-                CreateForAll = true;
-        }
-
-        public static bool TryGetMaterial(Color color, out Material material, out bool handle) {
-            handle = true;
-            material = null;
-            if (slocImporter.UseExistingMaterials)
-                foreach (var e in AssetDatabase.FindAssets("t:material", slocImporter.SearchInColorsFolderOnly ? new[] {"Assets/Colors"} : null)) {
-                    var asset = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(e));
-                    if (!asset.mainTexture && asset.color == color) {
-                        material = asset;
-                        break;
-                    }
-
-                    EditorUtility.UnloadUnusedAssetsImmediate();
-                }
-
-            if (material != null)
-                return true;
-            if (SkipForAll || !CreateForAll) {
-                handle = !CreateForAll;
-                return false;
-            }
-
-            CreateMaterial(color, out material);
-            return true;
-        }
-
-        private static void CreateMaterial(Color color, out Material material) {
-            material = new Material(Shader.Find("Standard")) {
-                color = color
-            };
-            AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
-        }
 
         #endregion
 
