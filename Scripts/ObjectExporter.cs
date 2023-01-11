@@ -204,7 +204,7 @@ public static class ObjectExporter {
 
         var meshName = mesh.name;
         Log($"Found MeshFilter with mesh name {meshName}");
-        var type = PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
+        var type = FindObjectType(meshName);
         if (type == ObjectType.None) {
             Log("Mesh does not match any known primitive type, skipping GameObject " + o.name);
             return true;
@@ -220,6 +220,8 @@ public static class ObjectExporter {
         };
         return false;
     }
+
+    public static ObjectType FindObjectType(string meshName) => PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
 
     public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList, Action<string, float> updateProgress = null) {
         updateProgress?.Invoke("Setting materials", 0);

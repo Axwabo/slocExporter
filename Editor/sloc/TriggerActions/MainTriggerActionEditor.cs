@@ -12,7 +12,11 @@ namespace Editor.sloc.TriggerActions {
     public sealed class MainTriggerActionEditor : UnityEditor.Editor {
 
         private static readonly Dictionary<TriggerActionType, TriggerActionEditorRenderer> Renderers = new() {
-            {TriggerActionType.TeleportToPosition, StandardActionRenderers.DrawTeleportToPosition}
+            {TriggerActionType.TeleportToPosition, StandardActionRenderers.TeleportToPosition},
+            {TriggerActionType.MoveRelativeToSelf, StandardActionRenderers.MoveRelativeToSelf},
+            {TriggerActionType.TeleportToRoom, StandardActionRenderers.TeleportToRoom},
+            {TriggerActionType.KillPlayer, StandardActionRenderers.KillPlayer},
+            {TriggerActionType.TeleportToSpawnedObject, TeleportToSpawnedObjectRenderer.Draw},
         };
 
         private static readonly TriggerActionType[] Values = (TriggerActionType[]) Enum.GetValues(typeof(TriggerActionType));
@@ -40,16 +44,16 @@ namespace Editor.sloc.TriggerActions {
         private static void AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) {
             switch (type) {
                 case TriggerActionType.TeleportToPosition:
-                    triggerAction.tpToPos = new TeleportToPositionData(Vector3.zero);
+                    triggerAction.tpToPos ??= new TeleportToPositionData(Vector3.zero);
                     break;
                 case TriggerActionType.TeleportToRoom:
-                    triggerAction.tpToRoom = new TeleportToRoomData(Vector3.zero, "Unknown");
+                    triggerAction.tpToRoom ??= new TeleportToRoomData(Vector3.zero, "Unknown");
                     break;
                 case TriggerActionType.MoveRelativeToSelf:
-                    triggerAction.moveRel = new MoveRelativeToSelfData(Vector3.zero);
+                    triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero);
                     break;
                 case TriggerActionType.KillPlayer:
-                    triggerAction.killPlayer = new KillPlayerData("Killed by your epic trigger.");
+                    triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger.");
                     break;
             }
         }

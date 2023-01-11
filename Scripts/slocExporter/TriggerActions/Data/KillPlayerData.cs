@@ -10,11 +10,11 @@ namespace slocExporter.TriggerActions.Data {
 
         public override TriggerActionType ActionType => TriggerActionType.KillPlayer;
 
-        public readonly string Cause;
+        public string cause;
 
-        public KillPlayerData(string cause) => Cause = cause;
+        public KillPlayerData(string cause) => this.cause = cause;
 
-        protected override void WriteData(BinaryWriter writer) => writer.Write(Cause);
+        protected override void WriteData(BinaryWriter writer) => writer.Write(cause);
 
     }
 

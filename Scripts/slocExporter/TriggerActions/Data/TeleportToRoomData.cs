@@ -10,19 +10,19 @@ namespace slocExporter.TriggerActions.Data {
         public override TargetType TargetType => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.TeleportToRoom;
-        
-        public readonly Vector3 PositionOffset;
 
-        public readonly string Room;
+        public Vector3 positionOffset;
+
+        public string room;
 
         public TeleportToRoomData(Vector3 positionOffset, string room) {
-            PositionOffset = positionOffset;
-            Room = room;
+            this.positionOffset = positionOffset;
+            this.room = room;
         }
 
         protected override void WriteData(BinaryWriter writer) {
-            writer.WriteVector(PositionOffset);
-            writer.Write(Room);
+            writer.WriteVector(positionOffset);
+            writer.Write(room);
         }
 
     }
