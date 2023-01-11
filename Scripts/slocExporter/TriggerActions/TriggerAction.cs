@@ -5,6 +5,8 @@ namespace slocExporter.TriggerActions {
 
     public sealed class TriggerAction : MonoBehaviour {
 
+        public static TriggerActionGizmosDrawer CurrentGizmosDrawer = null;
+
         public TriggerActionType type = TriggerActionType.None;
 
         public TeleportToPositionData tpToPos;
@@ -25,6 +27,8 @@ namespace slocExporter.TriggerActions {
             TriggerActionType.KillPlayer => killPlayer,
             _ => null
         };
+
+        private void OnDrawGizmosSelected() => CurrentGizmosDrawer?.Invoke(this);
 
     }
 

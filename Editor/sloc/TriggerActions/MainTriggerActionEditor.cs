@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Editor.sloc.TriggerActions.Renderers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using UnityEditor;
@@ -11,12 +12,12 @@ namespace Editor.sloc.TriggerActions {
     [CanEditMultipleObjects]
     public sealed class MainTriggerActionEditor : UnityEditor.Editor {
 
-        private static readonly Dictionary<TriggerActionType, TriggerActionEditorRenderer> Renderers = new() {
-            {TriggerActionType.TeleportToPosition, StandardActionRenderers.TeleportToPosition},
-            {TriggerActionType.MoveRelativeToSelf, StandardActionRenderers.MoveRelativeToSelf},
-            {TriggerActionType.TeleportToRoom, StandardActionRenderers.TeleportToRoom},
-            {TriggerActionType.KillPlayer, StandardActionRenderers.KillPlayer},
-            {TriggerActionType.TeleportToSpawnedObject, TeleportToSpawnedObjectRenderer.Draw},
+        private static readonly Dictionary<TriggerActionType, ITriggerActionEditorRenderer> Renderers = new() {
+            {TriggerActionType.TeleportToPosition, ActionRenderers.TeleportToPosition},
+            {TriggerActionType.MoveRelativeToSelf, ActionRenderers.MoveRelativeToSelf},
+            {TriggerActionType.TeleportToRoom, ActionRenderers.TeleportToRoom},
+            {TriggerActionType.KillPlayer, ActionRenderers.KillPlayer},
+            {TriggerActionType.TeleportToSpawnedObject, ActionRenderers.TeleportToSpawnedObject}
         };
 
         private static readonly TriggerActionType[] Values = (TriggerActionType[]) Enum.GetValues(typeof(TriggerActionType));
@@ -35,10 +36,14 @@ namespace Editor.sloc.TriggerActions {
 
             var curType = triggerAction.type;
 
-            if (Renderers.TryGetValue(curType, out var renderer))
-                renderer(triggerAction);
-            else
+            if (!Renderers.TryGetValue(curType, out var renderer)) {
                 EditorGUILayout.HelpBox("You can't edit this type! Please choose another.", MessageType.Error);
+                return;
+            }
+
+            renderer.DrawGUI(triggerAction);
+            if (renderer is ISelectedGizmosDrawer gizmosDrawer)
+                TriggerAction.CurrentGizmosDrawer = gizmosDrawer.DrawGizmos;
         }
 
         private static void AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) {
@@ -54,6 +59,9 @@ namespace Editor.sloc.TriggerActions {
                     break;
                 case TriggerActionType.KillPlayer:
                     triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger.");
+                    break;
+                case TriggerActionType.TeleportToSpawnedObject:
+                    triggerAction.tpToSpawnedObject ??= new SerializableTeleportToSpawnedObjectData();
                     break;
             }
         }
