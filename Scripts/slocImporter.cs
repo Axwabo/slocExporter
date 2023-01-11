@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using slocExporter;
 using UnityEditor;
 using UnityEngine;
@@ -18,12 +19,13 @@ public static class slocImporter {
     private static string _filePath = "";
 
     public static bool UseExistingMaterials = true;
-    
-    public static bool SearchInColorsFolderOnly;
+
+    public static bool SearchInColorsFolderOnly = true;
 
     private static bool _inProgress;
 
-    public static void TryImport(Action<string, float> updateProgress = null) {
+    public static void TryImport(ProgressUpdater updateProgress = null) {
+        var fields = typeof(BinaryReader).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
         if (_inProgress) {
             EditorUtility.DisplayDialog("slocImporter", "Import is already in progress", "OK");
             return;
@@ -46,7 +48,7 @@ public static class slocImporter {
         }
     }
 
-    private static void DoImport(out int importedCount, out string objectName, Action<string, float> updateProgress = null) {
+    private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null) {
         EnsureDirectory();
         API.SkipForAll = false;
         API.CreateForAll = false;

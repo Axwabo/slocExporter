@@ -35,15 +35,14 @@ namespace Editor.sloc.TriggerActions {
             }
 
             var curType = triggerAction.type;
-
             if (!Renderers.TryGetValue(curType, out var renderer)) {
                 EditorGUILayout.HelpBox("You can't edit this type! Please choose another.", MessageType.Error);
+                TriggerAction.CurrentGizmosDrawer = null;
                 return;
             }
 
             renderer.DrawGUI(triggerAction);
-            if (renderer is ISelectedGizmosDrawer gizmosDrawer)
-                TriggerAction.CurrentGizmosDrawer = gizmosDrawer.DrawGizmos;
+            TriggerAction.CurrentGizmosDrawer = renderer is ISelectedGizmosDrawer gizmosDrawer ? gizmosDrawer.DrawGizmos : null;
         }
 
         private static void AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) {

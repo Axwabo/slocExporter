@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using slocExporter.Objects;
 using slocExporter.Readers;
+using slocExporter.TriggerActions;
+using slocExporter.TriggerActions.Data;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,12 +20,13 @@ namespace slocExporter {
 
         #region Reader Declarations
 
-        public static readonly IObjectReader DefaultReader = new Ver3Reader();
+        public static readonly IObjectReader DefaultReader = new Ver4Reader();
 
         private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new() {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
-            {3, new Ver3Reader()}
+            {3, new Ver3Reader()},
+            {4, new Ver4Reader()}
         };
 
         public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
@@ -34,7 +37,7 @@ namespace slocExporter {
 
         #region Read
 
-        private static readonly FieldInfo ReadPosField = typeof(BinaryReader).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo ReadPosField = typeof(BufferedStream).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // starting from v3, the version is only a ushort instead of a uint
         private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader) {
@@ -47,7 +50,7 @@ namespace slocExporter {
             return newVersion;
         }
 
-        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, Action<string, float> updateProgress = null) {
+        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, ProgressUpdater updateProgress = null) {
             var objects = new List<slocGameObject>();
             using var buffered = new BufferedStream(stream, 4);
             var binaryReader = new BinaryReader(buffered);
@@ -69,26 +72,27 @@ namespace slocExporter {
             return objects;
         }
 
-        public static List<slocGameObject> ReadObjectsFromFile(string path, Action<string, float> updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
+        public static List<slocGameObject> ReadObjectsFromFile(string path, ProgressUpdater updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
 
         #endregion
 
         #region Create
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch {
-            PrimitiveObject primitive => CreatePrimitive(obj, parent, primitive),
-            LightObject light => CreateLight(obj, parent, light),
+            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            LightObject light => CreateLight(parent, light),
             EmptyObject => CreateEmpty(obj, parent),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
-        private static GameObject CreatePrimitive(slocGameObject obj, GameObject parent, PrimitiveObject primitive) {
+        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive) {
             var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
             toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(obj.Transform);
+            toy.SetLocalTransform(primitive.Transform);
             var colliderMode = primitive.ColliderMode;
             if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
                 toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
+            AddTriggerActionComponents(primitive.TriggerActions, toy);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
                 if (handle)
                     HandleNoMaterial(primitive, toy);
@@ -99,7 +103,12 @@ namespace slocExporter {
             return toy;
         }
 
-        private static GameObject CreateLight(slocGameObject obj, GameObject parent, LightObject light) {
+        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject) {
+            foreach (var data in actions)
+                gameObject.AddComponent<TriggerAction>().SetData(data);
+        }
+
+        private static GameObject CreateLight(GameObject parent, LightObject light) {
             var toy = new GameObject("Point Light");
             var lightComponent = toy.AddComponent<Light>();
             lightComponent.color = light.LightColor;
@@ -107,7 +116,7 @@ namespace slocExporter {
             lightComponent.range = light.Range;
             lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
             toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(obj.Transform);
+            toy.SetLocalTransform(light.Transform);
             return toy;
         }
 
@@ -118,9 +127,9 @@ namespace slocExporter {
             return emptyObject;
         }
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) {
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
             var go = new GameObject {
                 transform = {
                     position = position,
@@ -149,9 +158,9 @@ namespace slocExporter {
             return go;
         }
 
-        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
+        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
 
-        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
+        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
 
         #endregion
 

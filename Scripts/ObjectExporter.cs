@@ -48,7 +48,7 @@ public static class ObjectExporter {
 
     private static bool _inProgress;
 
-    public static void TryExport(bool selectedOnly, Action<string, float> updateProgress = null) {
+    public static void TryExport(bool selectedOnly, ProgressUpdater updateProgress = null) {
         if (_inProgress) {
             EditorUtility.DisplayDialog("slocExporter", "Export is already in progress", "OK");
             return;
@@ -71,7 +71,7 @@ public static class ObjectExporter {
         }
     }
 
-    private static void DoExport(bool selectedOnly, out int exportedCount, Action<string, float> updateProgress = null) {
+    private static void DoExport(bool selectedOnly, out int exportedCount, ProgressUpdater updateProgress = null) {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         var attributes = _attributes;
@@ -80,9 +80,10 @@ public static class ObjectExporter {
         LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
         var allObjects = GetObjects(selectedOnly);
-        var objectsById = new Dictionary<int, slocGameObject>();
-        var renderers = new Dictionary<int, MeshRenderer>();
-        var colliders = new Dictionary<int, PrimitiveObject.ColliderCreationMode>();
+        var objectsById = new InstanceDictionary<slocGameObject>();
+        var renderers = new InstanceDictionary<MeshRenderer>();
+        var colliders = new InstanceDictionary<PrimitiveObject.ColliderCreationMode>();
+        var runtimeTriggerActions = new InstanceDictionary<List<BaseTriggerActionData>>();
         var allObjectsCount = allObjects.Length;
         var floatObjectsCount = (float) allObjectsCount;
         Log($"Found {allObjectsCount} objects in total.");
@@ -98,8 +99,9 @@ public static class ObjectExporter {
 
             foreach (var component in o.GetComponents<Component>()) {
                 var skip = component switch {
-                    ColliderModeSetter setter => SetMode(o, setter, colliders),
                     ExporterIgnored => IgnoreObject(o, objectsById),
+                    ColliderModeSetter setter => SetMode(o, setter, colliders),
+                    TriggerAction triggerAction => AddTriggerAction(o, triggerAction, runtimeTriggerActions),
                     MeshFilter meshFilter => ProcessMeshFilter(o, meshFilter, objectsById),
                     MeshRenderer meshRenderer => ProcessRenderer(o, meshRenderer, renderers),
                     Light light => ProcessLight(o, light, objectsById),
@@ -117,9 +119,11 @@ public static class ObjectExporter {
 
         Log("Processing material colors...");
         RenderersToMaterials(renderers, objectsById, updateProgress);
-        var nonEmpty = objectsById.Where(e => e.Value is {IsValid: true}).ToList();
+        var nonEmpty = new InstanceList(objectsById.Where(e => e.Value is {IsValid: true}));
         Log("Setting collider modes...");
         SetColliderModes(nonEmpty, colliders, updateProgress);
+        Log("Setting trigger actions...");
+        SetTriggerActions(nonEmpty, runtimeTriggerActions, updateProgress);
         Log("Writing file...");
         WriteObjects(file, nonEmpty, attributes, collider, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
@@ -157,7 +161,16 @@ public static class ObjectExporter {
         return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
     }
 
-    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, Dictionary<int, PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
+    private static bool AddTriggerAction(GameObject o, TriggerAction action, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions) {
+        var id = o.GetInstanceID();
+        var list = runtimeTriggerActions.GetOrAdd(id, () => new List<BaseTriggerActionData>());
+        var selected = action.SelectedData;
+        if (selected != null)
+            list.Add(selected);
+        return false;
+    }
+
+    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, InstanceDictionary<PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
         var mode = setter.mode;
         if (mode is PrimitiveObject.ColliderCreationMode.Unset)
             return false;
@@ -167,13 +180,13 @@ public static class ObjectExporter {
         return false;
     }
 
-    private static bool IgnoreObject(GameObject gameObject, Dictionary<int, slocGameObject> objectsById) {
+    private static bool IgnoreObject(GameObject gameObject, InstanceDictionary<slocGameObject> objectsById) {
         Log($"{gameObject.name} is flagged as ExporterIgnored");
         objectsById.Remove(gameObject.GetInstanceID());
         return true;
     }
 
-    public static bool ProcessLight(GameObject o, Light l, Dictionary<int, slocGameObject> objectList) {
+    public static bool ProcessLight(GameObject o, Light l, InstanceDictionary<slocGameObject> objectList) {
         Log("Found light " + l.name);
         var oTransform = o.transform;
         var id = o.GetInstanceID();
@@ -189,13 +202,13 @@ public static class ObjectExporter {
         return false;
     }
 
-    public static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, Dictionary<int, MeshRenderer> renderers) {
+    public static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, InstanceDictionary<MeshRenderer> renderers) {
         Log("Found MeshRenderer " + meshRenderer.name);
         renderers[o.GetInstanceID()] = meshRenderer;
         return false;
     }
 
-    public static bool ProcessMeshFilter(GameObject o, MeshFilter filter, Dictionary<int, slocGameObject> objectList) {
+    public static bool ProcessMeshFilter(GameObject o, MeshFilter filter, InstanceDictionary<slocGameObject> objectList) {
         var mesh = filter.sharedMesh;
         if (mesh == null) {
             LogWarning($"{o.name} has no mesh");
@@ -223,7 +236,7 @@ public static class ObjectExporter {
 
     public static ObjectType FindObjectType(string meshName) => PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
 
-    public static void RenderersToMaterials(Dictionary<int, MeshRenderer> renderers, Dictionary<int, slocGameObject> objectList, Action<string, float> updateProgress = null) {
+    public static void RenderersToMaterials(InstanceDictionary<MeshRenderer> renderers, InstanceDictionary<slocGameObject> objectList, ProgressUpdater updateProgress = null) {
         updateProgress?.Invoke("Setting materials", 0);
         var list = renderers.ToList();
         var count = list.Count;
@@ -232,27 +245,38 @@ public static class ObjectExporter {
             updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
             var (id, r) = list[i];
             var mat = r.sharedMaterial;
-            if (mat == null || !objectList.TryGetValue(id, out var obj) || obj is not PrimitiveObject p)
+            if (mat == null || !objectList.TryGet(id, out PrimitiveObject p))
                 continue;
             p.MaterialColor = mat.color;
             Log($"Set material color for {id} to {mat.color}");
         }
     }
 
-    private static void SetColliderModes(List<KeyValuePair<int, slocGameObject>> objects, Dictionary<int, PrimitiveObject.ColliderCreationMode> modes, Action<string, float> updateProgress) {
+    private static void SetColliderModes(InstanceList objects, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes, ProgressUpdater updateProgress) {
         var count = objects.Count;
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             updateProgress?.Invoke($"Setting collider modes ({i + 1} of {count})", i / floatCount);
-            var (id, obj) = objects[i];
-            if (obj is not PrimitiveObject p)
+            if (!objects.TryGet(i, out var id, out PrimitiveObject p))
                 continue;
             if (modes.TryGetValue(id, out var mode))
                 p.ColliderMode = mode;
         }
     }
 
-    private static void WriteObjects(string file, List<KeyValuePair<int, slocGameObject>> nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, Action<string, float> updateProgress = null) {
+    private static void SetTriggerActions(InstanceList objects, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions, ProgressUpdater updateProgress) {
+        var count = objects.Count;
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            updateProgress?.Invoke($"Setting trigger actions ({i + 1} of {count})", i / floatCount);
+            if (!objects.TryGet(i, out var id, out PrimitiveObject p))
+                continue;
+            if (runtimeTriggerActions.TryGetValue(id, out var actions))
+                p.TriggerActions = actions.ToArray();
+        }
+    }
+
+    private static void WriteObjects(string file, InstanceList nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, ProgressUpdater updateProgress = null) {
         updateProgress?.Invoke("Writing objects", 0);
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
@@ -261,8 +285,7 @@ public static class ObjectExporter {
         header.WriteTo(writer);
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
-            var obj = nonEmpty[i];
-            obj.Value.WriteTo(writer, header);
+            nonEmpty.ObjectAt(i).WriteTo(writer, header);
             updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
         }
 
@@ -279,7 +302,7 @@ public static class ObjectExporter {
             UnityEngine.Debug.LogWarning(o);
     }
 
-    public static void CheckIfEmpty(GameObject o, Dictionary<int, slocGameObject> objectList) {
+    public static void CheckIfEmpty(GameObject o, InstanceDictionary<slocGameObject> objectList) {
         var id = o.GetInstanceID();
         if (objectList.ContainsKey(id))
             return;
