@@ -12,9 +12,13 @@ using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 // ReSharper disable SuggestBaseTypeForParameter
 public static class ObjectExporter {
+
+    #region Primitives and Constants
 
     public const string ExporterIgnoredTag = "slocExporter Ignored";
     public const string RoomTag = "Room";
@@ -28,15 +32,11 @@ public static class ObjectExporter {
         {"Quad", ObjectType.Quad}
     }.ToDictionary(k => new Regex($"{k.Key}(?:(?: Instance)+)?"), v => v.Value);
 
-    public static bool Init(bool debug, string filePath, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderCreationMode) {
-        if (_inProgress)
-            return false;
-        _debug = debug;
-        _fileName = filePath;
-        _attributes = attributes;
-        _colliderCreationMode = colliderCreationMode;
-        return true;
-    }
+    public static ObjectType FindObjectType(string meshName) => PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
+
+    #endregion
+
+    #region Settings
 
     private static bool _debug;
 
@@ -47,6 +47,20 @@ public static class ObjectExporter {
     private static PrimitiveObject.ColliderCreationMode _colliderCreationMode = PrimitiveObject.ColliderCreationMode.Unset;
 
     private static bool _inProgress;
+
+    public static bool Init(bool debug, string filePath, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderCreationMode) {
+        if (_inProgress)
+            return false;
+        _debug = debug;
+        _fileName = filePath;
+        _attributes = attributes;
+        _colliderCreationMode = colliderCreationMode;
+        return true;
+    }
+
+    #endregion
+
+    #region Main Export Process
 
     public static void TryExport(bool selectedOnly, ProgressUpdater updateProgress = null) {
         if (_inProgress) {
@@ -65,7 +79,7 @@ public static class ObjectExporter {
             _inProgress = false;
             EditorUtility.DisplayDialog("slocExporter", $"Export complete.\nsloc created with {exportedCount} GameObject(s).", "OK");
         } catch (Exception e) {
-            UnityEngine.Debug.LogError(e);
+            Debug.LogError(e);
             _inProgress = false;
             EditorUtility.DisplayDialog("slocExporter", "Export failed. See the Debug log for details.", "OK");
         }
@@ -138,10 +152,40 @@ public static class ObjectExporter {
             Directory.CreateDirectory(dir);
     }
 
+    private static void WriteObjects(string file, InstanceList nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, ProgressUpdater updateProgress = null) {
+        updateProgress?.Invoke("Writing objects", 0);
+        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
+        writer.Write(API.slocVersion);
+        var count = nonEmpty.Count;
+        var header = new slocHeader(API.slocVersion, count, attributes, colliderMode);
+        header.WriteTo(writer);
+        var floatCount = (float) count;
+        for (var i = 0; i < count; i++) {
+            nonEmpty.ObjectAt(i).WriteTo(writer, header);
+            updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
+        }
+
+        writer.Close();
+    }
+
+    #endregion
+
+    #region Basic Methods
+
+    private static void Log(object o) {
+        if (_debug)
+            Debug.Log(o);
+    }
+
+    private static void LogWarning(object o) {
+        if (_debug)
+            Debug.LogWarning(o);
+    }
+
     private static GameObject[] GetObjects(bool selectedOnly) {
         var list = new List<GameObject>();
         if (!selectedOnly) {
-            foreach (var obj in UnityEngine.Object.FindObjectsOfType<GameObject>()) {
+            foreach (var obj in Object.FindObjectsOfType<GameObject>()) {
                 if (obj.transform.parent != null)
                     continue;
                 list.AddRange(obj.WithAllChildren());
@@ -156,28 +200,22 @@ public static class ObjectExporter {
         return list.ToArray();
     }
 
+    private static void CheckIfEmpty(GameObject o, InstanceDictionary<slocGameObject> objectList) {
+        var id = o.GetInstanceID();
+        if (objectList.ContainsKey(id))
+            return;
+        var oTransform = o.transform;
+        var parent = oTransform.parent;
+        if (oTransform.childCount > 0)
+            objectList[id] = new EmptyObject(id) {
+                ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+                Transform = oTransform
+            };
+    }
+
     private static bool IsTaggedAsIgnored(GameObject gameObject) {
         var root = gameObject.transform.root.gameObject;
         return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
-    }
-
-    private static bool AddTriggerAction(GameObject o, TriggerAction action, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions) {
-        var id = o.GetInstanceID();
-        var list = runtimeTriggerActions.GetOrAdd(id, () => new List<BaseTriggerActionData>());
-        var selected = action.SelectedData;
-        if (selected != null)
-            list.Add(selected);
-        return false;
-    }
-
-    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, InstanceDictionary<PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
-        var mode = setter.mode;
-        if (mode is PrimitiveObject.ColliderCreationMode.Unset)
-            return false;
-        var id = gameObject.GetInstanceID();
-        Log("Setting collider mode for " + id + " to " + mode);
-        colliderCreationModes[id] = mode;
-        return false;
     }
 
     private static bool IgnoreObject(GameObject gameObject, InstanceDictionary<slocGameObject> objectsById) {
@@ -186,7 +224,20 @@ public static class ObjectExporter {
         return true;
     }
 
-    public static bool ProcessLight(GameObject o, Light l, InstanceDictionary<slocGameObject> objectList) {
+    #endregion
+
+    #region Behavior Processors
+
+    private static bool AddTriggerAction(GameObject o, TriggerAction action, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions) {
+        var selected = action.SelectedData;
+        if (selected == null)
+            return false;
+        var id = o.GetInstanceID();
+        runtimeTriggerActions.GetOrAdd(id, () => new List<BaseTriggerActionData>()).Add(selected);
+        return false;
+    }
+
+    private static bool ProcessLight(GameObject o, Light l, InstanceDictionary<slocGameObject> objectList) {
         Log("Found light " + l.name);
         var oTransform = o.transform;
         var id = o.GetInstanceID();
@@ -202,13 +253,13 @@ public static class ObjectExporter {
         return false;
     }
 
-    public static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, InstanceDictionary<MeshRenderer> renderers) {
+    private static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, InstanceDictionary<MeshRenderer> renderers) {
         Log("Found MeshRenderer " + meshRenderer.name);
         renderers[o.GetInstanceID()] = meshRenderer;
         return false;
     }
 
-    public static bool ProcessMeshFilter(GameObject o, MeshFilter filter, InstanceDictionary<slocGameObject> objectList) {
+    private static bool ProcessMeshFilter(GameObject o, MeshFilter filter, InstanceDictionary<slocGameObject> objectList) {
         var mesh = filter.sharedMesh;
         if (mesh == null) {
             LogWarning($"{o.name} has no mesh");
@@ -224,19 +275,31 @@ public static class ObjectExporter {
         }
 
         Log($"Added PrimitiveObject with type {type}");
-        var oTransform = o.transform;
+        var t = o.transform;
         var id = o.GetInstanceID();
-        var parent = oTransform.parent;
+        var parent = t.parent;
         objectList[id] = new PrimitiveObject(id, type) {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-            Transform = oTransform
+            Transform = t
         };
         return false;
     }
 
-    public static ObjectType FindObjectType(string meshName) => PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
+    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, InstanceDictionary<PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
+        var mode = setter.mode;
+        if (mode is PrimitiveObject.ColliderCreationMode.Unset)
+            return false;
+        var id = gameObject.GetInstanceID();
+        Log("Setting collider mode for " + id + " to " + mode);
+        colliderCreationModes[id] = mode;
+        return false;
+    }
 
-    public static void RenderersToMaterials(InstanceDictionary<MeshRenderer> renderers, InstanceDictionary<slocGameObject> objectList, ProgressUpdater updateProgress = null) {
+    #endregion
+
+    #region Post-Processing
+
+    private static void RenderersToMaterials(InstanceDictionary<MeshRenderer> renderers, InstanceDictionary<slocGameObject> objectList, ProgressUpdater updateProgress = null) {
         updateProgress?.Invoke("Setting materials", 0);
         var list = renderers.ToList();
         var count = list.Count;
@@ -276,48 +339,6 @@ public static class ObjectExporter {
         }
     }
 
-    private static void WriteObjects(string file, InstanceList nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, ProgressUpdater updateProgress = null) {
-        updateProgress?.Invoke("Writing objects", 0);
-        var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
-        writer.Write(API.slocVersion);
-        var count = nonEmpty.Count;
-        var header = new slocHeader(API.slocVersion, count, attributes, colliderMode);
-        header.WriteTo(writer);
-        var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
-            nonEmpty.ObjectAt(i).WriteTo(writer, header);
-            updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
-        }
-
-        writer.Close();
-    }
-
-    public static void Log(object o) {
-        if (_debug)
-            UnityEngine.Debug.Log(o);
-    }
-
-    public static void LogWarning(object o) {
-        if (_debug)
-            UnityEngine.Debug.LogWarning(o);
-    }
-
-    public static void CheckIfEmpty(GameObject o, InstanceDictionary<slocGameObject> objectList) {
-        var id = o.GetInstanceID();
-        if (objectList.ContainsKey(id))
-            return;
-        var oTransform = o.transform;
-        var parent = oTransform.parent;
-        if (oTransform.childCount > 0)
-            objectList[id] = new EmptyObject(id) {
-                ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-                Transform = oTransform
-            };
-    }
-
-    public static TeleportToSpawnedObjectData ProcessSerializedTpToSpawnedObject(SerializableTeleportToSpawnedObjectData serialized) {
-        // TODO: add to a dict
-        return null;
-    }
+    #endregion
 
 }

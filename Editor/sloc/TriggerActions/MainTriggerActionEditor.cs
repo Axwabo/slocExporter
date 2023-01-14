@@ -25,13 +25,17 @@ namespace Editor.sloc.TriggerActions {
 
         public override void OnInspectorGUI() {
             var triggerAction = (TriggerAction) target;
-
             var index = Array.IndexOf(Values, triggerAction.type);
             var newIndex = EditorGUILayout.Popup("Action Type", index, Names);
             var newType = Values[newIndex];
             if (newIndex != index) {
+                Undo.RecordObject(triggerAction, "Change Trigger Action Type");
                 triggerAction.type = newType;
-                AssignDefaultValue(triggerAction, newType);
+            }
+
+            if (triggerAction.SelectedData == null) {
+                Undo.RecordObject(triggerAction, "Change Trigger Action Type");
+                AssignDefaultValue(triggerAction, triggerAction.type);
             }
 
             var curType = triggerAction.type;
@@ -60,7 +64,7 @@ namespace Editor.sloc.TriggerActions {
                     triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger.");
                     break;
                 case TriggerActionType.TeleportToSpawnedObject:
-                    triggerAction.tpToSpawnedObject ??= new SerializableTeleportToSpawnedObjectData();
+                    triggerAction.tpToSpawnedObject ??= new EditorTeleportToSpawnedObjectData();
                     break;
             }
         }

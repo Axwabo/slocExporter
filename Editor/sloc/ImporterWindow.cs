@@ -9,7 +9,7 @@ namespace Editor.sloc {
         private const string ProgressbarTitle = "slocImporter";
 
         [MenuItem("Window/sloc/Import")]
-        public static void ShowWindow() => GetWindow(typeof(ImporterWindow), true, "Import an sloc file");
+        public static void ShowWindow() => GetWindow<ImporterWindow>(true, "Import an sloc file");
 
         private static string _filePath = "";
 

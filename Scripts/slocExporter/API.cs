@@ -18,6 +18,8 @@ namespace slocExporter {
 
         public const ushort slocVersion = 4;
 
+        public static readonly string CurrentVersion = "4.0.0";
+
         #region Reader Declarations
 
         public static readonly IObjectReader DefaultReader = new Ver4Reader();
@@ -94,7 +96,7 @@ namespace slocExporter {
                 toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
             AddTriggerActionComponents(primitive.TriggerActions, toy);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
-                if (handle) 
+                if (handle)
                     HandleNoMaterial(primitive, toy);
                 return toy;
             }
@@ -105,7 +107,10 @@ namespace slocExporter {
 
         private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject) {
             foreach (var data in actions)
-                gameObject.AddComponent<TriggerAction>().SetData(data);
+                if (data is TeleportToSpawnedObjectData tp)
+                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<TeleportToSpawnedObjectData>()).Add(tp);
+                else
+                    gameObject.AddComponent<TriggerAction>().SetData(data);
         }
 
         private static GameObject CreateLight(GameObject parent, LightObject light) {
@@ -129,7 +134,13 @@ namespace slocExporter {
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
+        private static readonly InstanceDictionary<GameObject> CreatedInstances = new();
+
+        private static readonly Dictionary<GameObject, List<TeleportToSpawnedObjectData>> TpToSpawnedCache = new();
+
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
+            CreatedInstances.Clear();
+            TpToSpawnedCache.Clear();
             var go = new GameObject {
                 transform = {
                     position = position,
@@ -141,13 +152,12 @@ namespace slocExporter {
             var processed = 0;
             var isCountKnown = total > 0;
             var floatTotal = (float) total;
-            var createdInstances = new Dictionary<int, GameObject>();
             ClearMaterialCache();
             updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
             foreach (var o in objects) {
-                var gameObject = o.CreateObject(o.HasParent && createdInstances.TryGetValue(o.ParentId, out var parentInstance) ? parentInstance : go, false);
+                var gameObject = o.CreateObject(CreatedInstances.GetOrReturn(o.ParentId, go, o.HasParent), false);
                 if (gameObject != null) {
-                    createdInstances[o.InstanceId] = gameObject;
+                    CreatedInstances[o.InstanceId] = gameObject;
                     created++;
                 }
 
@@ -155,9 +165,26 @@ namespace slocExporter {
                 updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
             }
 
+            PostProcessSpecialTriggerActions();
+            CreatedInstances.Clear();
+            TpToSpawnedCache.Clear();
             ClearMaterialCache();
             createdAmount = created;
             return go;
+        }
+
+        private static void PostProcessSpecialTriggerActions() {
+            foreach (var (o, list) in TpToSpawnedCache)
+            foreach (var data in list) {
+                if (!CreatedInstances.TryGetValue(data.ID, out var target))
+                    continue;
+                var component = o.AddComponent<TriggerAction>();
+                component.type = TriggerActionType.TeleportToSpawnedObject;
+                component.tpToSpawnedObject = new EditorTeleportToSpawnedObjectData {
+                    go = target,
+                    offset = data.Offset
+                };
+            }
         }
 
         public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
@@ -209,6 +236,20 @@ namespace slocExporter {
             writer.Write(vector3.z);
         }
 
+        public static void WriteQuaternion(this BinaryWriter writer, Quaternion quaternion) {
+            writer.Write(quaternion.x);
+            writer.Write(quaternion.y);
+            writer.Write(quaternion.z);
+            writer.Write(quaternion.w);
+        }
+
+        public static void WriteColor(this BinaryWriter writer, Color color) {
+            writer.Write(color.r);
+            writer.Write(color.g);
+            writer.Write(color.b);
+            writer.Write(color.a);
+        }
+
         #endregion
 
         public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
@@ -252,6 +293,14 @@ namespace slocExporter {
         public static bool IsTrigger(this PrimitiveObject.ColliderCreationMode colliderMode) => colliderMode is PrimitiveObject.ColliderCreationMode.Trigger or PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger;
 
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
+
+        public static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> factory) {
+            if (dictionary.TryGetValue(key, out var value))
+                return value;
+            value = factory();
+            dictionary.Add(key, value);
+            return value;
+        }
 
     }
 

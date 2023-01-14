@@ -1,1 +1,1 @@
-﻿public delegate void ProgressUpdater(string message,float progress);
+﻿public delegate void ProgressUpdater(string message, float progress);

@@ -19,12 +19,8 @@ namespace slocExporter.Objects {
         protected override void WriteData(BinaryWriter writer, slocHeader header) {
             if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(LightColor.ToLossyColor());
-            else {
-                writer.Write(LightColor.r);
-                writer.Write(LightColor.g);
-                writer.Write(LightColor.b);
-                writer.Write(LightColor.a);
-            }
+            else
+                writer.WriteColor(LightColor);
 
             writer.Write(Shadows);
             writer.Write(Range);

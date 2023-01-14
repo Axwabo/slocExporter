@@ -7,22 +7,27 @@ namespace slocExporter.TriggerActions {
 
         public static TriggerActionGizmosDrawer CurrentGizmosDrawer = null;
 
-        public TriggerActionType type = TriggerActionType.None;
+        public TriggerActionType type;
 
+        [SerializeReference]
         public TeleportToPositionData tpToPos;
 
+        [SerializeReference]
         public TeleportToRoomData tpToRoom;
 
-        public SerializableTeleportToSpawnedObjectData tpToSpawnedObject;
+        [SerializeReference]
+        public EditorTeleportToSpawnedObjectData tpToSpawnedObject;
 
+        [SerializeReference]
         public MoveRelativeToSelfData moveRel;
 
+        [SerializeReference]
         public KillPlayerData killPlayer;
 
         public BaseTriggerActionData SelectedData => type switch {
             TriggerActionType.TeleportToPosition => tpToPos,
             TriggerActionType.TeleportToRoom => tpToRoom,
-            TriggerActionType.TeleportToSpawnedObject => ObjectExporter.ProcessSerializedTpToSpawnedObject(tpToSpawnedObject),
+            TriggerActionType.TeleportToSpawnedObject => tpToSpawnedObject?.ExporterSuitableEquivalent,
             TriggerActionType.MoveRelativeToSelf => moveRel,
             TriggerActionType.KillPlayer => killPlayer,
             _ => null
@@ -37,9 +42,6 @@ namespace slocExporter.TriggerActions {
                 case TriggerActionType.TeleportToRoom:
                     tpToRoom = data as TeleportToRoomData;
                     break;
-                // case TriggerActionType.TeleportToSpawnedObject:
-                    // tpToSpawnedObject = ObjectExporter.ProcessSerializedTpToSpawnedObject(data as SerializableTeleportToSpawnedObjectData);
-                    // break;
                 case TriggerActionType.MoveRelativeToSelf:
                     moveRel = data as MoveRelativeToSelfData;
                     break;
@@ -47,7 +49,7 @@ namespace slocExporter.TriggerActions {
                     killPlayer = data as KillPlayerData;
                     break;
                 default:
-                    Debug.LogWarning("Unknown trigger action type: " + type);
+                    Debug.LogWarning($"Trigger action type \"{type}\" cannot be processed automatically (on GameObject \"{gameObject.name}\")");
                     break;
             }
         }

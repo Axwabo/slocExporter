@@ -26,6 +26,9 @@ namespace Editor.sloc {
             var current = ((ColliderModeSetter) targetsCache[0]).mode;
             var mode = StringToMode(OptionsArray[EditorGUILayout.Popup("Collider Creation Mode", Options.IndexOf(ModeToString(current)), OptionsArray)]);
             EditorGUILayout.HelpBox(GetModeDescription(mode), MessageType.Info);
+            if (mode == current)
+                return;
+            Undo.RecordObjects(targetsCache, "Set Collider Mode");
             foreach (var t in targetsCache)
                 ((ColliderModeSetter) t).mode = mode;
         }

@@ -12,10 +12,7 @@ namespace slocExporter.Objects {
         public void WriteTo(BinaryWriter writer) {
             writer.WriteVector(Position);
             writer.WriteVector(Scale);
-            writer.Write(Rotation.x);
-            writer.Write(Rotation.y);
-            writer.Write(Rotation.z);
-            writer.Write(Rotation.w);
+            writer.WriteQuaternion(Rotation);
         }
 
         public static implicit operator slocTransform(Transform transform) => new() {

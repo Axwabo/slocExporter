@@ -18,7 +18,7 @@ namespace Editor.sloc {
         private const string Asterisk = "Hover over an item with an * for more information.";
 
         [MenuItem("Window/sloc/Export")]
-        public static void ShowWindow() => GetWindow(typeof(ExporterWindow), true, "Export to sloc");
+        public static void ShowWindow() => GetWindow<ExporterWindow>(true, "Export to sloc");
 
         private static string _filePath = @"%appdata%\EXILED\Plugins\sloc\Objects\MyObject";
 

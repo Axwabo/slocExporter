@@ -26,12 +26,8 @@ namespace slocExporter.Objects {
         protected override void WriteData(BinaryWriter writer, slocHeader header) {
             if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(MaterialColor.ToLossyColor());
-            else {
-                writer.Write(MaterialColor.r);
-                writer.Write(MaterialColor.g);
-                writer.Write(MaterialColor.b);
-                writer.Write(MaterialColor.a);
-            }
+            else
+                writer.WriteColor(MaterialColor);
 
             writer.Write((byte) ColliderMode);
             if (ColliderMode.IsTrigger() || header.HasAttribute(slocAttributes.ExportAllTriggerActions))
