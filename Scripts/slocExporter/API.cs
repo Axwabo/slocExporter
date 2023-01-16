@@ -107,8 +107,8 @@ namespace slocExporter {
 
         private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject) {
             foreach (var data in actions)
-                if (data is TeleportToSpawnedObjectData tp)
-                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<TeleportToSpawnedObjectData>()).Add(tp);
+                if (data is SerializableTeleportToSpawnedObjectData tp)
+                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
                 else
                     gameObject.AddComponent<TriggerAction>().SetData(data);
         }
@@ -136,7 +136,7 @@ namespace slocExporter {
 
         private static readonly InstanceDictionary<GameObject> CreatedInstances = new();
 
-        private static readonly Dictionary<GameObject, List<TeleportToSpawnedObjectData>> TpToSpawnedCache = new();
+        private static readonly Dictionary<GameObject, List<SerializableTeleportToSpawnedObjectData>> TpToSpawnedCache = new();
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
             CreatedInstances.Clear();
@@ -180,10 +180,7 @@ namespace slocExporter {
                     continue;
                 var component = o.AddComponent<TriggerAction>();
                 component.type = TriggerActionType.TeleportToSpawnedObject;
-                component.tpToSpawnedObject = new EditorTeleportToSpawnedObjectData {
-                    go = target,
-                    offset = data.Offset
-                };
+                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset) {SelectedTargets = data.SelectedTargets};
             }
         }
 

@@ -7,7 +7,7 @@ namespace slocExporter.TriggerActions.Data {
     [Serializable]
     public sealed class MoveRelativeToSelfData : BaseTriggerActionData {
 
-        public sealed override TargetType TargetType => TargetType.All;
+        public override TargetType PossibleTargets => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.MoveRelativeToSelf;
 

@@ -89,7 +89,7 @@ public static class ObjectExporter {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         var attributes = _attributes;
-        var collider = _colliderCreationMode;
+        var defaultMode = _colliderCreationMode;
         EnsureDirectoryExists(file);
         LogWarning($"[slocExporter] Starting export to {file.ToShortAppDataPath()}");
         updateProgress?.Invoke("Detecting objects", -1f);
@@ -114,6 +114,7 @@ public static class ObjectExporter {
             foreach (var component in o.GetComponents<Component>()) {
                 var skip = component switch {
                     ExporterIgnored => IgnoreObject(o, objectsById),
+                    Collider collider => ProcessCollider(defaultMode, o, collider, colliders),
                     ColliderModeSetter setter => SetMode(o, setter, colliders),
                     TriggerAction triggerAction => AddTriggerAction(o, triggerAction, runtimeTriggerActions),
                     MeshFilter meshFilter => ProcessMeshFilter(o, meshFilter, objectsById),
@@ -139,7 +140,7 @@ public static class ObjectExporter {
         Log("Setting trigger actions...");
         SetTriggerActions(nonEmpty, runtimeTriggerActions, updateProgress);
         Log("Writing file...");
-        WriteObjects(file, nonEmpty, attributes, collider, updateProgress);
+        WriteObjects(file, nonEmpty, attributes, defaultMode, updateProgress);
         LogWarning($"[slocExporter] Export done in {stopwatch.ElapsedMilliseconds}ms; {nonEmpty.Count} objects exported to {file.ToShortAppDataPath()}");
         exportedCount = nonEmpty.Count;
     }
@@ -223,6 +224,14 @@ public static class ObjectExporter {
         objectsById.Remove(gameObject.GetInstanceID());
         return true;
     }
+    
+    private static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
+        (PrimitiveObject.ColliderCreationMode) ((byte) a | (byte) b << 4);
+
+    private static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b) {
+        a = (PrimitiveObject.ColliderCreationMode) ((byte) combined & 0x0F);
+        b = (PrimitiveObject.ColliderCreationMode) ((byte) combined >> 4);
+    }
 
     #endregion
 
@@ -234,6 +243,15 @@ public static class ObjectExporter {
             return false;
         var id = o.GetInstanceID();
         runtimeTriggerActions.GetOrAdd(id, () => new List<BaseTriggerActionData>()).Add(selected);
+        return false;
+    }
+
+    private static bool ProcessCollider(PrimitiveObject.ColliderCreationMode defaultMode, GameObject o, Collider collider, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes) {
+        if (defaultMode is not PrimitiveObject.ColliderCreationMode.Unset)
+            return false;
+        var id = o.GetInstanceID();
+        var colliderMode = collider.isTrigger ? PrimitiveObject.ColliderCreationMode.Trigger : PrimitiveObject.ColliderCreationMode.Unset;
+        modes[id] = CombineSafe(modes.TryGetValue(id, out var mode) ? mode : PrimitiveObject.ColliderCreationMode.Unset, colliderMode);
         return false;
     }
 
@@ -320,10 +338,10 @@ public static class ObjectExporter {
         var floatCount = (float) count;
         for (var i = 0; i < count; i++) {
             updateProgress?.Invoke($"Setting collider modes ({i + 1} of {count})", i / floatCount);
-            if (!objects.TryGet(i, out var id, out PrimitiveObject p))
+            if (!objects.TryGet(i, out var id, out PrimitiveObject p) || !modes.TryGetValue(id, out var mode))
                 continue;
-            if (modes.TryGetValue(id, out var mode))
-                p.ColliderMode = mode;
+            SplitSafe(mode, out var a, out var b);
+            p.ColliderMode = a == PrimitiveObject.ColliderCreationMode.Unset ? b : a;
         }
     }
 

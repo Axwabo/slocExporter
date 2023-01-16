@@ -64,7 +64,7 @@ namespace Editor.sloc.TriggerActions {
                     triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger.");
                     break;
                 case TriggerActionType.TeleportToSpawnedObject:
-                    triggerAction.tpToSpawnedObject ??= new EditorTeleportToSpawnedObjectData();
+                    triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero);
                     break;
             }
         }

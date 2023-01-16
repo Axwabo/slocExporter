@@ -16,7 +16,7 @@ namespace slocExporter.TriggerActions {
         public TeleportToRoomData tpToRoom;
 
         [SerializeReference]
-        public EditorTeleportToSpawnedObjectData tpToSpawnedObject;
+        public RuntimeTeleportToSpawnedObjectData tpToSpawnedObject;
 
         [SerializeReference]
         public MoveRelativeToSelfData moveRel;
@@ -27,7 +27,7 @@ namespace slocExporter.TriggerActions {
         public BaseTriggerActionData SelectedData => type switch {
             TriggerActionType.TeleportToPosition => tpToPos,
             TriggerActionType.TeleportToRoom => tpToRoom,
-            TriggerActionType.TeleportToSpawnedObject => tpToSpawnedObject?.ExporterSuitableEquivalent,
+            TriggerActionType.TeleportToSpawnedObject => tpToSpawnedObject,
             TriggerActionType.MoveRelativeToSelf => moveRel,
             TriggerActionType.KillPlayer => killPlayer,
             _ => null
@@ -49,7 +49,7 @@ namespace slocExporter.TriggerActions {
                     killPlayer = data as KillPlayerData;
                     break;
                 default:
-                    Debug.LogWarning($"Trigger action type \"{type}\" cannot be processed automatically (on GameObject \"{gameObject.name}\")");
+                    Debug.LogWarning($"Trigger action type \"{type}\" cannot be processed automatically (failing GameObject: \"{gameObject.name}\")");
                     break;
             }
         }

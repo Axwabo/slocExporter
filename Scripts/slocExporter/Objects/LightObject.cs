@@ -6,6 +6,9 @@ namespace slocExporter.Objects {
 
     public sealed class LightObject : slocGameObject {
 
+        public LightObject() : this(0) {
+        }
+
         public LightObject(int instanceId) : base(instanceId) => Type = ObjectType.Light;
 
         public Color LightColor = Color.white;

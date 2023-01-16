@@ -9,7 +9,8 @@ namespace slocExporter.TriggerActions {
         Player = 1,
         Pickup = 2,
         Toy = 4,
-        All = 255
+        Ragdoll = 8,
+        All = Player | Pickup | Toy | Ragdoll
 
     }
 

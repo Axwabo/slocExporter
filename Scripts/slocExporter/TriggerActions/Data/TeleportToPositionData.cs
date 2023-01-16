@@ -7,7 +7,7 @@ namespace slocExporter.TriggerActions.Data {
     [Serializable]
     public sealed class TeleportToPositionData : BaseTriggerActionData {
 
-        public override TargetType TargetType => TargetType.All;
+        public override TargetType PossibleTargets => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.TeleportToPosition;
 

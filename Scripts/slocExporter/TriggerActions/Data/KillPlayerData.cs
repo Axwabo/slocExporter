@@ -6,7 +6,7 @@ namespace slocExporter.TriggerActions.Data {
     [Serializable]
     public sealed class KillPlayerData : BaseTriggerActionData {
 
-        public override TargetType TargetType => TargetType.Player;
+        public override TargetType PossibleTargets => TargetType.Player;
 
         public override TriggerActionType ActionType => TriggerActionType.KillPlayer;
 

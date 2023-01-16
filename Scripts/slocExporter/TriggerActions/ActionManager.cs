@@ -15,6 +15,13 @@ namespace slocExporter.TriggerActions {
         private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new() {
             {4, new Ver4ActionDataReader()}
         };
+        
+        public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType> {
+            TargetType.Player,
+            TargetType.Pickup,
+            TargetType.Toy,
+            TargetType.Ragdoll
+        }.AsReadOnly();
 
         public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader) {
             reader = null;
@@ -34,7 +41,7 @@ namespace slocExporter.TriggerActions {
 
         public static BaseTriggerActionData[] ReadActions(BinaryReader stream, ITriggerActionDataReader reader) {
             var actionCount = stream.ReadInt32();
-            if(actionCount < 1)
+            if (actionCount < 1)
                 return Array.Empty<BaseTriggerActionData>();
             var actions = new List<BaseTriggerActionData>();
             for (var i = 0; i < actionCount; i++) {
