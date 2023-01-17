@@ -1,16 +1,15 @@
-﻿using Editor.sloc.TriggerActions.Renderers;
-using slocExporter.Objects;
+﻿using slocExporter.Objects;
 using slocExporter.TriggerActions;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.sloc.TriggerActions {
+namespace Editor.sloc.TriggerActions.Renderers {
 
     public sealed class TeleportToSpawnedObjectRenderer : ITriggerActionEditorRenderer, ISelectedGizmosDrawer {
 
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
-            var go = EditorGUILayout.ObjectField(new GUIContent("Target"), data.go, typeof(GameObject), true) as GameObject;
+            var go = EditorGUILayout.ObjectField(new GUIContent("Target Object","The object to teleport to."), data.go, typeof(GameObject), true) as GameObject;
             data.go = go;
             data.offset = EditorGUILayout.Vector3Field("Offset", data.offset);
             if (IsValidObject(go))

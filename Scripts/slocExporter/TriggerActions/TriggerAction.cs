@@ -34,8 +34,7 @@ namespace slocExporter.TriggerActions {
         };
 
         public void SetData(BaseTriggerActionData data) {
-            type = data.ActionType;
-            switch (type) {
+            switch (type = data.ActionType) {
                 case TriggerActionType.TeleportToPosition:
                     tpToPos = data as TeleportToPositionData;
                     break;

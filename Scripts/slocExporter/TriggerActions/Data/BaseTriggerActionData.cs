@@ -19,12 +19,11 @@ namespace slocExporter.TriggerActions.Data {
                 }
 
                 var possible = PossibleTargets;
-                foreach (var v in ActionManager.TargetTypeValues) {
+                foreach (var v in ActionManager.TargetTypeValues)
                     if (value.HasFlagFast(v) && possible.HasFlagFast(v))
                         _selected |= v;
                     else
                         _selected &= ~v;
-                }
             }
         }
 

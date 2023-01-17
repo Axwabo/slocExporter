@@ -7,7 +7,8 @@ namespace slocExporter.TriggerActions.Data {
     [Serializable]
     public sealed class RuntimeTeleportToSpawnedObjectData : BaseTriggerActionData {
 
-        public override TargetType PossibleTargets => TargetType.Toy;
+        public override TargetType PossibleTargets => TargetType.All;
+
         public override TriggerActionType ActionType => TriggerActionType.TeleportToSpawnedObject;
 
         public GameObject go;

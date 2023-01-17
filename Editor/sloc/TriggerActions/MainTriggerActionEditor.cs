@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Editor.sloc.TriggerActions.Renderers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
@@ -9,7 +10,6 @@ using UnityEngine;
 namespace Editor.sloc.TriggerActions {
 
     [CustomEditor(typeof(TriggerAction))]
-    [CanEditMultipleObjects]
     public sealed class MainTriggerActionEditor : UnityEditor.Editor {
 
         private static readonly Dictionary<TriggerActionType, ITriggerActionEditorRenderer> Renderers = new() {
@@ -33,10 +33,8 @@ namespace Editor.sloc.TriggerActions {
                 triggerAction.type = newType;
             }
 
-            if (triggerAction.SelectedData == null) {
-                Undo.RecordObject(triggerAction, "Change Trigger Action Type");
-                AssignDefaultValue(triggerAction, triggerAction.type);
-            }
+            var data = triggerAction.SelectedData ?? AssignDefaultValue(triggerAction, triggerAction.type);
+            DrawCheckboxes(triggerAction, data);
 
             var curType = triggerAction.type;
             if (!Renderers.TryGetValue(curType, out var renderer)) {
@@ -45,29 +43,42 @@ namespace Editor.sloc.TriggerActions {
                 return;
             }
 
+            GUILayout.Space(10);
+            GUILayout.Label("Data", EditorStyles.boldLabel);
             renderer.DrawGUI(triggerAction);
             TriggerAction.CurrentGizmosDrawer = renderer is ISelectedGizmosDrawer gizmosDrawer ? gizmosDrawer.DrawGizmos : null;
         }
 
-        private static void AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) {
-            switch (type) {
-                case TriggerActionType.TeleportToPosition:
-                    triggerAction.tpToPos ??= new TeleportToPositionData(Vector3.zero);
-                    break;
-                case TriggerActionType.TeleportToRoom:
-                    triggerAction.tpToRoom ??= new TeleportToRoomData(Vector3.zero, "Unknown");
-                    break;
-                case TriggerActionType.MoveRelativeToSelf:
-                    triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero);
-                    break;
-                case TriggerActionType.KillPlayer:
-                    triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger.");
-                    break;
-                case TriggerActionType.TeleportToSpawnedObject:
-                    triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero);
-                    break;
+        private static void DrawCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
+            if (data == null)
+                return;
+            var types = ActionManager.TargetTypeValues.Where(v => v != TargetType.None && data.PossibleTargets.HasFlagFast(v)).ToArray();
+            if (types.Length < 1)
+                return;
+            GUILayout.Label("Targets", EditorStyles.boldLabel);
+            var value = data.SelectedTargets;
+            foreach (var type in types) {
+                var active = EditorGUILayout.Toggle(type.ToString(), value.HasFlagFast(type));
+                if (active)
+                    value |= type;
+                else
+                    value &= ~type;
             }
+
+            if (value == data.SelectedTargets)
+                return;
+            Undo.RecordObject(triggerAction, "Change Trigger Action Targets");
+            data.SelectedTargets = value;
         }
+
+        private static BaseTriggerActionData AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) => type switch {
+            TriggerActionType.TeleportToPosition => triggerAction.tpToPos ??= new TeleportToPositionData(Vector3.zero),
+            TriggerActionType.TeleportToRoom => triggerAction.tpToRoom ??= new TeleportToRoomData(Vector3.zero, "Unknown"),
+            TriggerActionType.MoveRelativeToSelf => triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero),
+            TriggerActionType.KillPlayer => triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger."),
+            TriggerActionType.TeleportToSpawnedObject => triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero),
+            _ => null
+        };
 
     }
 
