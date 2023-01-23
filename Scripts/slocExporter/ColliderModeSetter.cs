@@ -15,6 +15,7 @@ namespace slocExporter {
         private const string ServerOnlyNonSpawnedObject = "Server-Only Non-Spawned Object";
         private const string NoColliderNonSpawnedObject = "Colliderless Non-Spawned Object";
 
+        // ReSharper disable InconsistentNaming
         private const string DescriptionNoCollider = "The object will neither have a collider on the client nor on the server.";
         private const string DescriptionClientOnly = "The object will have a collider on the client but not on the server.";
         private const string DescriptionServerOnly = "The object will be spawned on the client.\nIt will only have a collider on the server.";

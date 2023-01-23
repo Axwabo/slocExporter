@@ -73,7 +73,7 @@ namespace Editor.sloc.TriggerActions {
 
         private static BaseTriggerActionData AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) => type switch {
             TriggerActionType.TeleportToPosition => triggerAction.tpToPos ??= new TeleportToPositionData(Vector3.zero),
-            TriggerActionType.TeleportToRoom => triggerAction.tpToRoom ??= new TeleportToRoomData(Vector3.zero, "Unknown"),
+            TriggerActionType.TeleportToRoom => triggerAction.tpToRoom ??= new TeleportToRoomData("Unknown", Vector3.zero),
             TriggerActionType.MoveRelativeToSelf => triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero),
             TriggerActionType.KillPlayer => triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger."),
             TriggerActionType.TeleportToSpawnedObject => triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero),

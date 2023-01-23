@@ -8,7 +8,7 @@ namespace Editor.sloc.TriggerActions.Renderers {
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToRoom;
             data.Room = EditorGUILayout.TextField("Room Name", data.Room);
-            data.PositionOffset = EditorGUILayout.Vector3Field("Position Offset", data.PositionOffset);
+            data.Offset = EditorGUILayout.Vector3Field("Position Offset", data.Offset);
         }
 
     }

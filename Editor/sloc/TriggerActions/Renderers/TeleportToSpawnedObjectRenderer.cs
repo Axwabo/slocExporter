@@ -7,13 +7,15 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
     public sealed class TeleportToSpawnedObjectRenderer : ITriggerActionEditorRenderer, ISelectedGizmosDrawer {
 
+        private static readonly GUIContent Content = new("Target Object", "The object to teleport to.");
+
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
-            var go = EditorGUILayout.ObjectField(new GUIContent("Target Object","The object to teleport to."), data.Target, typeof(GameObject), true) as GameObject;
+            var go = EditorGUILayout.ObjectField(Content, data.Target, typeof(GameObject), true) as GameObject;
             data.Target = go;
             data.Offset = EditorGUILayout.Vector3Field("Offset", data.Offset);
             if (IsValidObject(go))
-                EditorGUILayout.HelpBox("A green wire sphere gizmo is indicating the point to teleport to", MessageType.None);
+                EditorGUILayout.HelpBox("A green wire sphere gizmo is indicating the point to teleport to", MessageType.Info);
             else
                 EditorGUILayout.HelpBox("Target must be a spawnable primitive (with a light or valid mesh)", MessageType.Error);
         }

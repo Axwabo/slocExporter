@@ -25,7 +25,6 @@ public static class slocImporter {
     private static bool _inProgress;
 
     public static void TryImport(ProgressUpdater updateProgress = null) {
-        var fields = typeof(BinaryReader).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
         if (_inProgress) {
             EditorUtility.DisplayDialog("slocImporter", "Import is already in progress", "OK");
             return;
@@ -49,7 +48,7 @@ public static class slocImporter {
     }
 
     private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null) {
-        EnsureDirectory();
+        EnsureColorsDirectoryExists();
         MaterialHandler.SkipForAll = false;
         MaterialHandler.CreateForAll = false;
         var lastView = SceneView.lastActiveSceneView;
@@ -63,7 +62,7 @@ public static class slocImporter {
         importedCount = spawned;
     }
 
-    private static void EnsureDirectory() {
+    private static void EnsureColorsDirectoryExists() {
         if (!Directory.Exists("Assets/Colors"))
             Directory.CreateDirectory("Assets/Colors");
     }

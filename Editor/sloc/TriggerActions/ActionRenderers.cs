@@ -19,7 +19,7 @@ namespace Editor.sloc.TriggerActions {
         public static readonly TeleportToRoomRenderer TeleportToRoom = new();
 
         public static readonly KillPlayerRenderer KillPlayer = new();
-        
+
         public static readonly TeleportToSpawnedObjectRenderer TeleportToSpawnedObject = new();
 
     }
