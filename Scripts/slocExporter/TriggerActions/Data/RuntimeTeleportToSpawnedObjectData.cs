@@ -1,28 +1,28 @@
-using System;
 using System.IO;
 using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
 
-    [Serializable]
     public sealed class RuntimeTeleportToSpawnedObjectData : BaseTriggerActionData {
 
         public override TargetType PossibleTargets => TargetType.All;
 
         public override TriggerActionType ActionType => TriggerActionType.TeleportToSpawnedObject;
 
-        public GameObject go;
+        [field: SerializeField]
+        public GameObject Target { get; set; }
 
-        public Vector3 offset;
+        [field: SerializeField]
+        public Vector3 Offset { get; set; }
 
-        public RuntimeTeleportToSpawnedObjectData(GameObject go, Vector3 offset) {
-            this.go = go;
-            this.offset = offset;
+        public RuntimeTeleportToSpawnedObjectData(GameObject target, Vector3 offset) {
+            Target = target;
+            Offset = offset;
         }
 
         protected override void WriteData(BinaryWriter writer) {
-            writer.Write(go.GetInstanceID());
-            writer.WriteVector(offset);
+            writer.Write(Target.GetInstanceID());
+            writer.WriteVector(Offset);
         }
 
     }

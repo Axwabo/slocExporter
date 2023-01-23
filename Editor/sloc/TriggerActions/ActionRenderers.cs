@@ -6,14 +6,14 @@ namespace Editor.sloc.TriggerActions {
 
         public static readonly SimplePositionRenderer TeleportToPosition = new(
             "Absolute Position",
-            i => i.tpToPos.position,
-            (i, v) => i.tpToPos.position = v
+            i => i.tpToPos.Position,
+            (i, v) => i.tpToPos.Position = v
         );
 
         public static readonly SimplePositionRenderer MoveRelativeToSelf = new(
             "Relative Position",
-            i => i.moveRel.offset,
-            (i, v) => i.moveRel.offset = v
+            i => i.moveRel.Offset,
+            (i, v) => i.moveRel.Offset = v
         );
 
         public static readonly TeleportToRoomRenderer TeleportToRoom = new();

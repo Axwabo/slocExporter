@@ -1,37 +1,41 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
 
+    [Serializable]
     public abstract class BaseTriggerActionData {
 
-        private TargetType _selected;
+        [field: SerializeField]
+        private TargetType Selected { get; set; }
 
         public abstract TargetType PossibleTargets { get; }
 
         public abstract TriggerActionType ActionType { get; }
 
         public TargetType SelectedTargets {
-            get => _selected;
+            get => Selected;
             set {
                 if (value is TargetType.None) {
-                    _selected = value;
+                    Selected = value;
                     return;
                 }
 
                 var possible = PossibleTargets;
                 foreach (var v in ActionManager.TargetTypeValues)
                     if (value.HasFlagFast(v) && possible.HasFlagFast(v))
-                        _selected |= v;
+                        Selected |= v;
                     else
-                        _selected &= ~v;
+                        Selected &= ~v;
             }
         }
 
         protected BaseTriggerActionData() => SelectedTargets = TargetType.All;
 
         public void WriteTo(BinaryWriter writer) {
-            writer.Write((byte) SelectedTargets);
             writer.Write((ushort) ActionType);
+            writer.Write((byte) SelectedTargets);
             WriteData(writer);
         }
 

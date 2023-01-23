@@ -8,7 +8,7 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         public void DrawGUI(TriggerAction instance) {
             GUILayout.Label("Death Cause:");
-            instance.killPlayer.cause = EditorGUILayout.TextArea(instance.killPlayer.cause);
+            instance.killPlayer.Cause = EditorGUILayout.TextArea(instance.killPlayer.Cause);
         }
 
     }

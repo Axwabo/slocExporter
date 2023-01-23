@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using JetBrains.Annotations;
 using slocExporter.Objects;
 
 public sealed class InstanceList : List<KeyValuePair<int, slocGameObject>> {

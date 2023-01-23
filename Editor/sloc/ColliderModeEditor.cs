@@ -4,7 +4,6 @@ using System.Linq;
 using slocExporter;
 using slocExporter.Objects;
 using UnityEditor;
-using UnityEngine;
 using static slocExporter.ColliderModeSetter;
 
 namespace Editor.sloc {

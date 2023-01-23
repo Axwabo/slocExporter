@@ -9,9 +9,9 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
-            var go = EditorGUILayout.ObjectField(new GUIContent("Target Object","The object to teleport to."), data.go, typeof(GameObject), true) as GameObject;
-            data.go = go;
-            data.offset = EditorGUILayout.Vector3Field("Offset", data.offset);
+            var go = EditorGUILayout.ObjectField(new GUIContent("Target Object","The object to teleport to."), data.Target, typeof(GameObject), true) as GameObject;
+            data.Target = go;
+            data.Offset = EditorGUILayout.Vector3Field("Offset", data.Offset);
             if (IsValidObject(go))
                 EditorGUILayout.HelpBox("A green wire sphere gizmo is indicating the point to teleport to", MessageType.None);
             else
@@ -20,11 +20,11 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         public void DrawGizmos(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
-            var go = data.go;
+            var go = data.Target;
             if (!go)
                 return;
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(go.transform.TransformPoint(data.offset), 0.2f);
+            Gizmos.DrawWireSphere(go.transform.TransformPoint(data.Offset), 0.2f);
         }
 
         private static bool IsValidObject(GameObject o)
