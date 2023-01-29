@@ -141,36 +141,39 @@ namespace slocExporter {
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
             CreatedInstances.Clear();
             TpToSpawnedCache.Clear();
-            var go = new GameObject {
-                transform = {
-                    position = position,
-                    rotation = rotation
-                }
-            };
-            var created = 0;
-            var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
-            var processed = 0;
-            var isCountKnown = total > 0;
-            var floatTotal = (float) total;
-            ClearMaterialCache();
-            updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
-            foreach (var o in objects) {
-                var gameObject = o.CreateObject(CreatedInstances.GetOrReturn(o.ParentId, go, o.HasParent), false);
-                if (gameObject != null) {
-                    CreatedInstances[o.InstanceId] = gameObject;
-                    created++;
+            try {
+                var go = new GameObject {
+                    transform = {
+                        position = position,
+                        rotation = rotation
+                    }
+                };
+                var created = 0;
+                var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
+                var processed = 0;
+                var isCountKnown = total > 0;
+                var floatTotal = (float) total;
+                ClearMaterialCache();
+                updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
+                foreach (var o in objects) {
+                    var gameObject = o.CreateObject(CreatedInstances.GetOrReturn(o.ParentId, go, o.HasParent), false);
+                    if (gameObject != null) {
+                        CreatedInstances[o.InstanceId] = gameObject;
+                        created++;
+                    }
+
+                    processed++;
+                    updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
                 }
 
-                processed++;
-                updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
+                PostProcessSpecialTriggerActions();
+                ClearMaterialCache();
+                createdAmount = created;
+                return go;
+            } finally {
+                CreatedInstances.Clear();
+                TpToSpawnedCache.Clear();
             }
-
-            PostProcessSpecialTriggerActions();
-            CreatedInstances.Clear();
-            TpToSpawnedCache.Clear();
-            ClearMaterialCache();
-            createdAmount = created;
-            return go;
         }
 
         private static void PostProcessSpecialTriggerActions() {

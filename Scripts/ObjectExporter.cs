@@ -76,12 +76,12 @@ public static class ObjectExporter {
         _inProgress = true;
         try {
             DoExport(selectedOnly, out var exportedCount, updateProgress);
-            _inProgress = false;
             EditorUtility.DisplayDialog("slocExporter", $"Export complete.\nsloc created with {exportedCount} GameObject(s).", "OK");
         } catch (Exception e) {
             Debug.LogError(e);
-            _inProgress = false;
             EditorUtility.DisplayDialog("slocExporter", "Export failed. See the Debug log for details.", "OK");
+        } finally {
+            _inProgress = false;
         }
     }
 
@@ -224,7 +224,7 @@ public static class ObjectExporter {
         objectsById.Remove(gameObject.GetInstanceID());
         return true;
     }
-    
+
     private static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
         (PrimitiveObject.ColliderCreationMode) ((byte) a | (byte) b << 4);
 

@@ -42,8 +42,9 @@ public static class slocImporter {
             EditorUtility.DisplayDialog("Import complete", $"Imported {importedCount} GameObject(s) as {objectName}", "OK");
         } catch (Exception e) {
             Debug.LogError(e);
-            _inProgress = false;
             EditorUtility.DisplayDialog("slocImporter", "Import failed. See the debug log for details.", "OK");
+        } finally {
+            _inProgress = false;
         }
     }
 
@@ -58,7 +59,6 @@ public static class slocImporter {
         var parent = API.CreateObjectsFromFile(fullPath, out var spawned, camTransform ? camTransform.position + camTransform.forward * 3f : Vector3.zero, updateProgress: updateProgress);
         objectName = Path.GetFileNameWithoutExtension(fullPath);
         parent.name = $"Imported-{objectName}";
-        _inProgress = false;
         importedCount = spawned;
     }
 
