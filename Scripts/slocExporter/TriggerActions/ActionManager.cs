@@ -4,6 +4,7 @@ using System.IO;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using slocExporter.TriggerActions.Readers;
+using UnityEngine;
 
 namespace slocExporter.TriggerActions {
 
@@ -29,6 +30,18 @@ namespace slocExporter.TriggerActions {
             TriggerEventType.Stay,
             TriggerEventType.Exit
         }.AsReadOnly();
+
+        public static readonly ICollection<TeleportOptions> TeleportOptionsValues = new List<TeleportOptions> {
+            TeleportOptions.ResetFallDamage,
+            TeleportOptions.ResetVelocity,
+            TeleportOptions.WorldSpaceTransform
+        }.AsReadOnly();
+
+        public static readonly Dictionary<TeleportOptions, string> TeleportOptionsNames = new() {
+            {TeleportOptions.ResetFallDamage, "Reset Fall Damage"},
+            {TeleportOptions.ResetVelocity, "Reset Velocity"},
+            {TeleportOptions.WorldSpaceTransform, "World-Space Transform"}
+        };
 
         public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader) {
             reader = null;
@@ -69,13 +82,22 @@ namespace slocExporter.TriggerActions {
             eventType = (TriggerEventType) eventTypes;
         }
 
+        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options) {
+            position = reader.ReadVector();
+            options = (TeleportOptions) reader.ReadByte();
+        }
+
         public static bool HasFlagFast(this TargetType targetType, TargetType flag) => (targetType & flag) == flag;
 
         public static bool Is(this TargetType type, TargetType isType) => type is TargetType.All || type.HasFlagFast(isType);
 
         public static bool HasFlagFast(this TriggerEventType eventType, TriggerEventType flag) => (eventType & flag) == flag;
-        
+
         public static bool Is(this TriggerEventType type, TriggerEventType isType) => type is TriggerEventType.All || type.HasFlagFast(isType);
+
+        public static bool HasFlagFast(this TeleportOptions options, TeleportOptions flag) => (options & flag) == flag;
+
+        public static bool Is(this TeleportOptions type, TeleportOptions isType) => type is TeleportOptions.None || type.HasFlagFast(isType);
 
     }
 

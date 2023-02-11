@@ -24,19 +24,19 @@ namespace slocExporter.TriggerActions.Readers {
         }
 
         public static TeleportToPositionData ReadTpToPos(BinaryReader reader) {
-            var position = reader.ReadVector();
-            return new TeleportToPositionData(position);
+            ActionManager.ReadTeleportData(reader, out var position, out var options);
+            return new TeleportToPositionData(position) {Options = options};
         }
 
         public static MoveRelativeToSelfData ReadMoveRelative(BinaryReader reader) {
-            var position = reader.ReadVector();
+            ActionManager.ReadTeleportData(reader, out var position, out var options);
             return new MoveRelativeToSelfData(position);
         }
 
         public static TeleportToRoomData ReadTpToRoom(BinaryReader reader) {
+            ActionManager.ReadTeleportData(reader, out var position, out var options);
             var name = reader.ReadString();
-            var position = reader.ReadVector();
-            return new TeleportToRoomData(name, position);
+            return new TeleportToRoomData(name, position) {Options = options};
         }
 
         public static KillPlayerData ReadKillPlayer(BinaryReader reader) {
@@ -45,9 +45,9 @@ namespace slocExporter.TriggerActions.Readers {
         }
 
         public static SerializableTeleportToSpawnedObjectData ReadTpToSpawnedObject(BinaryReader reader) {
+            ActionManager.ReadTeleportData(reader, out var offset, out var options);
             var virtualInstanceId = reader.ReadInt32();
-            var offset = reader.ReadVector();
-            return new SerializableTeleportToSpawnedObjectData(virtualInstanceId, offset);
+            return new SerializableTeleportToSpawnedObjectData(virtualInstanceId, offset, options);
         }
 
     }

@@ -12,8 +12,20 @@ namespace Editor.sloc.TriggerActions.Renderers {
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
             var go = EditorGUILayout.ObjectField(Content, data.Target, typeof(GameObject), true) as GameObject;
-            data.Target = go;
-            data.Offset = EditorGUILayout.Vector3Field("Offset", data.Offset);
+            if (data.Target != go) {
+                EditorUtility.SetDirty(instance);
+                Undo.RecordObject(instance, "Change Teleport Target");
+                data.Target = go;
+            }
+
+            var input = EditorGUILayout.Vector3Field("Offset", data.Position);
+            if (input != data.Position) {
+                EditorUtility.SetDirty(instance);
+                Undo.RecordObject(instance, "Change Teleport Offset");
+                data.Position = input;
+            }
+
+            SimplePositionRenderer.DrawCheckboxes(instance, data);
             if (IsValidObject(go))
                 EditorGUILayout.HelpBox("A green wire sphere gizmo is indicating the point to teleport to", MessageType.Info);
             else
@@ -26,7 +38,7 @@ namespace Editor.sloc.TriggerActions.Renderers {
             if (!go)
                 return;
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(go.transform.TransformPoint(data.Offset), 0.2f);
+            Gizmos.DrawWireSphere(data.ToWorldSpacePosition(go.transform), 0.2f);
         }
 
         private static bool IsValidObject(GameObject o)

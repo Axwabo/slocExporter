@@ -14,14 +14,18 @@ namespace slocExporter.TriggerActions.Data {
 
         public readonly Vector3 Offset;
 
-        public SerializableTeleportToSpawnedObjectData(int id, Vector3 offset) {
+        public readonly TeleportOptions Options;
+
+        public SerializableTeleportToSpawnedObjectData(int id, Vector3 offset, TeleportOptions options) {
             ID = id;
             Offset = offset;
+            Options = options;
         }
 
         protected override void WriteData(BinaryWriter writer) {
             writer.Write(ID);
             writer.WriteVector(Offset);
+            writer.Write((byte) Options);
         }
 
     }

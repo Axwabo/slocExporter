@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
 
-    public sealed class RuntimeTeleportToSpawnedObjectData : BaseTriggerActionData {
+    public sealed class RuntimeTeleportToSpawnedObjectData : BaseTeleportData {
 
         public override TargetType PossibleTargets => TargetType.All;
 
@@ -13,18 +13,12 @@ namespace slocExporter.TriggerActions.Data {
         [field: SerializeField]
         public GameObject Target { get; set; }
 
-        [field: SerializeField]
-        public Vector3 Offset { get; set; }
-
         public RuntimeTeleportToSpawnedObjectData(GameObject target, Vector3 offset) {
             Target = target;
-            Offset = offset;
+            Position = offset;
         }
 
-        protected override void WriteData(BinaryWriter writer) {
-            writer.Write(Target.GetInstanceID());
-            writer.WriteVector(Offset);
-        }
+        protected override void WriteAdditionalData(BinaryWriter writer) => writer.Write(Target.GetInstanceID());
 
     }
 

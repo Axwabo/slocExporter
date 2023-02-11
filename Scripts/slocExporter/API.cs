@@ -184,7 +184,10 @@ namespace slocExporter {
                     continue;
                 var component = o.AddComponent<TriggerAction>();
                 component.type = TriggerActionType.TeleportToSpawnedObject;
-                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset) {SelectedTargets = data.SelectedTargets};
+                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset) {
+                    SelectedTargets = data.SelectedTargets,
+                    Options = data.Options
+                };
             }
         }
 
