@@ -1,12 +1,13 @@
 ﻿using System.IO;
 using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 
 namespace slocExporter.TriggerActions.Readers {
 
     public sealed class Ver4ActionDataReader : ITriggerActionDataReader {
 
         public BaseTriggerActionData Read(BinaryReader reader) {
-            ActionManager.ReadTypes(reader, out var actionType, out var targetType);
+            ActionManager.ReadTypes(reader, out var actionType, out var targetType, out var eventType);
             BaseTriggerActionData data = actionType switch {
                 TriggerActionType.TeleportToPosition => ReadTpToPos(reader),
                 TriggerActionType.MoveRelativeToSelf => ReadMoveRelative(reader),
@@ -15,8 +16,10 @@ namespace slocExporter.TriggerActions.Readers {
                 TriggerActionType.TeleportToSpawnedObject => ReadTpToSpawnedObject(reader),
                 _ => null
             };
-            if (data is not null)
-                data.SelectedTargets = targetType;
+            if (data is null)
+                return null;
+            data.SelectedTargets = targetType;
+            data.SelectedEvents = eventType;
             return data;
         }
 

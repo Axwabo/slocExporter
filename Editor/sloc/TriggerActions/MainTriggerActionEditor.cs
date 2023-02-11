@@ -4,6 +4,7 @@ using System.Linq;
 using Editor.sloc.TriggerActions.Renderers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using UnityEditor;
 using UnityEngine;
 
@@ -52,9 +53,15 @@ namespace Editor.sloc.TriggerActions {
         private static void DrawCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
             if (data == null)
                 return;
+            DrawTargetTypeCheckboxes(triggerAction, data);
+            DrawEventTypeCheckboxes(triggerAction, data);
+        }
+
+        private static void DrawTargetTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
             var types = ActionManager.TargetTypeValues.Where(v => v != TargetType.None && data.PossibleTargets.HasFlagFast(v)).ToArray();
             if (types.Length < 1)
                 return;
+            GUILayout.Space(10);
             GUILayout.Label("Targets", EditorStyles.boldLabel);
             var value = data.SelectedTargets;
             foreach (var type in types) {
@@ -69,6 +76,24 @@ namespace Editor.sloc.TriggerActions {
                 return;
             Undo.RecordObject(triggerAction, "Change Trigger Action Targets");
             data.SelectedTargets = value;
+        }
+
+        private static void DrawEventTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
+            GUILayout.Space(10);
+            GUILayout.Label("Trigger Events", EditorStyles.boldLabel);
+            var value = data.SelectedEvents;
+            foreach (var type in ActionManager.EventTypeValues) {
+                var active = EditorGUILayout.Toggle(type.ToString(), value.HasFlagFast(type));
+                if (active)
+                    value |= type;
+                else
+                    value &= ~type;
+            }
+
+            if (value == data.SelectedEvents)
+                return;
+            Undo.RecordObject(triggerAction, "Change Trigger Action Events");
+            data.SelectedEvents = value;
         }
 
         private static BaseTriggerActionData AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) => type switch {

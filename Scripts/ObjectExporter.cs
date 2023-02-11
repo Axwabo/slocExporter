@@ -225,14 +225,6 @@ public static class ObjectExporter {
         return true;
     }
 
-    private static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
-        (PrimitiveObject.ColliderCreationMode) ((byte) a | (byte) b << 4);
-
-    private static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b) {
-        a = (PrimitiveObject.ColliderCreationMode) ((byte) combined & 0x0F);
-        b = (PrimitiveObject.ColliderCreationMode) ((byte) combined >> 4);
-    }
-
     #endregion
 
     #region Behavior Processors
@@ -251,7 +243,7 @@ public static class ObjectExporter {
             return false;
         var id = o.GetInstanceID();
         var colliderMode = collider.isTrigger ? PrimitiveObject.ColliderCreationMode.Trigger : PrimitiveObject.ColliderCreationMode.Unset;
-        modes[id] = CombineSafe(modes.TryGetValue(id, out var mode) ? mode : PrimitiveObject.ColliderCreationMode.Unset, colliderMode);
+        modes[id] = API.CombineSafe(modes.TryGetValue(id, out var mode) ? mode : PrimitiveObject.ColliderCreationMode.Unset, colliderMode);
         return false;
     }
 
@@ -340,7 +332,7 @@ public static class ObjectExporter {
             updateProgress?.Invoke($"Setting collider modes ({i + 1} of {count})", i / floatCount);
             if (!objects.TryGet(i, out var id, out PrimitiveObject p) || !modes.TryGetValue(id, out var mode))
                 continue;
-            SplitSafe(mode, out var a, out var b);
+            API.SplitSafe(mode, out var a, out var b);
             p.ColliderMode = a == PrimitiveObject.ColliderCreationMode.Unset ? b : a;
         }
     }

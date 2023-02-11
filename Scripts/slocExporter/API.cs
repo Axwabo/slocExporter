@@ -7,6 +7,7 @@ using slocExporter.Objects;
 using slocExporter.Readers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
 
@@ -248,6 +249,26 @@ namespace slocExporter {
             writer.Write(color.g);
             writer.Write(color.b);
             writer.Write(color.a);
+        }
+
+        #endregion
+
+        #region Bit Math
+
+        public static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
+            (PrimitiveObject.ColliderCreationMode) CombineSafe((byte) a, (byte) b);
+
+        public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b) {
+            SplitSafe((byte) combined, out var x, out var y);
+            a = (PrimitiveObject.ColliderCreationMode) x;
+            b = (PrimitiveObject.ColliderCreationMode) y;
+        }
+
+        public static byte CombineSafe(byte a, byte b) => (byte) (a << 4 | b);
+
+        public static void SplitSafe(byte combined, out byte a, out byte b) {
+            a = (byte) (combined >> 4);
+            b = (byte) (combined & 0xF);
         }
 
         #endregion

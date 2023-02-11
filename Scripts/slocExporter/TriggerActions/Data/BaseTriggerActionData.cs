@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
 namespace slocExporter.TriggerActions.Data {
@@ -7,35 +8,38 @@ namespace slocExporter.TriggerActions.Data {
     [Serializable]
     public abstract class BaseTriggerActionData {
 
-        [field: SerializeField]
-        private TargetType Selected { get; set; }
+        [SerializeField]
+        private TargetType selectedTargets;
 
         public abstract TargetType PossibleTargets { get; }
 
         public abstract TriggerActionType ActionType { get; }
 
         public TargetType SelectedTargets {
-            get => Selected;
+            get => selectedTargets;
             set {
                 if (value is TargetType.None) {
-                    Selected = value;
+                    selectedTargets = value;
                     return;
                 }
 
                 var possible = PossibleTargets;
                 foreach (var v in ActionManager.TargetTypeValues)
                     if (value.HasFlagFast(v) && possible.HasFlagFast(v))
-                        Selected |= v;
+                        selectedTargets |= v;
                     else
-                        Selected &= ~v;
+                        selectedTargets &= ~v;
             }
         }
+
+        [field: SerializeField]
+        public TriggerEventType SelectedEvents { get; set; } = TriggerEventType.All;
 
         protected BaseTriggerActionData() => SelectedTargets = TargetType.All;
 
         public void WriteTo(BinaryWriter writer) {
             writer.Write((ushort) ActionType);
-            writer.Write((byte) SelectedTargets);
+            writer.Write(API.CombineSafe((byte) SelectedTargets, (byte) SelectedEvents));
             WriteData(writer);
         }
 

@@ -1,4 +1,5 @@
 ﻿using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
 namespace slocExporter.TriggerActions {

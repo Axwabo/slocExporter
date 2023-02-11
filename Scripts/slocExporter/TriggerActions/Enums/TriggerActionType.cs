@@ -1,4 +1,4 @@
-﻿namespace slocExporter.TriggerActions {
+﻿namespace slocExporter.TriggerActions.Enums {
 
     public enum TriggerActionType : ushort {
 

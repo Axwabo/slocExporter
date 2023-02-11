@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using slocExporter.TriggerActions.Readers;
 
 namespace slocExporter.TriggerActions {
@@ -15,12 +16,18 @@ namespace slocExporter.TriggerActions {
         private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new() {
             {4, new Ver4ActionDataReader()}
         };
-        
+
         public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType> {
             TargetType.Player,
             TargetType.Pickup,
             TargetType.Toy,
             TargetType.Ragdoll
+        }.AsReadOnly();
+
+        public static readonly ICollection<TriggerEventType> EventTypeValues = new List<TriggerEventType> {
+            TriggerEventType.Enter,
+            TriggerEventType.Stay,
+            TriggerEventType.Exit
         }.AsReadOnly();
 
         public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader) {
@@ -54,14 +61,21 @@ namespace slocExporter.TriggerActions {
             return array;
         }
 
-        public static void ReadTypes(BinaryReader reader, out TriggerActionType actionType, out TargetType targetType) {
+        public static void ReadTypes(BinaryReader reader, out TriggerActionType actionType, out TargetType targetType, out TriggerEventType eventType) {
             actionType = (TriggerActionType) reader.ReadUInt16();
-            targetType = (TargetType) reader.ReadByte();
+            var combined = reader.ReadByte();
+            API.SplitSafe(combined, out var target, out var eventTypes);
+            targetType = (TargetType) target;
+            eventType = (TriggerEventType) eventTypes;
         }
 
         public static bool HasFlagFast(this TargetType targetType, TargetType flag) => (targetType & flag) == flag;
 
         public static bool Is(this TargetType type, TargetType isType) => type is TargetType.All || type.HasFlagFast(isType);
+
+        public static bool HasFlagFast(this TriggerEventType eventType, TriggerEventType flag) => (eventType & flag) == flag;
+        
+        public static bool Is(this TriggerEventType type, TriggerEventType isType) => type is TriggerEventType.All || type.HasFlagFast(isType);
 
     }
 
