@@ -1,4 +1,5 @@
-﻿using slocExporter.TriggerActions.Data;
+﻿using System;
+using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ namespace slocExporter.TriggerActions {
     public sealed class TriggerAction : MonoBehaviour {
 
         public static TriggerActionGizmosDrawer CurrentGizmosDrawer = null;
+
+        #region Stored Data
 
         public TriggerActionType type;
 
@@ -25,12 +28,31 @@ namespace slocExporter.TriggerActions {
         [SerializeReference]
         public KillPlayerData killPlayer;
 
+        [SerializeReference]
+        public TeleporterImmunityData tpImmunity;
+
+        #endregion
+
+        #region Editor Bools
+
+        [NonSerialized]
+        public bool ToggleTargets = false;
+
+        [NonSerialized]
+        public bool ToggleEvents = false;
+
+        [NonSerialized]
+        public bool ToggleData = true;
+
+        #endregion
+
         public BaseTriggerActionData SelectedData => type switch {
             TriggerActionType.TeleportToPosition => tpToPos,
             TriggerActionType.TeleportToRoom => tpToRoom,
             TriggerActionType.TeleportToSpawnedObject => tpToSpawnedObject,
             TriggerActionType.MoveRelativeToSelf => moveRel,
             TriggerActionType.KillPlayer => killPlayer,
+            TriggerActionType.TeleporterImmunity => tpImmunity,
             _ => null
         };
 
@@ -47,6 +69,9 @@ namespace slocExporter.TriggerActions {
                     break;
                 case TriggerActionType.KillPlayer:
                     killPlayer = data as KillPlayerData;
+                    break;
+                case TriggerActionType.TeleporterImmunity:
+                    tpImmunity = data as TeleporterImmunityData;
                     break;
                 default:
                     Debug.LogWarning($"Trigger action type \"{type}\" cannot be processed automatically (failing GameObject: \"{gameObject.name}\")");

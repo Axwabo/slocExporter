@@ -9,6 +9,8 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         private static readonly GUIContent Content = new("Target Object", "The object to teleport to.");
 
+        public string Description => "Teleports the object to another specified object with the given position offset.";
+
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
             var go = EditorGUILayout.ObjectField(Content, data.Target, typeof(GameObject), true) as GameObject;
@@ -34,7 +36,7 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         public void DrawGizmos(TriggerAction instance) {
             var data = instance.tpToSpawnedObject;
-            var go = data.Target;
+            var go = data?.Target;
             if (!go)
                 return;
             Gizmos.color = Color.green;

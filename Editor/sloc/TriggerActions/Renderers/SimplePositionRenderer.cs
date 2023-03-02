@@ -1,19 +1,31 @@
-﻿using slocExporter.TriggerActions;
+﻿using System.Collections.Generic;
+using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using UnityEditor;
+using UnityEngine;
 
 namespace Editor.sloc.TriggerActions.Renderers {
 
     public sealed class SimplePositionRenderer : ITriggerActionEditorRenderer {
 
+        private static readonly Dictionary<TeleportOptions, GUIContent> TeleportOptionsContent = new() {
+            {TeleportOptions.ResetFallDamage, new GUIContent("Reset Fall Damage", "Resets fall damage on the target player.")},
+            {TeleportOptions.ResetVelocity, new GUIContent("Reset Velocity", "Resets the target player's velocity.")},
+            {TeleportOptions.WorldSpaceTransform, new GUIContent("World Space Transform", "Uses world-space transform to calculate the offset instead of relative calculation based on the object this action is added to.")}
+        };
+
         public delegate BaseTeleportData PositionGetter(TriggerAction instance);
+
+        public string Description { get; }
 
         private readonly string _label;
         private readonly PositionGetter _positionGetter;
 
-        public SimplePositionRenderer(string label, PositionGetter positionGetter) {
+        public SimplePositionRenderer(string label, PositionGetter positionGetter, string description) {
             _label = label;
             _positionGetter = positionGetter;
+            Description = description;
         }
 
         public void DrawGUI(TriggerAction instance) {
@@ -30,7 +42,8 @@ namespace Editor.sloc.TriggerActions.Renderers {
         public static void DrawCheckboxes(TriggerAction triggerAction, BaseTeleportData data) {
             var value = data.Options;
             foreach (var type in ActionManager.TeleportOptionsValues) {
-                var active = EditorGUILayout.Toggle(ActionManager.TeleportOptionsNames[type], value.HasFlagFast(type));
+                var content = TeleportOptionsContent.GetValueOrDefault(type) ?? new GUIContent(type.ToString());
+                var active = EditorGUILayout.Toggle(content, value.HasFlagFast(type));
                 if (active)
                     value |= type;
                 else

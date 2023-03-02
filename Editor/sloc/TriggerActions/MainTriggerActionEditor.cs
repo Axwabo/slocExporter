@@ -18,11 +18,21 @@ namespace Editor.sloc.TriggerActions {
             {TriggerActionType.MoveRelativeToSelf, ActionRenderers.MoveRelativeToSelf},
             {TriggerActionType.TeleportToRoom, ActionRenderers.TeleportToRoom},
             {TriggerActionType.KillPlayer, ActionRenderers.KillPlayer},
-            {TriggerActionType.TeleportToSpawnedObject, ActionRenderers.TeleportToSpawnedObject}
+            {TriggerActionType.TeleportToSpawnedObject, ActionRenderers.TeleportToSpawnedObject},
+            {TriggerActionType.TeleporterImmunity, ActionRenderers.TeleporterImmunity}
         };
 
         private static readonly TriggerActionType[] Values = (TriggerActionType[]) Enum.GetValues(typeof(TriggerActionType));
         private static readonly string[] Names = Enum.GetNames(typeof(TriggerActionType));
+
+        private static readonly GUIContent TargetsContent = new("Targets", "Types of objects that can trigger this action.");
+        private static readonly GUIContent EventsContent = new("Trigger Events", "The trigger event types that this action will listen for.");
+
+        private static readonly Dictionary<TriggerEventType, GUIContent> EventDescriptions = new() {
+            {TriggerEventType.Enter, new GUIContent("On Enter", "Invoked when an object enters the trigger.")},
+            {TriggerEventType.Stay, new GUIContent("On Stay", "Invoked every frame while an object stays in the trigger.")},
+            {TriggerEventType.Exit, new GUIContent("On Exit", "Invoked when an object leaves the trigger.")}
+        };
 
         public override void OnInspectorGUI() {
             var triggerAction = (TriggerAction) target;
@@ -35,18 +45,19 @@ namespace Editor.sloc.TriggerActions {
             }
 
             var data = triggerAction.SelectedData ?? AssignDefaultValue(triggerAction, triggerAction.type);
-            DrawCheckboxes(triggerAction, data);
-
             var curType = triggerAction.type;
             if (!Renderers.TryGetValue(curType, out var renderer)) {
-                EditorGUILayout.HelpBox("You can't edit this type! Please choose another.", MessageType.Error);
+                EditorGUILayout.HelpBox("You can't edit this type! Please choose another one.", MessageType.Error);
                 TriggerAction.CurrentGizmosDrawer = null;
                 return;
             }
 
-            GUILayout.Space(10);
-            GUILayout.Label("Data", EditorStyles.boldLabel);
-            renderer.DrawGUI(triggerAction);
+            EditorGUILayout.HelpBox(renderer.Description, MessageType.None);
+            DrawCheckboxes(triggerAction, data);
+            EditorGUILayout.Space(5);
+            triggerAction.ToggleData = EditorGUILayout.Foldout(triggerAction.ToggleData, "Data", true);
+            if (triggerAction.ToggleData)
+                renderer.DrawGUI(triggerAction);
             TriggerAction.CurrentGizmosDrawer = renderer is ISelectedGizmosDrawer gizmosDrawer ? gizmosDrawer.DrawGizmos : null;
         }
 
@@ -61,8 +72,10 @@ namespace Editor.sloc.TriggerActions {
             var types = ActionManager.TargetTypeValues.Where(v => v != TargetType.None && data.PossibleTargets.HasFlagFast(v)).ToArray();
             if (types.Length < 1)
                 return;
-            GUILayout.Space(10);
-            GUILayout.Label("Targets", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+            triggerAction.ToggleTargets = EditorGUILayout.Foldout(triggerAction.ToggleTargets, TargetsContent, true);
+            if (!triggerAction.ToggleTargets)
+                return;
             var value = data.SelectedTargets;
             foreach (var type in types) {
                 var active = EditorGUILayout.Toggle(type.ToString(), value.HasFlagFast(type));
@@ -79,11 +92,14 @@ namespace Editor.sloc.TriggerActions {
         }
 
         private static void DrawEventTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
-            GUILayout.Space(10);
-            GUILayout.Label("Trigger Events", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+            triggerAction.ToggleEvents = EditorGUILayout.Foldout(triggerAction.ToggleEvents, EventsContent, true);
+            if (!triggerAction.ToggleEvents)
+                return;
             var value = data.SelectedEvents;
             foreach (var type in ActionManager.EventTypeValues) {
-                var active = EditorGUILayout.Toggle(type.ToString(), value.HasFlagFast(type));
+                var content = EventDescriptions.GetValueOrDefault(type) ?? new GUIContent(type.ToString());
+                var active = EditorGUILayout.Toggle(content, value.HasFlagFast(type));
                 if (active)
                     value |= type;
                 else
@@ -102,6 +118,7 @@ namespace Editor.sloc.TriggerActions {
             TriggerActionType.MoveRelativeToSelf => triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero),
             TriggerActionType.KillPlayer => triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger."),
             TriggerActionType.TeleportToSpawnedObject => triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero),
+            TriggerActionType.TeleporterImmunity => triggerAction.tpImmunity ??= new TeleporterImmunityData(false, 1),
             _ => null
         };
 

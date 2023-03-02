@@ -75,7 +75,8 @@ namespace slocExporter {
             return objects;
         }
 
-        public static List<slocGameObject> ReadObjectsFromFile(string path, ProgressUpdater updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
+        public static List<slocGameObject> ReadObjectsFromFile(string path, ProgressUpdater updateProgress = null) =>
+            ReadObjects(File.OpenRead(path), true, updateProgress);
 
         #endregion
 
@@ -230,6 +231,8 @@ namespace slocExporter {
             return count < 0 ? 0 : count;
         }
 
+        public static float ReadShortAsFloat(this BinaryReader reader) => reader.ReadInt16() * TeleporterImmunityData.ShortToFloatMultiplier;
+
         #endregion
 
         #region BinaryWriter Extensions
@@ -253,6 +256,8 @@ namespace slocExporter {
             writer.Write(color.b);
             writer.Write(color.a);
         }
+
+        public static void WriteFloatAsShort(this BinaryWriter writer, float value) => writer.Write((ushort) Mathf.Floor(value * TeleporterImmunityData.FloatToShortMultiplier));
 
         #endregion
 

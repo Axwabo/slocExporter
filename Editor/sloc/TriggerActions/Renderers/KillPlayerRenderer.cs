@@ -6,6 +6,8 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
     public sealed class KillPlayerRenderer : ITriggerActionEditorRenderer {
 
+        public string Description => "Kills the player with a specified cause.";
+
         public void DrawGUI(TriggerAction instance) {
             GUILayout.Label("Death Cause:");
             var i = instance.killPlayer;
