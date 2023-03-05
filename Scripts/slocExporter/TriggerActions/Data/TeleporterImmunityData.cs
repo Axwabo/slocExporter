@@ -18,15 +18,19 @@ namespace slocExporter.TriggerActions.Data {
         public bool IsGlobal { get; set; }
 
         [field: SerializeField]
+        public ImmunityDurationMode DurationMode { get; set; }
+
+        [field: SerializeField]
         public float Duration { get; set; }
 
-        public TeleporterImmunityData(bool isGlobal, float duration) {
+        public TeleporterImmunityData(bool isGlobal, ImmunityDurationMode durationMode, float duration) {
             IsGlobal = isGlobal;
+            DurationMode = durationMode;
             Duration = duration;
         }
 
         protected override void WriteData(BinaryWriter writer) {
-            writer.Write(IsGlobal);
+            writer.Write(API.CombineSafe((byte) (IsGlobal ? 1 : 0), (byte) DurationMode));
             writer.WriteFloatAsShort(Duration);
         }
 

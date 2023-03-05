@@ -4,7 +4,6 @@ using System.IO;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using slocExporter.TriggerActions.Readers;
-using UnityEngine;
 
 namespace slocExporter.TriggerActions {
 
@@ -80,11 +79,6 @@ namespace slocExporter.TriggerActions {
             API.SplitSafe(combined, out var target, out var eventTypes);
             targetType = (TargetType) target;
             eventType = (TriggerEventType) eventTypes;
-        }
-
-        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options) {
-            position = reader.ReadVector();
-            options = (TeleportOptions) reader.ReadByte();
         }
 
         public static bool HasFlagFast(this TargetType targetType, TargetType flag) => (targetType & flag) == flag;

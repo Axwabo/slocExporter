@@ -118,7 +118,7 @@ namespace Editor.sloc.TriggerActions {
             TriggerActionType.MoveRelativeToSelf => triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero),
             TriggerActionType.KillPlayer => triggerAction.killPlayer ??= new KillPlayerData("Killed by your epic trigger."),
             TriggerActionType.TeleportToSpawnedObject => triggerAction.tpToSpawnedObject ??= new RuntimeTeleportToSpawnedObjectData(null, Vector3.zero),
-            TriggerActionType.TeleporterImmunity => triggerAction.tpImmunity ??= new TeleporterImmunityData(false, 1),
+            TriggerActionType.TeleporterImmunity => triggerAction.tpImmunity ??= new TeleporterImmunityData(false, ImmunityDurationMode.Absolute, 1),
             _ => null
         };
 

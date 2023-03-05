@@ -12,7 +12,7 @@ public sealed class InstanceList : List<KeyValuePair<int, slocGameObject>> {
         item = pair.Value as T;
         return item != null;
     }
-    
+
     public slocGameObject ObjectAt(int index) => this[index].Value;
 
 }
