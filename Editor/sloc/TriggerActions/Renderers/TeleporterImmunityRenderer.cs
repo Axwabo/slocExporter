@@ -20,9 +20,23 @@ namespace Editor.sloc.TriggerActions.Renderers {
 
         public void DrawGUI(TriggerAction instance) {
             var data = instance.tpImmunity;
-            data.IsGlobal = EditorGUILayout.Toggle("Is Global", data.IsGlobal);
-            data.DurationMode = (ImmunityDurationMode) EditorGUILayout.Popup(DurationLabel, (int) data.DurationMode, DurationContent);
-            data.Duration = EditorGUILayout.Slider("Duration (seconds)", data.Duration, 0, TeleporterImmunityData.MaxValue);
+            var global = EditorGUILayout.Toggle("Is Global", data.IsGlobal);
+            if (global != data.IsGlobal) {
+                Undo.RecordObject(instance, "Change Immunity Global Mode");
+                data.IsGlobal = global;
+            }
+
+            var mode = (ImmunityDurationMode) EditorGUILayout.Popup(DurationLabel, (int) data.DurationMode, DurationContent);
+            if (mode != data.DurationMode) {
+                Undo.RecordObject(instance, "Change Immunity Duration Mode");
+                data.DurationMode = mode;
+            }
+
+            var duration = EditorGUILayout.Slider("Duration (seconds)", data.Duration, 0, TeleporterImmunityData.MaxValue);
+            if (duration == data.Duration)
+                return;
+            Undo.RecordObject(instance, "Change Immunity Duration Time");
+            data.Duration = duration;
         }
 
     }
