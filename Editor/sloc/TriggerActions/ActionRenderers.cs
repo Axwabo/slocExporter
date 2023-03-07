@@ -13,7 +13,7 @@ namespace Editor.sloc.TriggerActions {
         public static readonly SimplePositionRenderer MoveRelativeToSelf = new(
             "Relative Position",
             i => i.moveRel,
-            "Moves the object relative to its current position."
+            "Moves the interacting object relative to its current position."
         );
 
         public static readonly TeleportToRoomRenderer TeleportToRoom = new();
