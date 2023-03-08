@@ -18,12 +18,12 @@ public static class slocImporter {
     private static string _filePath = "";
 
     public static bool UseExistingMaterials = true;
-    
-    public static bool SearchInColorsFolderOnly;
+
+    public static bool SearchInColorsFolderOnly = true;
 
     private static bool _inProgress;
 
-    public static void TryImport(Action<string, float> updateProgress = null) {
+    public static void TryImport(ProgressUpdater updateProgress = null) {
         if (_inProgress) {
             EditorUtility.DisplayDialog("slocImporter", "Import is already in progress", "OK");
             return;
@@ -41,15 +41,16 @@ public static class slocImporter {
             EditorUtility.DisplayDialog("Import complete", $"Imported {importedCount} GameObject(s) as {objectName}", "OK");
         } catch (Exception e) {
             Debug.LogError(e);
-            _inProgress = false;
             EditorUtility.DisplayDialog("slocImporter", "Import failed. See the debug log for details.", "OK");
+        } finally {
+            _inProgress = false;
         }
     }
 
-    private static void DoImport(out int importedCount, out string objectName, Action<string, float> updateProgress = null) {
-        EnsureDirectory();
-        API.SkipForAll = false;
-        API.CreateForAll = false;
+    private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null) {
+        EnsureColorsDirectoryExists();
+        MaterialHandler.SkipForAll = false;
+        MaterialHandler.CreateForAll = false;
         var lastView = SceneView.lastActiveSceneView;
         var cam = lastView ? lastView.camera : null;
         var camTransform = cam ? cam.transform : null;
@@ -57,11 +58,10 @@ public static class slocImporter {
         var parent = API.CreateObjectsFromFile(fullPath, out var spawned, camTransform ? camTransform.position + camTransform.forward * 3f : Vector3.zero, updateProgress: updateProgress);
         objectName = Path.GetFileNameWithoutExtension(fullPath);
         parent.name = $"Imported-{objectName}";
-        _inProgress = false;
         importedCount = spawned;
     }
 
-    private static void EnsureDirectory() {
+    private static void EnsureColorsDirectoryExists() {
         if (!Directory.Exists("Assets/Colors"))
             Directory.CreateDirectory("Assets/Colors");
     }

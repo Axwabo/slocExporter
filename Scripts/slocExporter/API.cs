@@ -5,8 +5,11 @@ using System.Linq;
 using System.Reflection;
 using slocExporter.Objects;
 using slocExporter.Readers;
-using UnityEditor;
+using slocExporter.TriggerActions;
+using slocExporter.TriggerActions.Data;
+using slocExporter.TriggerActions.Enums;
 using UnityEngine;
+using static slocExporter.MaterialHandler;
 
 namespace slocExporter {
 
@@ -14,16 +17,19 @@ namespace slocExporter {
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 3;
+        public const ushort slocVersion = 4;
+
+        public static readonly string CurrentVersion = "4.0.0";
 
         #region Reader Declarations
 
-        public static readonly IObjectReader DefaultReader = new Ver3Reader();
+        public static readonly IObjectReader DefaultReader = new Ver4Reader();
 
         private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new() {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
-            {3, new Ver3Reader()}
+            {3, new Ver3Reader()},
+            {4, new Ver4Reader()}
         };
 
         public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
@@ -34,7 +40,7 @@ namespace slocExporter {
 
         #region Read
 
-        private static readonly FieldInfo ReadPosField = typeof(BinaryReader).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo ReadPosField = typeof(BufferedStream).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // starting from v3, the version is only a ushort instead of a uint
         private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader) {
@@ -47,7 +53,7 @@ namespace slocExporter {
             return newVersion;
         }
 
-        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, Action<string, float> updateProgress = null) {
+        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, ProgressUpdater updateProgress = null) {
             var objects = new List<slocGameObject>();
             using var buffered = new BufferedStream(stream, 4);
             var binaryReader = new BinaryReader(buffered);
@@ -69,26 +75,28 @@ namespace slocExporter {
             return objects;
         }
 
-        public static List<slocGameObject> ReadObjectsFromFile(string path, Action<string, float> updateProgress = null) => ReadObjects(File.OpenRead(path), true, updateProgress);
+        public static List<slocGameObject> ReadObjectsFromFile(string path, ProgressUpdater updateProgress = null) =>
+            ReadObjects(File.OpenRead(path), true, updateProgress);
 
         #endregion
 
         #region Create
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch {
-            PrimitiveObject primitive => CreatePrimitive(obj, parent, primitive),
-            LightObject light => CreateLight(obj, parent, light),
+            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            LightObject light => CreateLight(parent, light),
             EmptyObject => CreateEmpty(obj, parent),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
-        private static GameObject CreatePrimitive(slocGameObject obj, GameObject parent, PrimitiveObject primitive) {
+        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive) {
             var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
             toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(obj.Transform);
+            toy.SetLocalTransform(primitive.Transform);
             var colliderMode = primitive.ColliderMode;
             if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
                 toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
+            AddTriggerActionComponents(primitive.TriggerActions, toy);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
                 if (handle)
                     HandleNoMaterial(primitive, toy);
@@ -99,7 +107,15 @@ namespace slocExporter {
             return toy;
         }
 
-        private static GameObject CreateLight(slocGameObject obj, GameObject parent, LightObject light) {
+        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject) {
+            foreach (var data in actions)
+                if (data is SerializableTeleportToSpawnedObjectData tp)
+                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
+                else
+                    gameObject.AddComponent<TriggerAction>().SetData(data);
+        }
+
+        private static GameObject CreateLight(GameObject parent, LightObject light) {
             var toy = new GameObject("Point Light");
             var lightComponent = toy.AddComponent<Light>();
             lightComponent.color = light.LightColor;
@@ -107,7 +123,7 @@ namespace slocExporter {
             lightComponent.range = light.Range;
             lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
             toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(obj.Transform);
+            toy.SetLocalTransform(light.Transform);
             return toy;
         }
 
@@ -118,99 +134,67 @@ namespace slocExporter {
             return emptyObject;
         }
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) {
-            var go = new GameObject {
-                transform = {
-                    position = position,
-                    rotation = rotation
-                }
-            };
-            var created = 0;
-            var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
-            var processed = 0;
-            var isCountKnown = total > 0;
-            var floatTotal = (float) total;
-            var createdInstances = new Dictionary<int, GameObject>();
-            updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
-            foreach (var o in objects) {
-                var gameObject = o.CreateObject(o.HasParent && createdInstances.TryGetValue(o.ParentId, out var parentInstance) ? parentInstance : go, false);
-                if (gameObject != null) {
-                    createdInstances[o.InstanceId] = gameObject;
-                    created++;
-                }
+        private static readonly InstanceDictionary<GameObject> CreatedInstances = new();
 
-                processed++;
-                updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
-            }
+        private static readonly Dictionary<GameObject, List<SerializableTeleportToSpawnedObjectData>> TpToSpawnedCache = new();
 
-            createdAmount = created;
-            return go;
-        }
-
-        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
-
-        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, Action<string, float> updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
-
-        #endregion
-
-        #region Material Handling
-
-        public static bool CreateForAll;
-        public static bool SkipForAll;
-
-        public static void HandleNoMaterial(PrimitiveObject primitive, GameObject created) {
-            if (SkipForAll)
-                return;
-            var result = EditorUtility.DisplayDialogComplex("No Material", "No material found for color " + primitive.MaterialColor + ".\nCreate it now?", "Create", "Create for All", "Skip");
-            switch (result) {
-                case 0:
-                case 1:
-                    CreateMaterial(primitive.MaterialColor, out var mat);
-                    created.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                    break;
-                case 2:
-                    if (!EditorUtility.DisplayDialog("Skip", "Do you want to skip creating materials for all objects?", "Skip only this", "Skip for All"))
-                        SkipForAll = true;
-                    break;
-            }
-
-            if (result == 1)
-                CreateForAll = true;
-        }
-
-        public static bool TryGetMaterial(Color color, out Material material, out bool handle) {
-            handle = true;
-            material = null;
-            if (slocImporter.UseExistingMaterials)
-                foreach (var e in AssetDatabase.FindAssets("t:material", slocImporter.SearchInColorsFolderOnly ? new[] {"Assets/Colors"} : null)) {
-                    var asset = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(e));
-                    if (!asset.mainTexture && asset.color == color) {
-                        material = asset;
-                        break;
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
+            CreatedInstances.Clear();
+            TpToSpawnedCache.Clear();
+            try {
+                var go = new GameObject {
+                    transform = {
+                        position = position,
+                        rotation = rotation
+                    }
+                };
+                var created = 0;
+                var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
+                var processed = 0;
+                var isCountKnown = total > 0;
+                var floatTotal = (float) total;
+                ClearMaterialCache();
+                updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
+                foreach (var o in objects) {
+                    var gameObject = o.CreateObject(CreatedInstances.GetOrReturn(o.ParentId, go, o.HasParent), false);
+                    if (gameObject != null) {
+                        CreatedInstances[o.InstanceId] = gameObject;
+                        created++;
                     }
 
-                    EditorUtility.UnloadUnusedAssetsImmediate();
+                    processed++;
+                    updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
                 }
 
-            if (material != null)
-                return true;
-            if (SkipForAll || !CreateForAll) {
-                handle = !CreateForAll;
-                return false;
+                PostProcessSpecialTriggerActions();
+                ClearMaterialCache();
+                createdAmount = created;
+                return go;
+            } finally {
+                CreatedInstances.Clear();
+                TpToSpawnedCache.Clear();
             }
-
-            CreateMaterial(color, out material);
-            return true;
         }
 
-        private static void CreateMaterial(Color color, out Material material) {
-            material = new Material(Shader.Find("Standard")) {
-                color = color
-            };
-            AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
+        private static void PostProcessSpecialTriggerActions() {
+            foreach (var (o, list) in TpToSpawnedCache)
+            foreach (var data in list) {
+                if (!CreatedInstances.TryGetValue(data.ID, out var target))
+                    continue;
+                var component = o.AddComponent<TriggerAction>();
+                component.type = TriggerActionType.TeleportToSpawnedObject;
+                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset) {
+                    SelectedTargets = data.SelectedTargets,
+                    Options = data.Options
+                };
+            }
         }
+
+        public static GameObject CreateObjectsFromStream(Stream objects, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjects(objects), out spawnedAmount, position, rotation, updateProgress);
+
+        public static GameObject CreateObjectsFromFile(string path, out int spawnedAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(ReadObjectsFromFile(path, updateProgress), out spawnedAmount, position, rotation, updateProgress);
 
         #endregion
 
@@ -245,6 +229,54 @@ namespace slocExporter {
         public static int ReadObjectCount(this BinaryReader reader) {
             var count = reader.ReadInt32();
             return count < 0 ? 0 : count;
+        }
+
+        public static float ReadShortAsFloat(this BinaryReader reader) => reader.ReadInt16() * TeleporterImmunityData.ShortToFloatMultiplier;
+
+        #endregion
+
+        #region BinaryWriter Extensions
+
+        public static void WriteVector(this BinaryWriter writer, Vector3 vector3) {
+            writer.Write(vector3.x);
+            writer.Write(vector3.y);
+            writer.Write(vector3.z);
+        }
+
+        public static void WriteQuaternion(this BinaryWriter writer, Quaternion quaternion) {
+            writer.Write(quaternion.x);
+            writer.Write(quaternion.y);
+            writer.Write(quaternion.z);
+            writer.Write(quaternion.w);
+        }
+
+        public static void WriteColor(this BinaryWriter writer, Color color) {
+            writer.Write(color.r);
+            writer.Write(color.g);
+            writer.Write(color.b);
+            writer.Write(color.a);
+        }
+
+        public static void WriteFloatAsShort(this BinaryWriter writer, float value) => writer.Write((ushort) Mathf.Floor(value * TeleporterImmunityData.FloatToShortMultiplier));
+
+        #endregion
+
+        #region Bit Math
+
+        public static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
+            (PrimitiveObject.ColliderCreationMode) CombineSafe((byte) a, (byte) b);
+
+        public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b) {
+            SplitSafe((byte) combined, out var x, out var y);
+            a = (PrimitiveObject.ColliderCreationMode) x;
+            b = (PrimitiveObject.ColliderCreationMode) y;
+        }
+
+        public static byte CombineSafe(byte a, byte b) => (byte) (a << 4 | b);
+
+        public static void SplitSafe(byte combined, out byte a, out byte b) {
+            a = (byte) (combined >> 4);
+            b = (byte) (combined & 0xF);
         }
 
         #endregion
@@ -287,7 +319,17 @@ namespace slocExporter {
 
         public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
 
+        public static bool IsTrigger(this PrimitiveObject.ColliderCreationMode colliderMode) => colliderMode is PrimitiveObject.ColliderCreationMode.Trigger or PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger;
+
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
+
+        public static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> factory) {
+            if (dictionary.TryGetValue(key, out var value))
+                return value;
+            value = factory();
+            dictionary.Add(key, value);
+            return value;
+        }
 
     }
 
