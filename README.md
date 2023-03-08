@@ -6,7 +6,7 @@ Use the [slocLoader](https://github.com/Axwabo/slocLoader/) plugin to load them 
 
 ![Logo](https://github.com/Axwabo/slocLoader/blob/main/logo%20small.png?raw=true)
 
-[Watch the tutorial](https://youtu.be/nw5TH3bg8ok)
+[Watch the tutorial](https://youtu.be/jYsduSyncSw)
 
 # MapEditorReborn
 
@@ -32,7 +32,7 @@ To create an **sloc** file, add the **ObjectExporter** script to an empty object
 # Setup
 
 1. Download the archive from the [releases page](https://github.com/Axwabo/slocExporter/releases/latest/)
-2. Extract the archive to your Unity project's **Assets** folder
+2. Extract the archive to your Unity project's `Assets` folder
 3. Build your scene using primitive objects ang lights
 4. On the toolbar, navigate to `sloc`, then `Export`
 5. Enter the path to export to (or click **Select File**)
