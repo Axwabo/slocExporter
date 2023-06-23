@@ -11,21 +11,24 @@ using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
 
-namespace slocExporter {
+namespace slocExporter
+{
 
-    public static class API {
+    public static class API
+    {
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
         public const ushort slocVersion = 4;
 
-        public static readonly string CurrentVersion = "4.0.0";
+        public static readonly string CurrentVersion = "4.0.1";
 
         #region Reader Declarations
 
         public static readonly IObjectReader DefaultReader = new Ver4Reader();
 
-        private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new() {
+        private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new()
+        {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
             {3, new Ver3Reader()},
@@ -43,7 +46,8 @@ namespace slocExporter {
         private static readonly FieldInfo ReadPosField = typeof(BufferedStream).GetField("_readPos", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // starting from v3, the version is only a ushort instead of a uint
-        private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader) {
+        private static ushort ReadVersionSafe(BufferedStream buffered, BinaryReader binaryReader)
+        {
             var newVersion = binaryReader.ReadUInt16();
             var oldVersion = binaryReader.ReadUInt16();
             if (oldVersion is 0)
@@ -53,7 +57,8 @@ namespace slocExporter {
             return newVersion;
         }
 
-        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, ProgressUpdater updateProgress = null) {
+        public static List<slocGameObject> ReadObjects(Stream stream, bool autoClose = true, ProgressUpdater updateProgress = null)
+        {
             var objects = new List<slocGameObject>();
             using var buffered = new BufferedStream(stream, 4);
             var binaryReader = new BinaryReader(buffered);
@@ -63,7 +68,8 @@ namespace slocExporter {
             var header = reader.ReadHeader(binaryReader);
             var count = header.ObjectCount;
             var floatCount = (float) count;
-            for (var i = 0; i < count; i++) {
+            for (var i = 0; i < count; i++)
+            {
                 var obj = ReadObject(binaryReader, header, version, reader);
                 if (obj is {IsValid: true})
                     objects.Add(obj);
@@ -82,14 +88,16 @@ namespace slocExporter {
 
         #region Create
 
-        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch {
+        public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
+        {
             PrimitiveObject primitive => CreatePrimitive(parent, primitive),
             LightObject light => CreateLight(parent, light),
             EmptyObject => CreateEmpty(obj, parent),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
-        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive) {
+        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
+        {
             var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(primitive.Transform);
@@ -97,7 +105,8 @@ namespace slocExporter {
             if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
                 toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
             AddTriggerActionComponents(primitive.TriggerActions, toy);
-            if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle)) {
+            if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
+            {
                 if (handle)
                     HandleNoMaterial(primitive, toy);
                 return toy;
@@ -107,7 +116,8 @@ namespace slocExporter {
             return toy;
         }
 
-        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject) {
+        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject)
+        {
             foreach (var data in actions)
                 if (data is SerializableTeleportToSpawnedObjectData tp)
                     TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
@@ -115,7 +125,8 @@ namespace slocExporter {
                     gameObject.AddComponent<TriggerAction>().SetData(data);
         }
 
-        private static GameObject CreateLight(GameObject parent, LightObject light) {
+        private static GameObject CreateLight(GameObject parent, LightObject light)
+        {
             var toy = new GameObject("Point Light");
             var lightComponent = toy.AddComponent<Light>();
             lightComponent.color = light.LightColor;
@@ -127,7 +138,8 @@ namespace slocExporter {
             return toy;
         }
 
-        private static GameObject CreateEmpty(slocGameObject obj, GameObject parent) {
+        private static GameObject CreateEmpty(slocGameObject obj, GameObject parent)
+        {
             var emptyObject = new GameObject("Empty");
             emptyObject.SetAbsoluteTransformFrom(parent);
             emptyObject.SetLocalTransform(obj.Transform);
@@ -140,12 +152,16 @@ namespace slocExporter {
 
         private static readonly Dictionary<GameObject, List<SerializableTeleportToSpawnedObjectData>> TpToSpawnedCache = new();
 
-        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) {
+        public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, out int createdAmount, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null)
+        {
             CreatedInstances.Clear();
             TpToSpawnedCache.Clear();
-            try {
-                var go = new GameObject {
-                    transform = {
+            try
+            {
+                var go = new GameObject
+                {
+                    transform =
+                    {
                         position = position,
                         rotation = rotation
                     }
@@ -157,9 +173,11 @@ namespace slocExporter {
                 var floatTotal = (float) total;
                 ClearMaterialCache();
                 updateProgress?.Invoke("Creating objects", isCountKnown ? 0 : -1);
-                foreach (var o in objects) {
+                foreach (var o in objects)
+                {
                     var gameObject = o.CreateObject(CreatedInstances.GetOrReturn(o.ParentId, go, o.HasParent), false);
-                    if (gameObject != null) {
+                    if (gameObject != null)
+                    {
                         CreatedInstances[o.InstanceId] = gameObject;
                         created++;
                     }
@@ -169,23 +187,28 @@ namespace slocExporter {
                 }
 
                 PostProcessSpecialTriggerActions();
-                ClearMaterialCache();
                 createdAmount = created;
                 return go;
-            } finally {
+            }
+            finally
+            {
+                ClearMaterialCache();
                 CreatedInstances.Clear();
                 TpToSpawnedCache.Clear();
             }
         }
 
-        private static void PostProcessSpecialTriggerActions() {
+        private static void PostProcessSpecialTriggerActions()
+        {
             foreach (var (o, list) in TpToSpawnedCache)
-            foreach (var data in list) {
+            foreach (var data in list)
+            {
                 if (!CreatedInstances.TryGetValue(data.ID, out var target))
                     continue;
                 var component = o.AddComponent<TriggerAction>();
                 component.type = TriggerActionType.TeleportToSpawnedObject;
-                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset) {
+                component.tpToSpawnedObject = new RuntimeTeleportToSpawnedObjectData(target, data.Offset)
+                {
                     SelectedTargets = data.SelectedTargets,
                     Options = data.Options
                 };
@@ -200,12 +223,14 @@ namespace slocExporter {
 
         #region BinaryReader Extensions
 
-        public static slocGameObject ReadObject(this BinaryReader stream, slocHeader header, ushort version = 0, IObjectReader objectReader = null) {
+        public static slocGameObject ReadObject(this BinaryReader stream, slocHeader header, ushort version = 0, IObjectReader objectReader = null)
+        {
             objectReader ??= GetReader(version);
             return objectReader.Read(stream, header);
         }
 
-        public static slocTransform ReadTransform(this BinaryReader reader) => new() {
+        public static slocTransform ReadTransform(this BinaryReader reader) => new()
+        {
             Position = reader.ReadVector(),
             Scale = reader.ReadVector(),
             Rotation = reader.ReadQuaternion()
@@ -217,7 +242,8 @@ namespace slocExporter {
 
         public static Color ReadColor(this BinaryReader reader) => new(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
-        public static Color ReadLossyColor(this BinaryReader reader) {
+        public static Color ReadLossyColor(this BinaryReader reader)
+        {
             var color = reader.ReadInt32();
             var red = color >> 24 & 0xFF;
             var green = color >> 16 & 0xFF;
@@ -226,7 +252,8 @@ namespace slocExporter {
             return new Color(red * ColorDivisionMultiplier, green * ColorDivisionMultiplier, blue * ColorDivisionMultiplier, alpha * ColorDivisionMultiplier);
         }
 
-        public static int ReadObjectCount(this BinaryReader reader) {
+        public static int ReadObjectCount(this BinaryReader reader)
+        {
             var count = reader.ReadInt32();
             return count < 0 ? 0 : count;
         }
@@ -237,20 +264,23 @@ namespace slocExporter {
 
         #region BinaryWriter Extensions
 
-        public static void WriteVector(this BinaryWriter writer, Vector3 vector3) {
+        public static void WriteVector(this BinaryWriter writer, Vector3 vector3)
+        {
             writer.Write(vector3.x);
             writer.Write(vector3.y);
             writer.Write(vector3.z);
         }
 
-        public static void WriteQuaternion(this BinaryWriter writer, Quaternion quaternion) {
+        public static void WriteQuaternion(this BinaryWriter writer, Quaternion quaternion)
+        {
             writer.Write(quaternion.x);
             writer.Write(quaternion.y);
             writer.Write(quaternion.z);
             writer.Write(quaternion.w);
         }
 
-        public static void WriteColor(this BinaryWriter writer, Color color) {
+        public static void WriteColor(this BinaryWriter writer, Color color)
+        {
             writer.Write(color.r);
             writer.Write(color.g);
             writer.Write(color.b);
@@ -266,7 +296,8 @@ namespace slocExporter {
         public static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
             (PrimitiveObject.ColliderCreationMode) CombineSafe((byte) a, (byte) b);
 
-        public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b) {
+        public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b)
+        {
             SplitSafe((byte) combined, out var x, out var y);
             a = (PrimitiveObject.ColliderCreationMode) x;
             b = (PrimitiveObject.ColliderCreationMode) y;
@@ -274,14 +305,16 @@ namespace slocExporter {
 
         public static byte CombineSafe(byte a, byte b) => (byte) (a << 4 | b);
 
-        public static void SplitSafe(byte combined, out byte a, out byte b) {
+        public static void SplitSafe(byte combined, out byte a, out byte b)
+        {
             a = (byte) (combined >> 4);
             b = (byte) (combined & 0xF);
         }
 
         #endregion
 
-        public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch {
+        public static PrimitiveType ToPrimitiveType(this ObjectType type) => type switch
+        {
             ObjectType.Cube => PrimitiveType.Cube,
             ObjectType.Sphere => PrimitiveType.Sphere,
             ObjectType.Capsule => PrimitiveType.Capsule,
@@ -291,12 +324,14 @@ namespace slocExporter {
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "A non-primitive type was supplied")
         };
 
-        public static void SetAbsoluteTransformFrom(this GameObject o, GameObject parent) {
+        public static void SetAbsoluteTransformFrom(this GameObject o, GameObject parent)
+        {
             if (parent != null)
                 o.transform.SetParent(parent.transform, false);
         }
 
-        public static void SetLocalTransform(this GameObject o, slocTransform transform) {
+        public static void SetLocalTransform(this GameObject o, slocTransform transform)
+        {
             if (o == null)
                 return;
             var t = o.transform;
@@ -323,7 +358,8 @@ namespace slocExporter {
 
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
 
-        public static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> factory) {
+        public static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> factory)
+        {
             if (dictionary.TryGetValue(key, out var value))
                 return value;
             value = factory();

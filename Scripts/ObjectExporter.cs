@@ -16,14 +16,16 @@ using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 // ReSharper disable SuggestBaseTypeForParameter
-public static class ObjectExporter {
+public static class ObjectExporter
+{
 
     #region Primitives and Constants
 
     public const string ExporterIgnoredTag = "slocExporter Ignored";
     public const string RoomTag = "Room";
 
-    public static readonly Dictionary<Regex, ObjectType> PrimitiveTypes = new Dictionary<string, ObjectType> {
+    public static readonly Dictionary<Regex, ObjectType> PrimitiveTypes = new Dictionary<string, ObjectType>
+    {
         {"Cube", ObjectType.Cube},
         {"Cylinder", ObjectType.Cylinder},
         {"Sphere", ObjectType.Sphere},
@@ -48,7 +50,8 @@ public static class ObjectExporter {
 
     private static bool _inProgress;
 
-    public static bool Init(bool debug, string filePath, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderCreationMode) {
+    public static bool Init(bool debug, string filePath, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderCreationMode)
+    {
         if (_inProgress)
             return false;
         _debug = debug;
@@ -62,30 +65,39 @@ public static class ObjectExporter {
 
     #region Main Export Process
 
-    public static void TryExport(bool selectedOnly, ProgressUpdater updateProgress = null) {
-        if (_inProgress) {
+    public static void TryExport(bool selectedOnly, ProgressUpdater updateProgress = null)
+    {
+        if (_inProgress)
+        {
             EditorUtility.DisplayDialog("slocExporter", "Export is already in progress", "OK");
             return;
         }
 
-        if (string.IsNullOrEmpty(_fileName)) {
+        if (string.IsNullOrEmpty(_fileName))
+        {
             EditorUtility.DisplayDialog("slocExporter", "You must specify a path to export to!", "OK");
             return;
         }
 
         _inProgress = true;
-        try {
+        try
+        {
             DoExport(selectedOnly, out var exportedCount, updateProgress);
             EditorUtility.DisplayDialog("slocExporter", $"Export complete.\nsloc created with {exportedCount} GameObject(s).", "OK");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             Debug.LogError(e);
             EditorUtility.DisplayDialog("slocExporter", "Export failed. See the Debug log for details.", "OK");
-        } finally {
+        }
+        finally
+        {
             _inProgress = false;
         }
     }
 
-    private static void DoExport(bool selectedOnly, out int exportedCount, ProgressUpdater updateProgress = null) {
+    private static void DoExport(bool selectedOnly, out int exportedCount, ProgressUpdater updateProgress = null)
+    {
         var stopwatch = Stopwatch.StartNew();
         var file = (_fileName.EndsWith(".sloc") ? _fileName : $"{_fileName}.sloc").ToFullAppDataPath();
         var attributes = _attributes;
@@ -101,18 +113,22 @@ public static class ObjectExporter {
         var allObjectsCount = allObjects.Length;
         var floatObjectsCount = (float) allObjectsCount;
         Log($"Found {allObjectsCount} objects in total.");
-        for (var i = 0; i < allObjectsCount; i++) {
+        for (var i = 0; i < allObjectsCount; i++)
+        {
             var o = allObjects[i];
             var progressString = $"Processing objects ({i + 1} of {allObjectsCount})";
             var progressValue = i / floatObjectsCount;
-            if (IsTaggedAsIgnored(o)) {
+            if (IsTaggedAsIgnored(o))
+            {
                 Log($"Skipped object {o.name} because it's tagged as {ExporterIgnoredTag}");
                 updateProgress?.Invoke(progressString, progressValue);
                 continue;
             }
 
-            foreach (var component in o.GetComponents<Component>()) {
-                var skip = component switch {
+            foreach (var component in o.GetComponents<Component>())
+            {
+                var skip = component switch
+                {
                     ExporterIgnored => IgnoreObject(o, objectsById),
                     Collider collider => ProcessCollider(defaultMode, o, collider, colliders),
                     ColliderModeSetter setter => SetMode(o, setter, colliders),
@@ -145,7 +161,8 @@ public static class ObjectExporter {
         exportedCount = nonEmpty.Count;
     }
 
-    private static void EnsureDirectoryExists(string file) {
+    private static void EnsureDirectoryExists(string file)
+    {
         if (string.IsNullOrEmpty(file))
             return;
         var dir = Path.GetDirectoryName(file);
@@ -153,7 +170,8 @@ public static class ObjectExporter {
             Directory.CreateDirectory(dir);
     }
 
-    private static void WriteObjects(string file, InstanceList nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, ProgressUpdater updateProgress = null) {
+    private static void WriteObjects(string file, InstanceList nonEmpty, slocAttributes attributes, PrimitiveObject.ColliderCreationMode colliderMode, ProgressUpdater updateProgress = null)
+    {
         updateProgress?.Invoke("Writing objects", 0);
         var writer = new BinaryWriter(File.Open(file, FileMode.Create), Encoding.UTF8);
         writer.Write(API.slocVersion);
@@ -161,7 +179,8 @@ public static class ObjectExporter {
         var header = new slocHeader(API.slocVersion, count, attributes, colliderMode);
         header.WriteTo(writer);
         var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++)
+        {
             nonEmpty.ObjectAt(i).WriteTo(writer, header);
             updateProgress?.Invoke($"Writing objects ({i + 1} of {count})", i / floatCount);
         }
@@ -173,20 +192,25 @@ public static class ObjectExporter {
 
     #region Basic Methods
 
-    private static void Log(object o) {
+    private static void Log(object o)
+    {
         if (_debug)
             Debug.Log(o);
     }
 
-    private static void LogWarning(object o) {
+    private static void LogWarning(object o)
+    {
         if (_debug)
             Debug.LogWarning(o);
     }
 
-    private static GameObject[] GetObjects(bool selectedOnly) {
+    private static GameObject[] GetObjects(bool selectedOnly)
+    {
         var list = new List<GameObject>();
-        if (!selectedOnly) {
-            foreach (var obj in Object.FindObjectsOfType<GameObject>()) {
+        if (!selectedOnly)
+        {
+            foreach (var obj in Object.FindObjectsOfType<GameObject>())
+            {
                 if (obj.transform.parent != null)
                     continue;
                 list.AddRange(obj.WithAllChildren());
@@ -201,25 +225,29 @@ public static class ObjectExporter {
         return list.ToArray();
     }
 
-    private static void CheckIfEmpty(GameObject o, InstanceDictionary<slocGameObject> objectList) {
+    private static void CheckIfEmpty(GameObject o, InstanceDictionary<slocGameObject> objectList)
+    {
         var id = o.GetInstanceID();
         if (objectList.ContainsKey(id))
             return;
         var oTransform = o.transform;
         var parent = oTransform.parent;
         if (oTransform.childCount > 0)
-            objectList[id] = new EmptyObject(id) {
+            objectList[id] = new EmptyObject(id)
+            {
                 ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
                 Transform = oTransform
             };
     }
 
-    private static bool IsTaggedAsIgnored(GameObject gameObject) {
+    private static bool IsTaggedAsIgnored(GameObject gameObject)
+    {
         var root = gameObject.transform.root.gameObject;
-        return gameObject.CompareTag(ExporterIgnoredTag) || gameObject.TryGetComponent(out ExporterIgnored _) || root.CompareTag(RoomTag) || root.CompareTag(ExporterIgnoredTag) || root.TryGetComponent(out ExporterIgnored _);
+        return gameObject.tag is ExporterIgnoredTag || gameObject.TryGetComponent(out ExporterIgnored _) || root.tag is RoomTag || root.tag is ExporterIgnoredTag || root.TryGetComponent(out ExporterIgnored _);
     }
 
-    private static bool IgnoreObject(GameObject gameObject, InstanceDictionary<slocGameObject> objectsById) {
+    private static bool IgnoreObject(GameObject gameObject, InstanceDictionary<slocGameObject> objectsById)
+    {
         Log($"{gameObject.name} is flagged as ExporterIgnored");
         objectsById.Remove(gameObject.GetInstanceID());
         return true;
@@ -229,7 +257,8 @@ public static class ObjectExporter {
 
     #region Behavior Processors
 
-    private static bool AddTriggerAction(GameObject o, TriggerAction action, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions) {
+    private static bool AddTriggerAction(GameObject o, TriggerAction action, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions)
+    {
         var selected = action.SelectedData;
         if (selected == null)
             return false;
@@ -238,7 +267,8 @@ public static class ObjectExporter {
         return false;
     }
 
-    private static bool ProcessCollider(PrimitiveObject.ColliderCreationMode defaultMode, GameObject o, Collider collider, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes) {
+    private static bool ProcessCollider(PrimitiveObject.ColliderCreationMode defaultMode, GameObject o, Collider collider, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes)
+    {
         if (defaultMode is not PrimitiveObject.ColliderCreationMode.Unset)
             return false;
         var id = o.GetInstanceID();
@@ -247,12 +277,14 @@ public static class ObjectExporter {
         return false;
     }
 
-    private static bool ProcessLight(GameObject o, Light l, InstanceDictionary<slocGameObject> objectList) {
+    private static bool ProcessLight(GameObject o, Light l, InstanceDictionary<slocGameObject> objectList)
+    {
         Log("Found light " + l.name);
         var oTransform = o.transform;
         var id = o.GetInstanceID();
         var parent = oTransform.parent;
-        objectList.Add(id, new LightObject(id) {
+        objectList.Add(id, new LightObject(id)
+        {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
             Transform = oTransform,
             LightColor = l.color,
@@ -263,15 +295,18 @@ public static class ObjectExporter {
         return false;
     }
 
-    private static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, InstanceDictionary<MeshRenderer> renderers) {
+    private static bool ProcessRenderer(GameObject o, MeshRenderer meshRenderer, InstanceDictionary<MeshRenderer> renderers)
+    {
         Log("Found MeshRenderer " + meshRenderer.name);
         renderers[o.GetInstanceID()] = meshRenderer;
         return false;
     }
 
-    private static bool ProcessMeshFilter(GameObject o, MeshFilter filter, InstanceDictionary<slocGameObject> objectList) {
+    private static bool ProcessMeshFilter(GameObject o, MeshFilter filter, InstanceDictionary<slocGameObject> objectList)
+    {
         var mesh = filter.sharedMesh;
-        if (mesh == null) {
+        if (mesh == null)
+        {
             LogWarning($"{o.name} has no mesh");
             return true;
         }
@@ -279,7 +314,8 @@ public static class ObjectExporter {
         var meshName = mesh.name;
         Log($"Found MeshFilter with mesh name {meshName}");
         var type = FindObjectType(meshName);
-        if (type == ObjectType.None) {
+        if (type == ObjectType.None)
+        {
             Log("Mesh does not match any known primitive type, skipping GameObject " + o.name);
             return true;
         }
@@ -288,14 +324,17 @@ public static class ObjectExporter {
         var t = o.transform;
         var id = o.GetInstanceID();
         var parent = t.parent;
-        objectList[id] = new PrimitiveObject(id, type) {
+        objectList[id] = new PrimitiveObject(id, type)
+        {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-            Transform = t
+            Transform = t,
+            ColliderMode = PrimitiveObject.ColliderCreationMode.Unset
         };
         return false;
     }
 
-    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, InstanceDictionary<PrimitiveObject.ColliderCreationMode> colliderCreationModes) {
+    private static bool SetMode(GameObject gameObject, ColliderModeSetter setter, InstanceDictionary<PrimitiveObject.ColliderCreationMode> colliderCreationModes)
+    {
         var mode = setter.mode;
         if (mode is PrimitiveObject.ColliderCreationMode.Unset)
             return false;
@@ -309,12 +348,14 @@ public static class ObjectExporter {
 
     #region Post-Processing
 
-    private static void RenderersToMaterials(InstanceDictionary<MeshRenderer> renderers, InstanceDictionary<slocGameObject> objectList, ProgressUpdater updateProgress = null) {
+    private static void RenderersToMaterials(InstanceDictionary<MeshRenderer> renderers, InstanceDictionary<slocGameObject> objectList, ProgressUpdater updateProgress = null)
+    {
         updateProgress?.Invoke("Setting materials", 0);
         var list = renderers.ToList();
         var count = list.Count;
         var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++)
+        {
             updateProgress?.Invoke($"Setting materials ({i + 1} of {count})", i / floatCount);
             var (id, r) = list[i];
             var mat = r.sharedMaterial;
@@ -325,10 +366,12 @@ public static class ObjectExporter {
         }
     }
 
-    private static void SetColliderModes(InstanceList objects, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes, ProgressUpdater updateProgress) {
+    private static void SetColliderModes(InstanceList objects, InstanceDictionary<PrimitiveObject.ColliderCreationMode> modes, ProgressUpdater updateProgress)
+    {
         var count = objects.Count;
         var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++)
+        {
             updateProgress?.Invoke($"Setting collider modes ({i + 1} of {count})", i / floatCount);
             if (!objects.TryGet(i, out var id, out PrimitiveObject p) || !modes.TryGetValue(id, out var mode))
                 continue;
@@ -337,10 +380,12 @@ public static class ObjectExporter {
         }
     }
 
-    private static void SetTriggerActions(InstanceList objects, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions, ProgressUpdater updateProgress) {
+    private static void SetTriggerActions(InstanceList objects, InstanceDictionary<List<BaseTriggerActionData>> runtimeTriggerActions, ProgressUpdater updateProgress)
+    {
         var count = objects.Count;
         var floatCount = (float) count;
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++)
+        {
             updateProgress?.Invoke($"Setting trigger actions ({i + 1} of {count})", i / floatCount);
             if (!objects.TryGet(i, out var id, out PrimitiveObject p))
                 continue;
