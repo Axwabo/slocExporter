@@ -17,7 +17,7 @@ Laboratory.
 
 [Check out MapEditorReborn here](https://discord.gg/JwAfeSd79u)
 
-# What is an sloc?
+# What is sloc?
 
 **sloc** stands for **S**ecret **L**aboratory **O**bject **C**ontainer.
 
