@@ -19,7 +19,7 @@ namespace slocExporter
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 4;
+        public const ushort slocVersion = 5;
 
         public static string CurrentVersion = "4.0.1";
 
@@ -32,7 +32,8 @@ namespace slocExporter
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
             {3, new Ver3Reader()},
-            {4, new Ver4Reader()}
+            {4, new Ver4Reader()},
+            {5, new Ver5Reader()}
         };
 
         public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
