@@ -50,13 +50,13 @@ public static class ObjectExporter
         {"da8fd4315d23e984fa861e05c4e0f3cc", StructureObject.StructureType.MiscellaneousLocker},
         {"581e190a7fcffe14b8ed1f3b72d4719d", StructureObject.StructureType.RifleRack},
         {"4a1fa0d57462cb34db76e55e9de544fc", StructureObject.StructureType.Scp018Pedestal},
+        {"cb1f8708ad190734ba785b3cdafafb66", StructureObject.StructureType.Scp207Pedestal},
+        {"c960034df4c76fe4f8a3cd08a58d883c", StructureObject.StructureType.Scp244Pedestal},
+        {"17a2b65d1966ef041aac04e61ec852f6", StructureObject.StructureType.Scp268Pedestal},
+        {"d38194e63b3da2b4a80979c17f887d0b", StructureObject.StructureType.Scp500Pedestal},
         {"41460fe253b9dd2438beb331ddc0ca25", StructureObject.StructureType.Scp1576Pedestal},
         {"8e1c86dc26ed42e4eb519aedd0e9fcd1", StructureObject.StructureType.Scp1853Pedestal},
         {"6ad060242329d2d46ab64c47fd417146", StructureObject.StructureType.Scp2176Pedestal},
-        {"c960034df4c76fe4f8a3cd08a58d883c", StructureObject.StructureType.Scp244Pedestal},
-        {"cb1f8708ad190734ba785b3cdafafb66", StructureObject.StructureType.Scp244Pedestal},
-        {"17a2b65d1966ef041aac04e61ec852f6", StructureObject.StructureType.Scp268Pedestal},
-        {"d38194e63b3da2b4a80979c17f887d0b", StructureObject.StructureType.Scp500Pedestal},
         {"b39d8037aa87d5348af5c3ad54251890", StructureObject.StructureType.SportTarget},
         {"67777259bd9055040bc1be50789f9624", StructureObject.StructureType.Workstation}
     };

@@ -21,11 +21,11 @@ namespace slocExporter
 
         public const ushort slocVersion = 5;
 
-        public static string CurrentVersion = "4.0.1";
+        public static string CurrentVersion = "5.0.0";
 
         #region Reader Declarations
 
-        public static readonly IObjectReader DefaultReader = new Ver4Reader();
+        public static readonly IObjectReader DefaultReader = new Ver5Reader();
 
         private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new()
         {
