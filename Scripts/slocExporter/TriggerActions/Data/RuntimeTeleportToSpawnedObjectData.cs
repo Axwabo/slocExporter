@@ -2,9 +2,11 @@ using System.IO;
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
-    public sealed class RuntimeTeleportToSpawnedObjectData : BaseTeleportData {
+    public sealed class RuntimeTeleportToSpawnedObjectData : BaseTeleportData
+    {
 
         public override TargetType PossibleTargets => TargetType.All;
 
@@ -13,7 +15,8 @@ namespace slocExporter.TriggerActions.Data {
         [field: SerializeField]
         public GameObject Target { get; set; }
 
-        public RuntimeTeleportToSpawnedObjectData(GameObject target, Vector3 offset) {
+        public RuntimeTeleportToSpawnedObjectData(GameObject target, Vector3 offset)
+        {
             Target = target;
             Position = offset;
         }

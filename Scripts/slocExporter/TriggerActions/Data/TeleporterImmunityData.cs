@@ -2,9 +2,11 @@
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
-    public sealed class TeleporterImmunityData : BaseTriggerActionData {
+    public sealed class TeleporterImmunityData : BaseTriggerActionData
+    {
 
         public const float MaxValue = 60f;
         public const float FloatToShortMultiplier = 1000f;
@@ -23,13 +25,15 @@ namespace slocExporter.TriggerActions.Data {
         [field: SerializeField]
         public float Duration { get; set; }
 
-        public TeleporterImmunityData(bool isGlobal, ImmunityDurationMode durationMode, float duration) {
+        public TeleporterImmunityData(bool isGlobal, ImmunityDurationMode durationMode, float duration)
+        {
             IsGlobal = isGlobal;
             DurationMode = durationMode;
             Duration = duration;
         }
 
-        protected override void WriteData(BinaryWriter writer) {
+        protected override void WriteData(BinaryWriter writer)
+        {
             writer.Write(API.CombineSafe((byte) (IsGlobal ? 1 : 0), (byte) DurationMode));
             writer.WriteFloatAsShort(Duration);
         }

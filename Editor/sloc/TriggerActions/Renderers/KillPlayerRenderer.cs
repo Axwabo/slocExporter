@@ -2,13 +2,16 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.sloc.TriggerActions.Renderers {
+namespace Editor.sloc.TriggerActions.Renderers
+{
 
-    public sealed class KillPlayerRenderer : ITriggerActionEditorRenderer {
+    public sealed class KillPlayerRenderer : ITriggerActionEditorRenderer
+    {
 
         public string Description => "Kills the player with a specified cause.";
 
-        public void DrawGUI(TriggerAction instance) {
+        public void DrawGUI(TriggerAction instance)
+        {
             GUILayout.Label("Death Cause:");
             var i = instance.killPlayer;
             var input = EditorGUILayout.TextArea(i.Cause);

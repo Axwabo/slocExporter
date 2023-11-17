@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace Editor.Updater.Responses {
+namespace Editor.Updater.Responses
+{
 
     [Serializable]
-    public struct ErrorMessage {
+    public struct ErrorMessage
+    {
 
         public string message;
 

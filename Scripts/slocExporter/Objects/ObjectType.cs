@@ -1,6 +1,8 @@
-﻿namespace slocExporter.Objects {
+﻿namespace slocExporter.Objects
+{
 
-    public enum ObjectType : byte {
+    public enum ObjectType : byte
+    {
 
         None = 0,
         Light = 1,

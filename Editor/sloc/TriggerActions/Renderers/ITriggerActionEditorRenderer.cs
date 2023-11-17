@@ -1,8 +1,10 @@
 ﻿using slocExporter.TriggerActions;
 
-namespace Editor.sloc.TriggerActions.Renderers {
+namespace Editor.sloc.TriggerActions.Renderers
+{
 
-    public interface ITriggerActionEditorRenderer {
+    public interface ITriggerActionEditorRenderer
+    {
 
         string Description { get; }
 

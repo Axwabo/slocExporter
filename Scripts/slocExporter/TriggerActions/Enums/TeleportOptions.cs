@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace slocExporter.TriggerActions.Enums {
+namespace slocExporter.TriggerActions.Enums
+{
 
     [Flags]
-    public enum TeleportOptions : byte {
+    public enum TeleportOptions : byte
+    {
 
         None = 0,
         ResetFallDamage = 1,

@@ -21,7 +21,7 @@ namespace slocExporter
 
         public const ushort slocVersion = 4;
 
-        public static readonly string CurrentVersion = "4.0.1";
+        public static string CurrentVersion = "4.0.1";
 
         #region Reader Declarations
 

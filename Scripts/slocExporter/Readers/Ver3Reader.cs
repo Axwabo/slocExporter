@@ -2,15 +2,19 @@
 using slocExporter.Objects;
 using UnityEngine;
 
-namespace slocExporter.Readers {
+namespace slocExporter.Readers
+{
 
-    public sealed class Ver3Reader : IObjectReader {
+    public sealed class Ver3Reader : IObjectReader
+    {
 
         public slocHeader ReadHeader(BinaryReader stream) => ReadHeaderStatic(stream, 3);
 
-        public slocGameObject Read(BinaryReader stream, slocHeader header) {
+        public slocGameObject Read(BinaryReader stream, slocHeader header)
+        {
             var objectType = (ObjectType) stream.ReadByte();
-            return objectType switch {
+            return objectType switch
+            {
                 ObjectType.Cube
                     or ObjectType.Sphere
                     or ObjectType.Cylinder
@@ -23,7 +27,8 @@ namespace slocExporter.Readers {
             };
         }
 
-        public static slocHeader ReadHeaderStatic(BinaryReader stream, ushort version) {
+        public static slocHeader ReadHeaderStatic(BinaryReader stream, ushort version)
+        {
             var count = stream.ReadObjectCount();
             var attributes = (slocAttributes) stream.ReadByte();
             var colliderCreationMode = attributes.HasFlagFast(slocAttributes.DefaultColliderMode)
@@ -37,7 +42,8 @@ namespace slocExporter.Readers {
             );
         }
 
-        public static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header) {
+        public static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header)
+        {
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var slocTransform = stream.ReadTransform();
@@ -46,7 +52,8 @@ namespace slocExporter.Readers {
             var creationMode = colliderCreationMode is PrimitiveObject.ColliderCreationMode.Unset && header.HasAttribute(slocAttributes.DefaultColliderMode)
                 ? header.DefaultColliderMode
                 : colliderCreationMode;
-            return new PrimitiveObject(instanceId, type) {
+            return new PrimitiveObject(instanceId, type)
+            {
                 ParentId = parentId,
                 Transform = slocTransform,
                 MaterialColor = color,
@@ -54,7 +61,8 @@ namespace slocExporter.Readers {
             };
         }
 
-        public static LightObject ReadLight(BinaryReader stream, slocHeader header) {
+        public static LightObject ReadLight(BinaryReader stream, slocHeader header)
+        {
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var transform = stream.ReadTransform();
@@ -62,7 +70,8 @@ namespace slocExporter.Readers {
             var shadows = stream.ReadBoolean();
             var range = stream.ReadSingle();
             var intensity = stream.ReadSingle();
-            return new LightObject(instanceId) {
+            return new LightObject(instanceId)
+            {
                 ParentId = parentId,
                 Transform = transform,
                 LightColor = lightColor,

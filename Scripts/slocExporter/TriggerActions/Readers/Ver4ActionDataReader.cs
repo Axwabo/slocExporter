@@ -3,13 +3,17 @@ using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Readers {
+namespace slocExporter.TriggerActions.Readers
+{
 
-    public sealed class Ver4ActionDataReader : ITriggerActionDataReader {
+    public sealed class Ver4ActionDataReader : ITriggerActionDataReader
+    {
 
-        public BaseTriggerActionData Read(BinaryReader reader) {
+        public BaseTriggerActionData Read(BinaryReader reader)
+        {
             ActionManager.ReadTypes(reader, out var actionType, out var targetType, out var eventType);
-            BaseTriggerActionData data = actionType switch {
+            BaseTriggerActionData data = actionType switch
+            {
                 TriggerActionType.TeleportToPosition => ReadTpToPos(reader),
                 TriggerActionType.MoveRelativeToSelf => ReadMoveRelative(reader),
                 TriggerActionType.TeleportToRoom => ReadTpToRoom(reader),
@@ -25,41 +29,48 @@ namespace slocExporter.TriggerActions.Readers {
             return data;
         }
 
-        public static TeleportToPositionData ReadTpToPos(BinaryReader reader) {
+        public static TeleportToPositionData ReadTpToPos(BinaryReader reader)
+        {
             ReadTeleportData(reader, out var position, out var options);
             return new TeleportToPositionData(position) {Options = options};
         }
 
-        public static MoveRelativeToSelfData ReadMoveRelative(BinaryReader reader) {
+        public static MoveRelativeToSelfData ReadMoveRelative(BinaryReader reader)
+        {
             ReadTeleportData(reader, out var position, out var options);
             return new MoveRelativeToSelfData(position) {Options = options};
         }
 
-        public static TeleportToRoomData ReadTpToRoom(BinaryReader reader) {
+        public static TeleportToRoomData ReadTpToRoom(BinaryReader reader)
+        {
             ReadTeleportData(reader, out var position, out var options);
             var name = reader.ReadString();
             return new TeleportToRoomData(name, position) {Options = options};
         }
 
-        public static KillPlayerData ReadKillPlayer(BinaryReader reader) {
+        public static KillPlayerData ReadKillPlayer(BinaryReader reader)
+        {
             var cause = reader.ReadString();
             return new KillPlayerData(cause);
         }
 
-        public static SerializableTeleportToSpawnedObjectData ReadTpToSpawnedObject(BinaryReader reader) {
+        public static SerializableTeleportToSpawnedObjectData ReadTpToSpawnedObject(BinaryReader reader)
+        {
             ReadTeleportData(reader, out var offset, out var options);
             var virtualInstanceId = reader.ReadInt32();
             return new SerializableTeleportToSpawnedObjectData(virtualInstanceId, offset, options);
         }
 
-        public static TeleporterImmunityData ReadTeleporterImmunity(BinaryReader reader) {
+        public static TeleporterImmunityData ReadTeleporterImmunity(BinaryReader reader)
+        {
             var firstByte = reader.ReadByte();
             API.SplitSafe(firstByte, out var isGlobal, out var options);
             var duration = reader.ReadShortAsFloat();
             return new TeleporterImmunityData(isGlobal != 0, (ImmunityDurationMode) options, duration);
         }
 
-        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options) {
+        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options)
+        {
             position = reader.ReadVector();
             options = (TeleportOptions) reader.ReadByte();
         }

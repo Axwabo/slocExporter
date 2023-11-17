@@ -1,6 +1,7 @@
 ﻿using slocExporter.TriggerActions;
 
-namespace slocExporter {
+namespace slocExporter
+{
 
     public delegate void TriggerActionGizmosDrawer(TriggerAction instance);
 

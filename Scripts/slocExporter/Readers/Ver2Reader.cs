@@ -1,15 +1,19 @@
 ﻿using System.IO;
 using slocExporter.Objects;
 
-namespace slocExporter.Readers {
+namespace slocExporter.Readers
+{
 
-    public sealed class Ver2Reader : IObjectReader {
+    public sealed class Ver2Reader : IObjectReader
+    {
 
         public slocHeader ReadHeader(BinaryReader stream) => new(2, stream.ReadObjectCount());
 
-        public slocGameObject Read(BinaryReader stream, slocHeader header) {
+        public slocGameObject Read(BinaryReader stream, slocHeader header)
+        {
             var objectType = (ObjectType) stream.ReadByte();
-            return objectType switch {
+            return objectType switch
+            {
                 ObjectType.Cube
                     or ObjectType.Sphere
                     or ObjectType.Cylinder
@@ -22,19 +26,22 @@ namespace slocExporter.Readers {
             };
         }
 
-        public static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type) {
+        public static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type)
+        {
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var transform = stream.ReadTransform();
             var materialColor = stream.ReadColor();
-            return new PrimitiveObject(instanceId, type) {
+            return new PrimitiveObject(instanceId, type)
+            {
                 ParentId = parentId,
                 Transform = transform,
                 MaterialColor = materialColor
             };
         }
 
-        public static LightObject ReadLight(BinaryReader stream) {
+        public static LightObject ReadLight(BinaryReader stream)
+        {
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var transform = stream.ReadTransform();
@@ -42,7 +49,8 @@ namespace slocExporter.Readers {
             var shadows = stream.ReadBoolean();
             var range = stream.ReadSingle();
             var intensity = stream.ReadSingle();
-            return new LightObject(instanceId) {
+            return new LightObject(instanceId)
+            {
                 ParentId = parentId,
                 Transform = transform,
                 LightColor = lightColor,
@@ -52,11 +60,13 @@ namespace slocExporter.Readers {
             };
         }
 
-        public static EmptyObject ReadEmpty(BinaryReader stream) {
+        public static EmptyObject ReadEmpty(BinaryReader stream)
+        {
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var transform = stream.ReadTransform();
-            return new EmptyObject(instanceId) {
+            return new EmptyObject(instanceId)
+            {
                 ParentId = parentId,
                 Transform = transform
             };

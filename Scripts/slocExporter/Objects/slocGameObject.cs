@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using slocExporter.Readers;
 
-namespace slocExporter.Objects {
+namespace slocExporter.Objects
+{
 
-    public abstract class slocGameObject {
+    public abstract class slocGameObject
+    {
 
         protected slocGameObject(int instanceId) => InstanceId = instanceId;
 
@@ -19,7 +21,8 @@ namespace slocExporter.Objects {
 
         public virtual bool IsValid => Type != ObjectType.None;
 
-        public void WriteTo(BinaryWriter writer, slocHeader header) {
+        public void WriteTo(BinaryWriter writer, slocHeader header)
+        {
             writer.Write((byte) Type);
             writer.Write(InstanceId);
             writer.Write(ParentId);
@@ -27,7 +30,8 @@ namespace slocExporter.Objects {
             WriteData(writer, header);
         }
 
-        protected virtual void WriteData(BinaryWriter writer, slocHeader header) {
+        protected virtual void WriteData(BinaryWriter writer, slocHeader header)
+        {
         }
 
     }

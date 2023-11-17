@@ -3,9 +3,11 @@ using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions {
+namespace slocExporter.TriggerActions
+{
 
-    public sealed class TriggerAction : MonoBehaviour {
+    public sealed class TriggerAction : MonoBehaviour
+    {
 
         public static TriggerActionGizmosDrawer CurrentGizmosDrawer = null;
 
@@ -46,7 +48,8 @@ namespace slocExporter.TriggerActions {
 
         #endregion
 
-        public BaseTriggerActionData SelectedData => type switch {
+        public BaseTriggerActionData SelectedData => type switch
+        {
             TriggerActionType.TeleportToPosition => tpToPos,
             TriggerActionType.TeleportToRoom => tpToRoom,
             TriggerActionType.TeleportToSpawnedObject => tpToSpawnedObject,
@@ -56,8 +59,10 @@ namespace slocExporter.TriggerActions {
             _ => null
         };
 
-        public void SetData(BaseTriggerActionData data) {
-            switch (type = data.ActionType) {
+        public void SetData(BaseTriggerActionData data)
+        {
+            switch (type = data.ActionType)
+            {
                 case TriggerActionType.TeleportToPosition:
                     tpToPos = data as TeleportToPositionData;
                     break;

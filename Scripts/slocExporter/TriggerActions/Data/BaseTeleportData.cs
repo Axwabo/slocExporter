@@ -2,9 +2,11 @@
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
-    public abstract class BaseTeleportData : BaseTriggerActionData {
+    public abstract class BaseTeleportData : BaseTriggerActionData
+    {
 
         [field: SerializeField]
         public Vector3 Position { get; set; }
@@ -12,13 +14,15 @@ namespace slocExporter.TriggerActions.Data {
         [field: SerializeField]
         public TeleportOptions Options { get; set; }
 
-        protected sealed override void WriteData(BinaryWriter writer) {
+        protected sealed override void WriteData(BinaryWriter writer)
+        {
             writer.WriteVector(Position);
             writer.Write((byte) Options);
             WriteAdditionalData(writer);
         }
 
-        protected virtual void WriteAdditionalData(BinaryWriter writer) {
+        protected virtual void WriteAdditionalData(BinaryWriter writer)
+        {
         }
 
         public Vector3 ToWorldSpacePosition(Transform reference) =>

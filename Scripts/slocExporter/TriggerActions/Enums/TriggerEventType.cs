@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace slocExporter.TriggerActions.Enums {
+namespace slocExporter.TriggerActions.Enums
+{
 
     [Flags]
-    public enum TriggerEventType : byte {
+    public enum TriggerEventType : byte
+    {
 
         None = 0,
         Enter = 1,

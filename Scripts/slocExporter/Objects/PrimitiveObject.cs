@@ -5,14 +5,18 @@ using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using UnityEngine;
 
-namespace slocExporter.Objects {
+namespace slocExporter.Objects
+{
 
-    public sealed class PrimitiveObject : slocGameObject {
+    public sealed class PrimitiveObject : slocGameObject
+    {
 
-        public PrimitiveObject(ObjectType type) : this(0, type) {
+        public PrimitiveObject(ObjectType type) : this(0, type)
+        {
         }
 
-        public PrimitiveObject(int instanceId, ObjectType type) : base(instanceId) {
+        public PrimitiveObject(int instanceId, ObjectType type) : base(instanceId)
+        {
             if (type is ObjectType.None or ObjectType.Light)
                 throw new ArgumentException("Invalid primitive type", nameof(type));
             Type = type;
@@ -26,7 +30,8 @@ namespace slocExporter.Objects {
 
         public ColliderCreationMode GetNonUnsetColliderMode() => ColliderMode is ColliderCreationMode.Unset ? ColliderCreationMode.Both : ColliderMode;
 
-        protected override void WriteData(BinaryWriter writer, slocHeader header) {
+        protected override void WriteData(BinaryWriter writer, slocHeader header)
+        {
             if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(MaterialColor.ToLossyColor());
             else
@@ -37,7 +42,8 @@ namespace slocExporter.Objects {
                 ActionManager.WriteActions(writer, TriggerActions);
         }
 
-        public enum ColliderCreationMode : byte {
+        public enum ColliderCreationMode : byte
+        {
 
             Unset = 0,
             NoCollider = 1,

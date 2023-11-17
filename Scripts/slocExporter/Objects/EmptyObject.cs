@@ -1,8 +1,11 @@
-﻿namespace slocExporter.Objects {
+﻿namespace slocExporter.Objects
+{
 
-    public sealed class EmptyObject : slocGameObject {
+    public sealed class EmptyObject : slocGameObject
+    {
 
-        public EmptyObject() : this(0) {
+        public EmptyObject() : this(0)
+        {
         }
 
         public EmptyObject(int instanceId) : base(instanceId) => Type = ObjectType.Empty;

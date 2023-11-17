@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 
-namespace slocExporter {
+namespace slocExporter
+{
 
     [DisallowMultipleComponent]
-    public sealed class ExporterIgnored : MonoBehaviour {
+    public sealed class ExporterIgnored : MonoBehaviour
+    {
 
     }
 

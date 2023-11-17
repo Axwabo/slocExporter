@@ -1,6 +1,8 @@
-﻿namespace Editor.Updater {
+﻿namespace Editor.Updater
+{
 
-    internal static class Constants {
+    internal static class Constants
+    {
 
         private const string ApiUrlFormat = "https://api.github.com/repos/{0}/{1}/";
 
