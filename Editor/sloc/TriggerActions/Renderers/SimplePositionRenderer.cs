@@ -16,8 +16,8 @@ namespace Editor.sloc.TriggerActions.Renderers
         {
             {TeleportOptions.ResetFallDamage, new GUIContent("Reset Fall Damage", "Resets fall damage on the target player.")},
             {TeleportOptions.ResetVelocity, new GUIContent("Reset Velocity", "Resets the target object's velocity. Applies to items and ragdolls only.")},
-            {TeleportOptions.WorldSpaceTransform, new GUIContent("World Space Transform", "Uses world-space transform to calculate the offset instead of relative calculation based on the object this action is added to.")},
-            {TeleportOptions.DeltaRotation, new GUIContent("Delta Rotation", "If enabled, the object will be rotated on the Y axis by the specified amount, ignoring world-space transform.")}
+            {TeleportOptions.WorldSpaceTransform, new GUIContent("World Space Transform", "Uses world-space transform to calculate the offset instead of relative calculation. The result is based on the object reference (e.g. room object associated with a TeleportToRoom action).")},
+            {TeleportOptions.DeltaRotation, new GUIContent("Delta Rotation", "If enabled, the object will be rotated on the Y axis by the specified amount, ignoring world-space transform. When disabled, the object's Y rotation will be set to the transformed value.")}
         };
 
         public delegate BaseTeleportData PositionGetter(TriggerAction instance);
