@@ -24,15 +24,7 @@ namespace Editor.sloc.TriggerActions.Renderers
                 data.Target = go;
             }
 
-            var input = EditorGUILayout.Vector3Field("Offset", data.Position);
-            if (input != data.Position)
-            {
-                EditorUtility.SetDirty(instance);
-                Undo.RecordObject(instance, "Change Teleport Offset");
-                data.Position = input;
-            }
-
-            SimplePositionRenderer.DrawCheckboxes(instance, data);
+            SimplePositionRenderer.DrawCommonElements(instance, data);
             if (IsValidObject(go))
                 EditorGUILayout.HelpBox("A green wire sphere gizmo is indicating the point to teleport to", MessageType.Info);
             else

@@ -13,11 +13,12 @@ namespace slocExporter.TriggerActions
 
         public const ushort MinVersion = 4;
 
-        private static readonly ITriggerActionDataReader DefaultReader = new Ver4ActionDataReader();
+        private static readonly ITriggerActionDataReader DefaultReader = new Ver5ActionDataReader();
 
         private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new()
         {
-            {4, new Ver4ActionDataReader()}
+            {4, new Ver4ActionDataReader()},
+            {5, DefaultReader}
         };
 
         public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType>
@@ -39,15 +40,9 @@ namespace slocExporter.TriggerActions
         {
             TeleportOptions.ResetFallDamage,
             TeleportOptions.ResetVelocity,
-            TeleportOptions.WorldSpaceTransform
+            TeleportOptions.WorldSpaceTransform,
+            TeleportOptions.DeltaRotation
         }.AsReadOnly();
-
-        public static readonly Dictionary<TeleportOptions, string> TeleportOptionsNames = new()
-        {
-            {TeleportOptions.ResetFallDamage, "Reset Fall Damage"},
-            {TeleportOptions.ResetVelocity, "Reset Velocity"},
-            {TeleportOptions.WorldSpaceTransform, "World-Space Transform"}
-        };
 
         public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader)
         {
@@ -103,7 +98,7 @@ namespace slocExporter.TriggerActions
 
         public static bool HasFlagFast(this TeleportOptions options, TeleportOptions flag) => (options & flag) == flag;
 
-        public static bool Is(this TeleportOptions type, TeleportOptions isType) => type is TeleportOptions.None || type.HasFlagFast(isType);
+        public static bool Is(this TeleportOptions type, TeleportOptions isType) => type is TeleportOptions.All || type.HasFlagFast(isType);
 
     }
 
