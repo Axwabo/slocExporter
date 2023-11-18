@@ -1,5 +1,6 @@
 ﻿using slocExporter.TriggerActions;
 using UnityEditor;
+using UnityEngine;
 
 namespace Editor.sloc.TriggerActions.Renderers
 {
@@ -19,6 +20,8 @@ namespace Editor.sloc.TriggerActions.Renderers
                 data.Room = room;
             }
 
+            if (EditorGUILayout.LinkButton("Room names (see attribute values)"))
+                Application.OpenURL("https://github.com/Axwabo/SCPSL-Helpers/blob/main/Axwabo.Helpers.NWAPI/Config/RoomType.cs");
             SimplePositionRenderer.DrawCommonElements(instance, data);
         }
 
