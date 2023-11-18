@@ -134,6 +134,8 @@ namespace slocExporter
             var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
             gameObject.SetAbsoluteTransformFrom(parent);
             gameObject.SetLocalTransform(structure.Transform);
+            if (structure.RemoveDefaultLoot)
+                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
             return gameObject;
         }
 

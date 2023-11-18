@@ -180,6 +180,7 @@ public static class ObjectExporter
         {
             var skip = component switch
             {
+                StructureOverride structureOverride => ProcessStructureOverride(o, structureOverride, objectsById),
                 Collider collider => ProcessCollider(defaultMode, o, collider, colliders),
                 ColliderModeSetter setter => SetMode(o, setter, colliders),
                 TriggerAction triggerAction => AddTriggerAction(o, triggerAction, runtimeTriggerActions),
@@ -202,18 +203,35 @@ public static class ObjectExporter
         if (!PrefabUtility.IsOutermostPrefabInstanceRoot(gameObject))
             return;
         var prefab = PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
-        if (prefab == null)
-            return;
-        var guid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(prefab)).ToString();
-        if (!StructureGuids.TryGetValue(guid, out var type))
+        var guid = prefab == null ? "" : AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(prefab)).ToString();
+        var hasOverride = gameObject.TryGetComponent(out StructureOverride structureOverride);
+        var type = hasOverride ? structureOverride.type : StructureObject.StructureType.None;
+        if (type == StructureObject.StructureType.None && !StructureGuids.TryGetValue(guid, out type))
             return;
         var id = gameObject.GetInstanceID();
         var parent = gameObject.transform.parent;
         objectsById[id] = new StructureObject(id, type)
         {
             ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
-            Transform = gameObject.transform
+            Transform = gameObject.transform,
+            RemoveDefaultLoot = hasOverride && structureOverride.removeDefaultLoot
         };
+    }
+
+    private static bool ProcessStructureOverride(GameObject gameObject, StructureOverride structureOverride, InstanceDictionary<slocGameObject> objectsById, StructureObject.StructureType fromPrefab = StructureObject.StructureType.None)
+    {
+        var type = fromPrefab != StructureObject.StructureType.None ? fromPrefab : structureOverride.type;
+        if (type == StructureObject.StructureType.None)
+            return false;
+        var id = gameObject.GetInstanceID();
+        var parent = gameObject.transform.parent;
+        objectsById[id] = new StructureObject(id, type)
+        {
+            ParentId = parent == null ? id : parent.gameObject.GetInstanceID(),
+            Transform = gameObject.transform,
+            RemoveDefaultLoot = structureOverride.removeDefaultLoot
+        };
+        return false;
     }
 
     private static void EnsureDirectoryExists(string file)
