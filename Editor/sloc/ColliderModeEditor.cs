@@ -6,11 +6,13 @@ using slocExporter.Objects;
 using UnityEditor;
 using static slocExporter.ColliderModeSetter;
 
-namespace Editor.sloc {
+namespace Editor.sloc
+{
 
     [CustomEditor(typeof(ColliderModeSetter))]
     [CanEditMultipleObjects]
-    public sealed class ColliderModeEditor : UnityEditor.Editor {
+    public sealed class ColliderModeEditor : UnityEditor.Editor
+    {
 
         private static readonly List<string> Options = Enum.GetValues(typeof(PrimitiveObject.ColliderCreationMode))
             .Cast<PrimitiveObject.ColliderCreationMode>()
@@ -18,7 +20,8 @@ namespace Editor.sloc {
 
         private static readonly string[] OptionsArray = Options.ToArray();
 
-        public override void OnInspectorGUI() {
+        public override void OnInspectorGUI()
+        {
             var targetsCache = targets;
             if (targetsCache.Length < 1)
                 return;

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace slocExporter.TriggerActions.Readers
 {
 
-    public sealed class Ver4ActionDataReader : ITriggerActionDataReader
+    public sealed class Ver5ActionDataReader : ITriggerActionDataReader
     {
 
         public BaseTriggerActionData Read(BinaryReader reader)
@@ -17,9 +17,9 @@ namespace slocExporter.TriggerActions.Readers
                 TriggerActionType.TeleportToPosition => ReadTpToPos(reader),
                 TriggerActionType.MoveRelativeToSelf => ReadMoveRelative(reader),
                 TriggerActionType.TeleportToRoom => ReadTpToRoom(reader),
-                TriggerActionType.KillPlayer => ReadKillPlayer(reader),
+                TriggerActionType.KillPlayer => Ver4ActionDataReader.ReadKillPlayer(reader),
                 TriggerActionType.TeleportToSpawnedObject => ReadTpToSpawnedObject(reader),
-                TriggerActionType.TeleporterImmunity => ReadTeleporterImmunity(reader),
+                TriggerActionType.TeleporterImmunity => Ver4ActionDataReader.ReadTeleporterImmunity(reader),
                 _ => null
             };
             if (data is null)
@@ -31,48 +31,35 @@ namespace slocExporter.TriggerActions.Readers
 
         public static TeleportToPositionData ReadTpToPos(BinaryReader reader)
         {
-            ReadTeleportData(reader, out var position, out var options);
-            return new TeleportToPositionData(position) {Options = options};
+            ReadTeleportData(reader, out var position, out var options, out var rotation);
+            return new TeleportToPositionData(position) {Options = options, RotationY = rotation};
         }
 
         public static MoveRelativeToSelfData ReadMoveRelative(BinaryReader reader)
         {
-            ReadTeleportData(reader, out var position, out var options);
-            return new MoveRelativeToSelfData(position) {Options = options};
+            ReadTeleportData(reader, out var position, out var options, out var rotation);
+            return new MoveRelativeToSelfData(position) {Options = options, RotationY = rotation};
         }
 
         public static TeleportToRoomData ReadTpToRoom(BinaryReader reader)
         {
-            ReadTeleportData(reader, out var position, out var options);
+            ReadTeleportData(reader, out var position, out var options, out var rotation);
             var name = reader.ReadString();
-            return new TeleportToRoomData(name, position) {Options = options};
-        }
-
-        public static KillPlayerData ReadKillPlayer(BinaryReader reader)
-        {
-            var cause = reader.ReadString();
-            return new KillPlayerData(cause);
+            return new TeleportToRoomData(name, position) {Options = options, RotationY = rotation};
         }
 
         public static SerializableTeleportToSpawnedObjectData ReadTpToSpawnedObject(BinaryReader reader)
         {
-            ReadTeleportData(reader, out var offset, out var options);
+            ReadTeleportData(reader, out var offset, out var options, out var rotation);
             var virtualInstanceId = reader.ReadInt32();
-            return new SerializableTeleportToSpawnedObjectData(virtualInstanceId, offset, options);
+            return new SerializableTeleportToSpawnedObjectData(virtualInstanceId, offset, options, rotation);
         }
 
-        public static TeleporterImmunityData ReadTeleporterImmunity(BinaryReader reader)
-        {
-            var firstByte = reader.ReadByte();
-            API.SplitSafe(firstByte, out var isGlobal, out var options);
-            var duration = reader.ReadShortAsFloat();
-            return new TeleporterImmunityData(isGlobal != 0, (ImmunityDurationMode) options, duration);
-        }
-
-        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options)
+        public static void ReadTeleportData(BinaryReader reader, out Vector3 position, out TeleportOptions options, out float rotation)
         {
             position = reader.ReadVector();
             options = (TeleportOptions) reader.ReadByte();
+            rotation = reader.ReadSingle();
         }
 
     }

@@ -5,44 +5,47 @@ using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using slocExporter.TriggerActions.Readers;
 
-namespace slocExporter.TriggerActions {
+namespace slocExporter.TriggerActions
+{
 
-    public static class ActionManager {
+    public static class ActionManager
+    {
 
         public const ushort MinVersion = 4;
 
-        private static readonly ITriggerActionDataReader DefaultReader = new Ver4ActionDataReader();
+        private static readonly ITriggerActionDataReader DefaultReader = new Ver5ActionDataReader();
 
-        private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new() {
-            {4, new Ver4ActionDataReader()}
+        private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new()
+        {
+            {4, new Ver4ActionDataReader()},
+            {5, DefaultReader}
         };
 
-        public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType> {
+        public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType>
+        {
             TargetType.Player,
             TargetType.Pickup,
             TargetType.Toy,
             TargetType.Ragdoll
         }.AsReadOnly();
 
-        public static readonly ICollection<TriggerEventType> EventTypeValues = new List<TriggerEventType> {
+        public static readonly ICollection<TriggerEventType> EventTypeValues = new List<TriggerEventType>
+        {
             TriggerEventType.Enter,
             TriggerEventType.Stay,
             TriggerEventType.Exit
         }.AsReadOnly();
 
-        public static readonly ICollection<TeleportOptions> TeleportOptionsValues = new List<TeleportOptions> {
+        public static readonly ICollection<TeleportOptions> TeleportOptionsValues = new List<TeleportOptions>
+        {
             TeleportOptions.ResetFallDamage,
             TeleportOptions.ResetVelocity,
-            TeleportOptions.WorldSpaceTransform
+            TeleportOptions.WorldSpaceTransform,
+            TeleportOptions.DeltaRotation
         }.AsReadOnly();
 
-        public static readonly Dictionary<TeleportOptions, string> TeleportOptionsNames = new() {
-            {TeleportOptions.ResetFallDamage, "Reset Fall Damage"},
-            {TeleportOptions.ResetVelocity, "Reset Velocity"},
-            {TeleportOptions.WorldSpaceTransform, "World-Space Transform"}
-        };
-
-        public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader) {
+        public static bool TryGetReader(ushort version, out ITriggerActionDataReader reader)
+        {
             reader = null;
             if (version < MinVersion)
                 return Readers.TryGetValue(version, out reader);
@@ -52,18 +55,21 @@ namespace slocExporter.TriggerActions {
 
         public static ITriggerActionDataReader GetReader(ushort version) => TryGetReader(version, out var reader) ? reader : DefaultReader;
 
-        public static void WriteActions(BinaryWriter writer, ICollection<BaseTriggerActionData> actions) {
+        public static void WriteActions(BinaryWriter writer, ICollection<BaseTriggerActionData> actions)
+        {
             writer.Write(actions.Count);
             foreach (var data in actions)
                 data.WriteTo(writer);
         }
 
-        public static BaseTriggerActionData[] ReadActions(BinaryReader stream, ITriggerActionDataReader reader) {
+        public static BaseTriggerActionData[] ReadActions(BinaryReader stream, ITriggerActionDataReader reader)
+        {
             var actionCount = stream.ReadInt32();
             if (actionCount < 1)
                 return Array.Empty<BaseTriggerActionData>();
             var actions = new List<BaseTriggerActionData>();
-            for (var i = 0; i < actionCount; i++) {
+            for (var i = 0; i < actionCount; i++)
+            {
                 var action = reader.Read(stream);
                 if (action != null)
                     actions.Add(action);
@@ -73,7 +79,8 @@ namespace slocExporter.TriggerActions {
             return array;
         }
 
-        public static void ReadTypes(BinaryReader reader, out TriggerActionType actionType, out TargetType targetType, out TriggerEventType eventType) {
+        public static void ReadTypes(BinaryReader reader, out TriggerActionType actionType, out TargetType targetType, out TriggerEventType eventType)
+        {
             actionType = (TriggerActionType) reader.ReadUInt16();
             var combined = reader.ReadByte();
             API.SplitSafe(combined, out var target, out var eventTypes);
@@ -91,7 +98,7 @@ namespace slocExporter.TriggerActions {
 
         public static bool HasFlagFast(this TeleportOptions options, TeleportOptions flag) => (options & flag) == flag;
 
-        public static bool Is(this TeleportOptions type, TeleportOptions isType) => type is TeleportOptions.None || type.HasFlagFast(isType);
+        public static bool Is(this TeleportOptions type, TeleportOptions isType) => type is TeleportOptions.All || type.HasFlagFast(isType);
 
     }
 

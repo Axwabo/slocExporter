@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using slocExporter.Objects;
 
-namespace slocExporter.Readers {
+namespace slocExporter.Readers
+{
 
-    public interface IObjectReader {
+    public interface IObjectReader
+    {
 
         slocHeader ReadHeader(BinaryReader stream);
 

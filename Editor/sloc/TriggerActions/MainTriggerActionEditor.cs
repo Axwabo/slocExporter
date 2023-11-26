@@ -8,12 +8,15 @@ using slocExporter.TriggerActions.Enums;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.sloc.TriggerActions {
+namespace Editor.sloc.TriggerActions
+{
 
     [CustomEditor(typeof(TriggerAction))]
-    public sealed class MainTriggerActionEditor : UnityEditor.Editor {
+    public sealed class MainTriggerActionEditor : UnityEditor.Editor
+    {
 
-        private static readonly Dictionary<TriggerActionType, ITriggerActionEditorRenderer> Renderers = new() {
+        private static readonly Dictionary<TriggerActionType, ITriggerActionEditorRenderer> Renderers = new()
+        {
             {TriggerActionType.TeleportToPosition, ActionRenderers.TeleportToPosition},
             {TriggerActionType.MoveRelativeToSelf, ActionRenderers.MoveRelativeToSelf},
             {TriggerActionType.TeleportToRoom, ActionRenderers.TeleportToRoom},
@@ -28,25 +31,29 @@ namespace Editor.sloc.TriggerActions {
         private static readonly GUIContent TargetsContent = new("Targets", "Types of objects that can trigger this action.");
         private static readonly GUIContent EventsContent = new("Trigger Events", "The trigger event types that this action will listen for.");
 
-        private static readonly Dictionary<TriggerEventType, GUIContent> EventDescriptions = new() {
+        private static readonly Dictionary<TriggerEventType, GUIContent> EventDescriptions = new()
+        {
             {TriggerEventType.Enter, new GUIContent("On Enter", "Invoked when an object enters the trigger.")},
             {TriggerEventType.Stay, new GUIContent("On Stay", "Invoked every frame while an object stays in the trigger.")},
             {TriggerEventType.Exit, new GUIContent("On Exit", "Invoked when an object leaves the trigger.")}
         };
 
-        public override void OnInspectorGUI() {
+        public override void OnInspectorGUI()
+        {
             var triggerAction = (TriggerAction) target;
             var index = Array.IndexOf(Values, triggerAction.type);
             var newIndex = EditorGUILayout.Popup("Action Type", index, Names);
             var newType = Values[newIndex];
-            if (newIndex != index) {
+            if (newIndex != index)
+            {
                 Undo.RecordObject(triggerAction, "Change Trigger Action Type");
                 triggerAction.type = newType;
             }
 
             var data = triggerAction.SelectedData ?? AssignDefaultValue(triggerAction, triggerAction.type);
             var curType = triggerAction.type;
-            if (!Renderers.TryGetValue(curType, out var renderer)) {
+            if (!Renderers.TryGetValue(curType, out var renderer))
+            {
                 EditorGUILayout.HelpBox("You can't edit this type! Please choose another one.", MessageType.Error);
                 TriggerAction.CurrentGizmosDrawer = null;
                 return;
@@ -61,14 +68,16 @@ namespace Editor.sloc.TriggerActions {
             TriggerAction.CurrentGizmosDrawer = renderer is ISelectedGizmosDrawer gizmosDrawer ? gizmosDrawer.DrawGizmos : null;
         }
 
-        private static void DrawCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
+        private static void DrawCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data)
+        {
             if (data == null)
                 return;
             DrawTargetTypeCheckboxes(triggerAction, data);
             DrawEventTypeCheckboxes(triggerAction, data);
         }
 
-        private static void DrawTargetTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
+        private static void DrawTargetTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data)
+        {
             var types = ActionManager.TargetTypeValues.Where(v => v != TargetType.None && data.PossibleTargets.HasFlagFast(v)).ToArray();
             if (types.Length < 1)
                 return;
@@ -77,7 +86,8 @@ namespace Editor.sloc.TriggerActions {
             if (!triggerAction.ToggleTargets)
                 return;
             var value = data.SelectedTargets;
-            foreach (var type in types) {
+            foreach (var type in types)
+            {
                 var active = EditorGUILayout.Toggle(type.ToString(), value.HasFlagFast(type));
                 if (active)
                     value |= type;
@@ -91,13 +101,15 @@ namespace Editor.sloc.TriggerActions {
             data.SelectedTargets = value;
         }
 
-        private static void DrawEventTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data) {
+        private static void DrawEventTypeCheckboxes(TriggerAction triggerAction, BaseTriggerActionData data)
+        {
             EditorGUILayout.Space(5);
             triggerAction.ToggleEvents = EditorGUILayout.Foldout(triggerAction.ToggleEvents, EventsContent, true);
             if (!triggerAction.ToggleEvents)
                 return;
             var value = data.SelectedEvents;
-            foreach (var type in ActionManager.EventTypeValues) {
+            foreach (var type in ActionManager.EventTypeValues)
+            {
                 var content = EventDescriptions.GetValueOrDefault(type) ?? new GUIContent(type.ToString());
                 var active = EditorGUILayout.Toggle(content, value.HasFlagFast(type));
                 if (active)
@@ -112,7 +124,8 @@ namespace Editor.sloc.TriggerActions {
             data.SelectedEvents = value;
         }
 
-        private static BaseTriggerActionData AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) => type switch {
+        private static BaseTriggerActionData AssignDefaultValue(TriggerAction triggerAction, TriggerActionType type) => type switch
+        {
             TriggerActionType.TeleportToPosition => triggerAction.tpToPos ??= new TeleportToPositionData(Vector3.zero),
             TriggerActionType.TeleportToRoom => triggerAction.tpToRoom ??= new TeleportToRoomData("Unknown", Vector3.zero),
             TriggerActionType.MoveRelativeToSelf => triggerAction.moveRel ??= new MoveRelativeToSelfData(Vector3.zero),

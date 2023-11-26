@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace Editor.Updater.Responses {
+namespace Editor.Updater.Responses
+{
 
     [Serializable]
-    public struct TagResponse {
+    public struct TagResponse
+    {
 
         public string name;
 

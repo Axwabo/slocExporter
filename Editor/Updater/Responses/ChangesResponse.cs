@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace Editor.Updater.Responses {
+namespace Editor.Updater.Responses
+{
 
     [Serializable]
-    public struct ChangesResponse {
+    public struct ChangesResponse
+    {
 
         public ChangedFile[] files;
 
@@ -12,7 +14,8 @@ namespace Editor.Updater.Responses {
     }
 
     [Serializable]
-    public struct ChangedFile {
+    public struct ChangedFile
+    {
 
         public string filename;
 

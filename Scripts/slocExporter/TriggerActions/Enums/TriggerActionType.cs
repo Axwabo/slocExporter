@@ -1,6 +1,8 @@
-﻿namespace slocExporter.TriggerActions.Enums {
+﻿namespace slocExporter.TriggerActions.Enums
+{
 
-    public enum TriggerActionType : ushort {
+    public enum TriggerActionType : ushort
+    {
 
         None = 0,
         TeleportToPosition = 1,

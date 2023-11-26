@@ -1,8 +1,10 @@
 ﻿using Editor.sloc.TriggerActions.Renderers;
 
-namespace Editor.sloc.TriggerActions {
+namespace Editor.sloc.TriggerActions
+{
 
-    public static class ActionRenderers {
+    public static class ActionRenderers
+    {
 
         public static readonly SimplePositionRenderer TeleportToPosition = new(
             "Absolute Position",

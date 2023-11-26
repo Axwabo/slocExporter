@@ -3,10 +3,12 @@ using System.IO;
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
     [Serializable]
-    public abstract class BaseTriggerActionData {
+    public abstract class BaseTriggerActionData
+    {
 
         [SerializeField]
         private TargetType selectedTargets;
@@ -15,10 +17,13 @@ namespace slocExporter.TriggerActions.Data {
 
         public abstract TriggerActionType ActionType { get; }
 
-        public TargetType SelectedTargets {
+        public TargetType SelectedTargets
+        {
             get => selectedTargets;
-            set {
-                if (value is TargetType.None) {
+            set
+            {
+                if (value is TargetType.None)
+                {
                     selectedTargets = value;
                     return;
                 }
@@ -37,13 +42,15 @@ namespace slocExporter.TriggerActions.Data {
 
         protected BaseTriggerActionData() => SelectedTargets = TargetType.All;
 
-        public void WriteTo(BinaryWriter writer) {
+        public void WriteTo(BinaryWriter writer)
+        {
             writer.Write((ushort) ActionType);
             writer.Write(API.CombineSafe((byte) SelectedTargets, (byte) SelectedEvents));
             WriteData(writer);
         }
 
-        protected virtual void WriteData(BinaryWriter writer) {
+        protected virtual void WriteData(BinaryWriter writer)
+        {
         }
 
     }

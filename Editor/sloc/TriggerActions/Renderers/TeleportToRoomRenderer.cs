@@ -1,27 +1,28 @@
 ﻿using slocExporter.TriggerActions;
 using UnityEditor;
+using UnityEngine;
 
-namespace Editor.sloc.TriggerActions.Renderers {
+namespace Editor.sloc.TriggerActions.Renderers
+{
 
-    public sealed class TeleportToRoomRenderer : ITriggerActionEditorRenderer {
+    public sealed class TeleportToRoomRenderer : ITriggerActionEditorRenderer
+    {
 
         public string Description => "Teleports the object to a specified room with the given position offset.";
 
-        public void DrawGUI(TriggerAction instance) {
+        public void DrawGUI(TriggerAction instance)
+        {
             var data = instance.tpToRoom;
             var room = EditorGUILayout.TextField("Room Name", data.Room);
-            if (room != data.Room) {
+            if (room != data.Room)
+            {
                 Undo.RecordObject(instance, "Change Teleport Room");
                 data.Room = room;
             }
 
-            var position = EditorGUILayout.Vector3Field("Position Offset", data.Position);
-            if (position != data.Position) {
-                Undo.RecordObject(instance, "Change Teleport Offset");
-                data.Position = position;
-            }
-
-            SimplePositionRenderer.DrawCheckboxes(instance, data);
+            if (EditorGUILayout.LinkButton("Room names (see attribute values)"))
+                Application.OpenURL("https://github.com/Axwabo/SCPSL-Helpers/blob/main/Axwabo.Helpers.NWAPI/Config/RoomType.cs");
+            SimplePositionRenderer.DrawCommonElements(instance, data);
         }
 
     }

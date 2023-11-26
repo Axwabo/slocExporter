@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace slocExporter {
+namespace slocExporter
+{
 
     [Flags]
-    public enum slocAttributes : byte {
+    public enum slocAttributes : byte
+    {
 
         None = 0,
         LossyColors = 1,

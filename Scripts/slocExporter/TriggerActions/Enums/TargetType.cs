@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace slocExporter.TriggerActions.Enums {
+namespace slocExporter.TriggerActions.Enums
+{
 
     [Flags]
-    public enum TargetType : byte {
+    public enum TargetType : byte
+    {
 
         None = 0,
         Player = 1,

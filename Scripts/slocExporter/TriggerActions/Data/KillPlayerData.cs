@@ -2,9 +2,11 @@
 using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
-    public sealed class KillPlayerData : BaseTriggerActionData {
+    public sealed class KillPlayerData : BaseTriggerActionData
+    {
 
         public override TargetType PossibleTargets => TargetType.Player;
 

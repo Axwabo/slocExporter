@@ -10,10 +10,12 @@ using UnityEngine;
 using UnityEngine.Networking;
 using static Editor.Updater.Constants;
 
-namespace Editor.Updater {
+namespace Editor.Updater
+{
 
     [InitializeOnLoad]
-    public static class ProjectUpdater {
+    public static class ProjectUpdater
+    {
 
         private const string InitDone = "slocUnityInitDone";
 
@@ -34,7 +36,8 @@ namespace Editor.Updater {
             && Version.TryParse(API.CurrentVersion, out var current)
             && latest <= current;
 
-        private static bool ResetUpdate() {
+        private static bool ResetUpdate()
+        {
             if (Sending)
                 return false;
             if (Progress.Exists(_asyncProgressId))
@@ -46,13 +49,17 @@ namespace Editor.Updater {
             return true;
         }
 
-        private static bool TryParseJson<T>(out T result) {
+        private static bool TryParseJson<T>(out T result)
+        {
             var text = _request?.downloadHandler?.text;
             if (!string.IsNullOrEmpty(text))
-                try {
+                try
+                {
                     result = JsonUtility.FromJson<T>(text);
                     return true;
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Warn("Failed to parse JSON response:\n" + e);
                 }
 
@@ -63,7 +70,8 @@ namespace Editor.Updater {
         #endregion
 
         // Startup initializer
-        static ProjectUpdater() {
+        static ProjectUpdater()
+        {
             if (SessionState.GetBool(InitDone, false))
                 return;
             SessionState.SetBool(InitDone, true);
@@ -71,10 +79,12 @@ namespace Editor.Updater {
                 UpdateAsync();
         }
 
-        public static async void UpdateAsync() {
+        public static async void UpdateAsync()
+        {
             if (!ResetUpdate())
                 return;
-            try {
+            try
+            {
                 _asyncProgressId = ProgressStart("Preparing sloc update", CheckingForUpdates);
                 var checkedForUpdates = await SendRequestAsync(string.Format(Tags, GitHubUsername, Repository), CheckingForUpdates);
                 if (!checkedForUpdates || !CompleteUpdateCheck(true) || !TryAskForUpdate(out var version, true))
@@ -94,23 +104,30 @@ namespace Editor.Updater {
                 _asyncProgressId = ProgressStart("Updating sloc", "Patching...");
                 _assets = Application.dataPath;
                 await Task.Run(() => FileModification.PatchFiles(UpdateProgressBackground, _files!, _assets));
+                API.CurrentVersion = version;
                 Log($"Successfully updated to version {version}!");
                 Progress.Report(_asyncProgressId, 1f, "Update complete!");
                 Progress.Finish(_asyncProgressId);
                 EditorUtility.DisplayDialog("sloc Update", "Update complete!", "Nice");
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Debug.LogError("[slocUpdater] " + e);
                 Finish(Progress.Status.Failed);
                 EditorUtility.DisplayDialog("sloc Update", "Update failed! See the Debug log for details.", "Bruh");
-            } finally {
+            }
+            finally
+            {
                 DeleteFile();
             }
         }
 
-        public static void UpdateBlocking() {
+        public static void UpdateBlocking()
+        {
             if (!ResetUpdate())
                 return;
-            try {
+            try
+            {
                 var checkedForUpdates = SendRequestBlocking(string.Format(Tags, GitHubUsername, Repository), CheckingForUpdates);
                 if (!checkedForUpdates || !CompleteUpdateCheck(false) || !TryAskForUpdate(out var version, false))
                     return;
@@ -126,12 +143,17 @@ namespace Editor.Updater {
                 ProgressNoCancel("Patching...", -1f);
                 _assets = Application.dataPath;
                 FileModification.PatchFiles(UpdateProgressBlocking, _files!, _assets);
+                API.CurrentVersion = version;
                 Log($"Successfully updated to version {version}!");
                 EditorUtility.DisplayDialog("sloc Update", "Update complete!", "Nice");
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Debug.LogError("[slocUpdater] " + e);
                 EditorUtility.DisplayDialog("sloc Update", "Update failed! See the Debug log for details.", "Bruh");
-            } finally {
+            }
+            finally
+            {
                 EditorUtility.ClearProgressBar();
                 DeleteFile();
             }
@@ -139,7 +161,8 @@ namespace Editor.Updater {
 
         #region Request Handling
 
-        private static void CreateRequest(string url, Action<UnityWebRequest> setup = null) {
+        private static void CreateRequest(string url, Action<UnityWebRequest> setup = null)
+        {
             _isDone = false;
             _canceled = false;
             _request = UnityWebRequest.Get(url);
@@ -147,20 +170,24 @@ namespace Editor.Updater {
             setup?.Invoke(_request);
         }
 
-        private static Task<bool> SendRequestAsync(string url, string description, Action<UnityWebRequest> setup = null) {
+        private static Task<bool> SendRequestAsync(string url, string description, Action<UnityWebRequest> setup = null)
+        {
             CreateRequest(url, setup);
             _request.SendWebRequest().completed += _ => _isDone = true;
             return Task.Run(() => WaitForRequestCompletion(description, true));
         }
 
-        private static bool SendRequestBlocking(string url, string description, Action<UnityWebRequest> setup = null) {
+        private static bool SendRequestBlocking(string url, string description, Action<UnityWebRequest> setup = null)
+        {
             CreateRequest(url, setup);
             _request.SendWebRequest();
             return WaitForRequestCompletion(description, false);
         }
 
-        private static bool WaitForRequestCompletion(string title, bool silent) {
-            while (Sending) {
+        private static bool WaitForRequestCompletion(string title, bool silent)
+        {
+            while (Sending)
+            {
                 if (silent ? _isDone : _request.result != UnityWebRequest.Result.InProgress)
                     break;
                 Thread.Sleep(50);
@@ -176,7 +203,8 @@ namespace Editor.Updater {
             return true;
         }
 
-        private static void Dispose(bool clearProgressBar) {
+        private static void Dispose(bool clearProgressBar)
+        {
             if (clearProgressBar)
                 EditorUtility.ClearProgressBar();
             _request?.Dispose();
@@ -192,11 +220,13 @@ namespace Editor.Updater {
         private static bool DownloadFilesBlocking() => SendRequestBlocking(_tags[0].zipball_url, DownloadingFiles, SetDownloadHandler);
 
         private static void SetDownloadHandler(UnityWebRequest request) =>
-            request.downloadHandler = new DownloadHandlerFile(Path.Combine(Directory.GetCurrentDirectory(), ArchiveFileName)) {
+            request.downloadHandler = new DownloadHandlerFile(Path.Combine(Directory.GetCurrentDirectory(), ArchiveFileName))
+            {
                 removeFileOnAbort = true
             };
 
-        private static bool ValidateDownloadedFile() {
+        private static bool ValidateDownloadedFile()
+        {
             if (File.Exists(ArchiveFileName))
                 return true;
             Finish(Progress.Status.Failed);
@@ -205,7 +235,8 @@ namespace Editor.Updater {
             return false;
         }
 
-        private static void DeleteFile() {
+        private static void DeleteFile()
+        {
             if (File.Exists(ArchiveFileName))
                 File.Delete(ArchiveFileName);
         }
@@ -214,11 +245,13 @@ namespace Editor.Updater {
 
         #region Checks
 
-        private static bool CompleteUpdateCheck(bool silent) {
+        private static bool CompleteUpdateCheck(bool silent)
+        {
             if (_canceled)
                 return false;
             var requestResult = _request.result;
-            switch (requestResult) {
+            switch (requestResult)
+            {
                 case UnityWebRequest.Result.ConnectionError:
                 case UnityWebRequest.Result.ProtocolError:
                     Finish(Progress.Status.Failed);
@@ -239,11 +272,13 @@ namespace Editor.Updater {
             return _tags is {Length: not 0};
         }
 
-        private static bool ChangesReceived(bool silent) {
+        private static bool ChangesReceived(bool silent)
+        {
             if (_canceled)
                 return false;
             var requestResult = _request.result;
-            switch (requestResult) {
+            switch (requestResult)
+            {
                 case UnityWebRequest.Result.ConnectionError:
                 case UnityWebRequest.Result.ProtocolError:
                     Finish(Progress.Status.Failed);
@@ -262,16 +297,18 @@ namespace Editor.Updater {
             return _files is {Length: not 0};
         }
 
-
-        private static void ChangesRequestSuccess() {
+        private static void ChangesRequestSuccess()
+        {
             Progress.Report(_asyncProgressId, 2, 4);
-            if (!TryParseJson(out ChangesResponse r)) {
+            if (!TryParseJson(out ChangesResponse r))
+            {
                 Finish(Progress.Status.Failed);
                 EditorUtility.DisplayDialog(ReceiveFailed, "Couldn't parse file changes\nServer sent an invalid response", "OK");
                 return;
             }
 
-            if (r.message != null) {
+            if (r.message != null)
+            {
                 Finish(Progress.Status.Failed);
                 Warn("Could not receive file changes: " + r.message);
                 EditorUtility.DisplayDialog(ReceiveFailed, r.message, "OK");
@@ -281,8 +318,10 @@ namespace Editor.Updater {
             _files = r.files;
         }
 
-        private static bool TryAskForUpdate(out string latest, bool silent) {
-            if (_tags is not {Length: not 0}) {
+        private static bool TryAskForUpdate(out string latest, bool silent)
+        {
+            if (_tags is not {Length: not 0})
+            {
                 Finish(Progress.Status.Failed);
                 Warn("No update information received");
                 EditorUtility.DisplayDialog(CheckFailed, "No update information received", "OK");
@@ -291,7 +330,8 @@ namespace Editor.Updater {
             }
 
             var version = latest = _tags[0].name.TrimStart('v', 'V');
-            if (IsUpToDate(version)) {
+            if (IsUpToDate(version))
+            {
                 ProgressBg(1, 4, "sloc is up to date");
                 Finish(Progress.Status.Succeeded);
                 Log("sloc is up to date.");
@@ -312,7 +352,8 @@ namespace Editor.Updater {
 
         #region Error Handling
 
-        private static bool HandleStandardError(string title) {
+        private static bool HandleStandardError(string title)
+        {
             var reset = _request?.GetResponseHeader("x-ratelimit-reset");
             var remaining = _request?.GetResponseHeader("x-ratelimit-remaining");
             if (!string.IsNullOrEmpty(remaining) && int.TryParse(remaining, out var count) && count > 0)
@@ -328,7 +369,8 @@ namespace Editor.Updater {
             return true;
         }
 
-        private static bool HandleErrorMessage(string title) {
+        private static bool HandleErrorMessage(string title)
+        {
             if (!TryParseJson(out ErrorMessage msg))
                 return false;
             Warn("Update failed\nGitHub API response:" + msg.message);
@@ -340,20 +382,23 @@ namespace Editor.Updater {
 
         #region Progress
 
-        private static void ProgressNoCancel(string description, float progress, bool show = true) {
+        private static void ProgressNoCancel(string description, float progress, bool show = true)
+        {
             if (show)
                 EditorUtility.DisplayProgressBar("sloc Update", description, progress);
         }
 
         private static bool ProgressCancel(string description, float progress, bool show = true) => show && EditorUtility.DisplayCancelableProgressBar("sloc Update", description, progress);
 
-        private static int ProgressStart(string title, string description) {
+        private static int ProgressStart(string title, string description)
+        {
             var id = Progress.Start(title, description, Progress.Options.Sticky);
             Progress.Report(id, -1f);
             return id;
         }
 
-        private static void Finish(Progress.Status status) {
+        private static void Finish(Progress.Status status)
+        {
             if (Progress.Exists(_asyncProgressId))
                 Progress.Finish(_asyncProgressId, status);
         }

@@ -8,6 +8,7 @@ using slocExporter.Readers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
+using UnityEditor;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
 
@@ -19,20 +20,21 @@ namespace slocExporter
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 4;
+        public const ushort slocVersion = 5;
 
-        public static readonly string CurrentVersion = "4.0.1";
+        public static string CurrentVersion = "5.0.0";
 
         #region Reader Declarations
 
-        public static readonly IObjectReader DefaultReader = new Ver4Reader();
+        public static readonly IObjectReader DefaultReader = new Ver5Reader();
 
         private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new()
         {
             {1, new Ver1Reader()},
             {2, new Ver2Reader()},
             {3, new Ver3Reader()},
-            {4, new Ver4Reader()}
+            {4, new Ver4Reader()},
+            {5, new Ver5Reader()}
         };
 
         public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
@@ -90,11 +92,52 @@ namespace slocExporter
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
         {
+            StructureObject structure => CreateStructure(parent, structure),
             PrimitiveObject primitive => CreatePrimitive(parent, primitive),
             LightObject light => CreateLight(parent, light),
             EmptyObject => CreateEmpty(obj, parent),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
+
+        public static readonly Dictionary<StructureObject.StructureType, string> StructureGuids = new()
+        {
+            {StructureObject.StructureType.Adrenaline, "c9027d87e276243499d0855914516728"},
+            {StructureObject.StructureType.BinaryTarget, "c89913dc758501e4d88bbd018f72c543"},
+            {StructureObject.StructureType.DboyTarget, "db20325cd26c8c84eb3ad5b333807b21"},
+            {StructureObject.StructureType.EzBreakableDoor, "1b1ee647e05e4bf4491ce470b3982de3"},
+            {StructureObject.StructureType.Generator, "cecdb86e000e08445895728aa8890bfb"},
+            {StructureObject.StructureType.HczBreakableDoor, "1a97804ccde6c3f4f835c0dcd09c6f85"},
+            {StructureObject.StructureType.LargeGunLocker, "99d103e1d107c434283bcf72ae8b3c76"},
+            {StructureObject.StructureType.LczBreakableDoor, "bbb9c95a6d1307d4e9c1218f4532072b"},
+            {StructureObject.StructureType.Medkit, "54c07ebe424ee83429e95a25a10534c6"},
+            {StructureObject.StructureType.MiscellaneousLocker, "da8fd4315d23e984fa861e05c4e0f3cc"},
+            {StructureObject.StructureType.RifleRack, "581e190a7fcffe14b8ed1f3b72d4719d"},
+            {StructureObject.StructureType.Scp018Pedestal, "4a1fa0d57462cb34db76e55e9de544fc"},
+            {StructureObject.StructureType.Scp207Pedestal, "cb1f8708ad190734ba785b3cdafafb66"},
+            {StructureObject.StructureType.Scp244Pedestal, "c960034df4c76fe4f8a3cd08a58d883c"},
+            {StructureObject.StructureType.Scp268Pedestal, "17a2b65d1966ef041aac04e61ec852f6"},
+            {StructureObject.StructureType.Scp500Pedestal, "d38194e63b3da2b4a80979c17f887d0b"},
+            {StructureObject.StructureType.Scp1576Pedestal, "41460fe253b9dd2438beb331ddc0ca25"},
+            {StructureObject.StructureType.Scp1853Pedestal, "8e1c86dc26ed42e4eb519aedd0e9fcd1"},
+            {StructureObject.StructureType.Scp2176Pedestal, "6ad060242329d2d46ab64c47fd417146"},
+            {StructureObject.StructureType.SportTarget, "b39d8037aa87d5348af5c3ad54251890"},
+            {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"}
+        };
+
+        private static GameObject CreateStructure(GameObject parent, StructureObject structure)
+        {
+            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
+                return null;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
+            if (prefab == null)
+                return null;
+            var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
+            gameObject.SetAbsoluteTransformFrom(parent);
+            gameObject.SetLocalTransform(structure.Transform);
+            if (structure.RemoveDefaultLoot)
+                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
+            return gameObject;
+        }
 
         private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
         {

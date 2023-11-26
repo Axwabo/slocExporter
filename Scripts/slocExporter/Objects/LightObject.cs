@@ -2,11 +2,14 @@
 using slocExporter.Readers;
 using UnityEngine;
 
-namespace slocExporter.Objects {
+namespace slocExporter.Objects
+{
 
-    public sealed class LightObject : slocGameObject {
+    public sealed class LightObject : slocGameObject
+    {
 
-        public LightObject() : this(0) {
+        public LightObject() : this(0)
+        {
         }
 
         public LightObject(int instanceId) : base(instanceId) => Type = ObjectType.Light;
@@ -19,7 +22,8 @@ namespace slocExporter.Objects {
 
         public float Intensity = 1;
 
-        protected override void WriteData(BinaryWriter writer, slocHeader header) {
+        protected override void WriteData(BinaryWriter writer, slocHeader header)
+        {
             if (header.HasAttribute(slocAttributes.LossyColors))
                 writer.Write(LightColor.ToLossyColor());
             else

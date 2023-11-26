@@ -1,10 +1,12 @@
 ﻿using slocExporter.Objects;
 using UnityEngine;
 
-namespace slocExporter {
+namespace slocExporter
+{
 
     [DisallowMultipleComponent]
-    public sealed class ColliderModeSetter : MonoBehaviour {
+    public sealed class ColliderModeSetter : MonoBehaviour
+    {
 
         private const string NoCollider = "No Collider";
         private const string ClientOnly = "Client-Only";
@@ -15,7 +17,6 @@ namespace slocExporter {
         private const string ServerOnlyNonSpawnedObject = "Server-Only Non-Spawned Object";
         private const string NoColliderNonSpawnedObject = "Colliderless Non-Spawned Object";
 
-        // ReSharper disable InconsistentNaming
         private const string DescriptionNoCollider = "The object will neither have a collider on the client nor on the server.";
         private const string DescriptionClientOnly = "The object will have a collider on the client but not on the server.";
         private const string DescriptionServerOnly = "The object will be spawned on the client.\nIt will only have a collider on the server.";
@@ -29,7 +30,8 @@ namespace slocExporter {
 
         public PrimitiveObject.ColliderCreationMode mode = PrimitiveObject.ColliderCreationMode.Unset;
 
-        public static string ModeToString(PrimitiveObject.ColliderCreationMode mode) => mode switch {
+        public static string ModeToString(PrimitiveObject.ColliderCreationMode mode) => mode switch
+        {
             PrimitiveObject.ColliderCreationMode.NoCollider => NoCollider,
             PrimitiveObject.ColliderCreationMode.ClientOnly => ClientOnly,
             PrimitiveObject.ColliderCreationMode.ServerOnly => ServerOnly,
@@ -41,7 +43,8 @@ namespace slocExporter {
             _ => "Unset"
         };
 
-        public static PrimitiveObject.ColliderCreationMode StringToMode(string mode) => mode switch {
+        public static PrimitiveObject.ColliderCreationMode StringToMode(string mode) => mode switch
+        {
             NoCollider => PrimitiveObject.ColliderCreationMode.NoCollider,
             ClientOnly => PrimitiveObject.ColliderCreationMode.ClientOnly,
             ServerOnly => PrimitiveObject.ColliderCreationMode.ServerOnly,
@@ -53,7 +56,8 @@ namespace slocExporter {
             _ => PrimitiveObject.ColliderCreationMode.Unset
         };
 
-        public static string GetModeDescription(PrimitiveObject.ColliderCreationMode mode, bool isHeader = false) => mode switch {
+        public static string GetModeDescription(PrimitiveObject.ColliderCreationMode mode, bool isHeader = false) => mode switch
+        {
             PrimitiveObject.ColliderCreationMode.NoCollider => DescriptionNoCollider,
             PrimitiveObject.ColliderCreationMode.ClientOnly => DescriptionClientOnly,
             PrimitiveObject.ColliderCreationMode.ServerOnly => DescriptionServerOnly,

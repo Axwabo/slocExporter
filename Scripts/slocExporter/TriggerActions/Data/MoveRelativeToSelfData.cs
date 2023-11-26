@@ -1,9 +1,11 @@
 ﻿using slocExporter.TriggerActions.Enums;
 using UnityEngine;
 
-namespace slocExporter.TriggerActions.Data {
+namespace slocExporter.TriggerActions.Data
+{
 
-    public sealed class MoveRelativeToSelfData : BaseTeleportData {
+    public sealed class MoveRelativeToSelfData : BaseTeleportData
+    {
 
         public override TargetType PossibleTargets => TargetType.All;
 

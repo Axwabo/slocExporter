@@ -4,9 +4,11 @@ using slocExporter;
 using UnityEditor;
 using UnityEngine;
 
-public static class slocImporter {
+public static class slocImporter
+{
 
-    public static bool Init(string filePath, bool useExistingMaterials, bool colorsFolderOnly) {
+    public static bool Init(string filePath, bool useExistingMaterials, bool colorsFolderOnly)
+    {
         if (_inProgress)
             return false;
         _filePath = filePath;
@@ -23,31 +25,40 @@ public static class slocImporter {
 
     private static bool _inProgress;
 
-    public static void TryImport(ProgressUpdater updateProgress = null) {
-        if (_inProgress) {
+    public static void TryImport(ProgressUpdater updateProgress = null)
+    {
+        if (_inProgress)
+        {
             EditorUtility.DisplayDialog("slocImporter", "Import is already in progress", "OK");
             return;
         }
 
-        if (string.IsNullOrEmpty(_filePath)) {
+        if (string.IsNullOrEmpty(_filePath))
+        {
             EditorUtility.DisplayDialog("slocImporter", "You must specify a file to import!", "OK");
             return;
         }
 
         _inProgress = true;
 
-        try {
+        try
+        {
             DoImport(out var importedCount, out var objectName, updateProgress);
             EditorUtility.DisplayDialog("Import complete", $"Imported {importedCount} GameObject(s) as {objectName}", "OK");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             Debug.LogError(e);
             EditorUtility.DisplayDialog("slocImporter", "Import failed. See the debug log for details.", "OK");
-        } finally {
+        }
+        finally
+        {
             _inProgress = false;
         }
     }
 
-    private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null) {
+    private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null)
+    {
         EnsureColorsDirectoryExists();
         MaterialHandler.SkipForAll = false;
         MaterialHandler.CreateForAll = false;
@@ -61,7 +72,8 @@ public static class slocImporter {
         importedCount = spawned;
     }
 
-    private static void EnsureColorsDirectoryExists() {
+    private static void EnsureColorsDirectoryExists()
+    {
         if (!Directory.Exists("Assets/Colors"))
             Directory.CreateDirectory("Assets/Colors");
     }

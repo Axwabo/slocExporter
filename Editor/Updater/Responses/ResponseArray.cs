@@ -1,10 +1,12 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Editor.Updater.Responses {
+namespace Editor.Updater.Responses
+{
 
     [Serializable]
-    public struct ResponseArray<T> {
+    public struct ResponseArray<T>
+    {
 
         public T[] items;
 
