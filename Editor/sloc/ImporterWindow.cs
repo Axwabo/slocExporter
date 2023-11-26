@@ -9,6 +9,7 @@ namespace Editor.sloc
     {
 
         private const string ProgressbarTitle = "slocImporter";
+        private const string FilePathStateKey = "slocExporterImportFilePath";
 
         [MenuItem("sloc/Import")]
         public static void ShowWindow() => GetWindow<ImporterWindow>(true, "Import an sloc file");
@@ -19,6 +20,8 @@ namespace Editor.sloc
 
         private static bool _colorsFolderOnly;
 
+        private void OnEnable() => SessionState.GetString(FilePathStateKey, _filePath);
+
         private void OnGUI()
         {
             _useExistingMaterials = EditorGUILayout.Toggle(new GUIContent("Use Existing Materials", "When enabled, the importer tries to use existing materials in the assets."), _useExistingMaterials);
@@ -26,6 +29,7 @@ namespace Editor.sloc
             _filePath = EditorGUILayout.TextField("File Path:", _filePath);
             if (GUILayout.Button("Select File"))
                 _filePath = EditorUtility.OpenFilePanel("Select sloc file to import", _filePath, "sloc").ToShortAppDataPath();
+            SessionState.SetString(FilePathStateKey, _filePath);
             if (!GUILayout.Button("Import Objects"))
                 return;
             if (!slocImporter.Init(_filePath, _useExistingMaterials, _colorsFolderOnly))

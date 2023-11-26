@@ -18,6 +18,7 @@ namespace Editor.sloc
         private const string ProgressbarTitle = "slocExporter";
         private const string LossyColorDescription = "Uses a single 32-bit integer for colors instead of four 32-bit floats (16 bytes per color). This reduces file size but limits the RGB color range to 0-255 and therefore loses precision.";
         private const string Asterisk = "Hover over an item with an * for more information.";
+        private const string FilePathStateKey = "slocExporterExportFilePath";
 
         [MenuItem("sloc/Export")]
         public static void ShowWindow() => GetWindow<ExporterWindow>(true, "Export to sloc");
@@ -39,6 +40,8 @@ namespace Editor.sloc
 
         private static readonly List<string> Options = new(OptionsArray);
 
+        private void OnEnable() => _filePath = SessionState.GetString(FilePathStateKey, _filePath);
+
         private void OnGUI()
         {
             GUILayout.Label("File", EditorStyles.boldLabel);
@@ -58,6 +61,7 @@ namespace Editor.sloc
             }
 
             _filePath = EditorGUILayout.TextField("Path", filePath);
+            SessionState.SetString(FilePathStateKey, _filePath);
             GUILayout.Space(10);
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
             _lossyColors = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColors);
