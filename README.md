@@ -6,7 +6,7 @@ Use the [slocLoader](https://github.com/Axwabo/slocLoader/) plugin to load them 
 
 ![Logo](https://github.com/Axwabo/slocLoader/blob/main/logo%20small.png?raw=true)
 
-[Watch the tutorial](https://youtu.be/jYsduSyncSw)
+[Watch the tutorial](https://youtu.be/4_-viU0HBBU)
 
 # MapEditorReborn
 
@@ -50,7 +50,7 @@ If you want to edit an existing **sloc** file, you can use the **Importer**.
 
 # Use References
 
-For better positioning, download [the room assets you need](https://drive.google.com/drive/folders/1693Lf8OkXKdar8Ni2W5TfNHWoOHIiFpt?usp=sharing)
+For better positioning, download [the room and structure assets you need](https://drive.google.com/drive/folders/1693Lf8OkXKdar8Ni2W5TfNHWoOHIiFpt?usp=sharing)
 
 1. Drag and drop the Unity packages into the Unity project.
 2. Put the room you need into the scene from the RoomPrefabs folder.
@@ -98,3 +98,9 @@ A maximum of 60 seconds can be specified but this can be stacked by using the `A
 **WARNING:** if you use the `Add` duration mode in `Stay` it may result in very long durations of teleporter immunity.
 
 A way to clear immunity is by setting the duration mode to `Absolute` and the duration to 0 seconds.
+
+# Structures
+
+Add the imported prefab into the scene.
+
+To mark another object as a structure, add the `Structure Override` script. This can also be used to remove the default loot of lockers. Setting the type to `None` on a prefab will retain the original object type. 
