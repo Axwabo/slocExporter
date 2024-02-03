@@ -11,7 +11,6 @@ namespace Editor.sloc
         private Texture2D _image;
         private bool _compressImage;
 
-        private const string _materialsFolderPath = "Assets/Colors";
         private const string _mergeQuadsDescription = "Should the multiple quads after each other with same color merge into single one?";
 
         private void OnGUI()
@@ -44,7 +43,7 @@ namespace Editor.sloc
                 return;
             }
 
-            if (!AssetDatabase.IsValidFolder(_materialsFolderPath))
+            if (!AssetDatabase.IsValidFolder("Assets/Colors"))
             {
                 AssetDatabase.CreateFolder("Assets", "Colors");
             }
@@ -70,6 +69,9 @@ namespace Editor.sloc
                     i += runLength;
                 }
             }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         private void GenerateQuadsNotMerged(GameObject parent)
@@ -88,6 +90,9 @@ namespace Editor.sloc
                     if (color.a > 0f) CreatePrimitive(new Vector3(i, 1, j), _image.GetPixel(i, j), 1, parent);
                 }
             }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         private void CreatePrimitive(Vector3 position, Color color, int runLength, GameObject parent)
@@ -97,16 +102,14 @@ namespace Editor.sloc
             gameObject.transform.localScale = new Vector3(runLength, 1, 1f);
             gameObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
-            string materialPath = $"{_materialsFolderPath}{color.ToString()}.mat";
+            string materialPath = $"Assets/Colors/Material-{color.ToString()}.mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
 
             if (material == null)
             {
                 material = new Material(Shader.Find("Standard"));
                 material.color = color;
-                AssetDatabase.CreateAsset(material, materialPath + $"Material-{color.ToString()}" + ".mat");
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
+                AssetDatabase.CreateAsset(material, materialPath);
             }
 
             Renderer renderer = gameObject.GetComponent<Renderer>();
