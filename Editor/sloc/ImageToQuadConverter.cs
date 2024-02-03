@@ -104,7 +104,7 @@ namespace Editor.sloc
             {
                 material = new Material(Shader.Find("Standard"));
                 material.color = color;
-                AssetDatabase.CreateAsset(material, materialPath);
+                AssetDatabase.CreateAsset(material, materialPath + $"Material-{color.ToString()}" + ".mat");
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
