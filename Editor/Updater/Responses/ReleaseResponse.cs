@@ -4,12 +4,12 @@ namespace Editor.Updater.Responses
 {
 
     [Serializable]
-    public struct TagResponse
+    public struct ReleaseResponse
     {
 
-        public string name;
+        public string tag_name;
 
-        public string message;
+        public bool prerelease;
 
         public string zipball_url;
 

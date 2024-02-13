@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Editor.Updater.Responses;
@@ -19,9 +20,11 @@ namespace Editor.Updater
 
         private const string InitDone = "slocUnityInitDone";
 
+        private const string PreReleaseWarning = "\nThe update will download a pre-release version. Downgrading is not supported - only update if you can wait for the next release.";
+
         private static UnityWebRequest _request;
         private static bool _canceled;
-        private static TagResponse[] _tags;
+        private static ReleaseResponse[] _releases;
         private static ChangedFile[] _files;
         private static string _assets;
         private static int _asyncProgressId;
@@ -43,7 +46,7 @@ namespace Editor.Updater
             if (Progress.Exists(_asyncProgressId))
                 Progress.Remove(_asyncProgressId);
             _canceled = false;
-            _tags = null;
+            _releases = null;
             _files = null;
             _assets = null;
             return true;
@@ -86,7 +89,7 @@ namespace Editor.Updater
             try
             {
                 _asyncProgressId = ProgressStart("Preparing sloc update", CheckingForUpdates);
-                var checkedForUpdates = await SendRequestAsync(string.Format(Tags, GitHubUsername, Repository), CheckingForUpdates);
+                var checkedForUpdates = await SendRequestAsync(string.Format(Releases, GitHubUsername, Repository), CheckingForUpdates);
                 if (!checkedForUpdates || !CompleteUpdateCheck(true) || !TryAskForUpdate(out var version, true))
                     return;
 
@@ -122,14 +125,14 @@ namespace Editor.Updater
             }
         }
 
-        public static void UpdateBlocking()
+        public static void UpdateBlocking(bool preRelease = false)
         {
             if (!ResetUpdate())
                 return;
             try
             {
-                var checkedForUpdates = SendRequestBlocking(string.Format(Tags, GitHubUsername, Repository), CheckingForUpdates);
-                if (!checkedForUpdates || !CompleteUpdateCheck(false) || !TryAskForUpdate(out var version, false))
+                var checkedForUpdates = SendRequestBlocking(string.Format(Releases, GitHubUsername, Repository), CheckingForUpdates);
+                if (!checkedForUpdates || !CompleteUpdateCheck(false) || !TryAskForUpdate(out var version, false, preRelease))
                     return;
 
                 var receivedChanges = SendRequestBlocking(string.Format(Compare, GitHubUsername, Repository, API.CurrentVersion, version), ReceivingChanges);
@@ -215,9 +218,9 @@ namespace Editor.Updater
 
         #region Download
 
-        private static Task<bool> DownloadFilesAsync() => SendRequestAsync(_tags[0].zipball_url, DownloadingFiles, SetDownloadHandler);
+        private static Task<bool> DownloadFilesAsync() => SendRequestAsync(_releases[0].zipball_url, DownloadingFiles, SetDownloadHandler);
 
-        private static bool DownloadFilesBlocking() => SendRequestBlocking(_tags[0].zipball_url, DownloadingFiles, SetDownloadHandler);
+        private static bool DownloadFilesBlocking() => SendRequestBlocking(_releases[0].zipball_url, DownloadingFiles, SetDownloadHandler);
 
         private static void SetDownloadHandler(UnityWebRequest request) =>
             request.downloadHandler = new DownloadHandlerFile(Path.Combine(Directory.GetCurrentDirectory(), ArchiveFileName))
@@ -264,12 +267,12 @@ namespace Editor.Updater
                 case UnityWebRequest.Result.Success:
                     if (silent)
                         ProgressBg(1, 4, null);
-                    _tags = ResponseArray<TagResponse>.Parse(_request.downloadHandler.text);
+                    _releases = ResponseArray<ReleaseResponse>.Parse(_request.downloadHandler.text);
                     break;
             }
 
             Dispose(!silent);
-            return _tags is {Length: not 0};
+            return _releases is {Length: not 0};
         }
 
         private static bool ChangesReceived(bool silent)
@@ -318,9 +321,9 @@ namespace Editor.Updater
             _files = r.files;
         }
 
-        private static bool TryAskForUpdate(out string latest, bool silent)
+        private static bool TryAskForUpdate(out string latest, bool silent, bool preRelease = false)
         {
-            if (_tags is not {Length: not 0})
+            if (_releases is not {Length: not 0})
             {
                 Finish(Progress.Status.Failed);
                 Warn("No update information received");
@@ -329,7 +332,8 @@ namespace Editor.Updater
                 return false;
             }
 
-            var version = latest = _tags[0].name.TrimStart('v', 'V');
+            var release = _releases.First(e => !e.prerelease || preRelease);
+            var version = latest = release.tag_name.TrimStart('v', 'V');
             if (IsUpToDate(version))
             {
                 ProgressBg(1, 4, "sloc is up to date");
@@ -344,7 +348,7 @@ namespace Editor.Updater
                 ProgressBg(1, 4, "Waiting for user confirmation...");
             else
                 EditorUtility.DisplayProgressBar("sloc Update", "Waiting for user confirmation...", -1);
-            var update = EditorUtility.DisplayDialog("sloc update", $"An update is available. Would you like to install it?\nYour version:{API.CurrentVersion}\nLatest version: {version}", "Yes", "Skip");
+            var update = EditorUtility.DisplayDialog("sloc update", $"An update is available. Would you like to install it?\nYour version:{API.CurrentVersion}\nLatest version: {version}{(preRelease ? PreReleaseWarning : "")}", "Yes", "Skip");
             if (!update)
                 Finish(Progress.Status.Canceled);
             return update;

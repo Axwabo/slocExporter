@@ -40,8 +40,10 @@ namespace Editor.Updater
             }
 
             GUILayout.Label($"Current Version: {slocExporter.API.CurrentVersion}", EditorStyles.boldLabel);
-            if (GUILayout.Button("Find Updates Now"))
+            if (GUILayout.Button("Update Now"))
                 ProjectUpdater.UpdateBlocking();
+            if (GUILayout.Button("Check for pre-release versions"))
+                ProjectUpdater.UpdateBlocking(true);
         }
 
     }

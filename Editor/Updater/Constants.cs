@@ -6,7 +6,7 @@
 
         private const string ApiUrlFormat = "https://api.github.com/repos/{0}/{1}/";
 
-        public const string Tags = ApiUrlFormat + "tags";
+        public const string Releases = ApiUrlFormat + "releases";
 
         public const string Compare = ApiUrlFormat + "compare/v{2}...v{3}";
 
