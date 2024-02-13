@@ -112,6 +112,7 @@ namespace Editor.Updater
                 Progress.Report(_asyncProgressId, 1f, "Update complete!");
                 Progress.Finish(_asyncProgressId);
                 EditorUtility.DisplayDialog("sloc Update", "Update complete!", "Nice");
+                EditorUtility.RequestScriptReload();
             }
             catch (Exception e)
             {
@@ -149,6 +150,7 @@ namespace Editor.Updater
                 API.CurrentVersion = version;
                 Log($"Successfully updated to version {version}!");
                 EditorUtility.DisplayDialog("sloc Update", "Update complete!", "Nice");
+                EditorUtility.RequestScriptReload();
             }
             catch (Exception e)
             {
