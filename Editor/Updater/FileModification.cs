@@ -93,6 +93,8 @@ namespace Editor.Updater
 
         private static void ModifyCsproj(string path, bool wasRemoved, string assets, List<string> list)
         {
+            if (!path.EndsWith(".cs"))
+                return;
             var pathFromRoot = Path.GetRelativePath(Directory.GetParent(assets)!.FullName, path).Replace('\\', '/');
             var existingIndex = list.FindIndex(s =>
             {
