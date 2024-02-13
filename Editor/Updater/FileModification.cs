@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Editor.Updater.Responses;
 using UnityEngine;
 
@@ -39,6 +41,8 @@ namespace Editor.Updater
                 return;
             }
 
+            var projectFile = File.ReadAllLines(Constants.ProjectFileName).ToList();
+            var editorProjectFile = File.ReadAllLines(Constants.EditorProjectFileName).ToList();
             var count = files.Length;
             var fc = (float) count;
             for (var i = 0; i < count; i++)
@@ -53,14 +57,17 @@ namespace Editor.Updater
                     continue;
                 }
 
-                ProcessPatch(file, entry, wasRemoved, assets);
+                ProcessPatch(file, entry, wasRemoved, assets, projectFile, editorProjectFile);
                 update(name, (i + 1) / fc);
             }
+
+            File.WriteAllLines(Constants.ProjectFileName, projectFile);
+            File.WriteAllLines(Constants.EditorProjectFileName, editorProjectFile);
         }
 
-        private static void ProcessPatch(ChangedFile file, ZipArchiveEntry entry, bool wasRemoved, string assets)
+        private static void ProcessPatch(ChangedFile file, ZipArchiveEntry entry, bool wasRemoved, string assets, List<string> projectFile, List<string> editorProjectFile)
         {
-            var path = Path.Combine(assets, file.filename);
+            var path = Path.GetFullPath(Path.Combine(assets, file.filename));
             if (wasRemoved)
             {
                 if (File.Exists(path))
@@ -78,6 +85,32 @@ namespace Editor.Updater
                     Directory.CreateDirectory(directory);
                 entry.ExtractToFile(path, true);
             }
+
+            ModifyCsproj(path, wasRemoved, assets, path.Replace('\\', '/').Contains("Editor/") ? editorProjectFile : projectFile);
+        }
+
+        private static readonly Regex CsprojRegex = new(@"<Compile\s?Include=""(.*)""\s?/>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static void ModifyCsproj(string path, bool wasRemoved, string assets, List<string> list)
+        {
+            var pathFromRoot = Path.GetRelativePath(Directory.GetParent(assets)!.FullName, path).Replace('\\', '/');
+            var existingIndex = list.FindIndex(s =>
+            {
+                var match = CsprojRegex.Match(s);
+                return match.Success && match.Groups[1].Value.Replace('\\', '/') == pathFromRoot;
+            });
+            if (wasRemoved)
+            {
+                if (existingIndex != -1)
+                    list.RemoveAt(existingIndex);
+                return;
+            }
+
+            if (existingIndex != -1)
+                return;
+            var index = list.FindIndex(s => s.Contains("<Compile"));
+            if (index != -1)
+                list.Insert(index, $"<Compile Include=\"{pathFromRoot.Replace('/', Path.DirectorySeparatorChar)}\" />");
         }
 
         private static void RemoveMetaFile(string file)

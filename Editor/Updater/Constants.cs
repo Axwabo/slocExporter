@@ -28,6 +28,10 @@
 
         public const string CheckingForUpdates = "Checking for updates...";
 
+        public const string ProjectFileName = "Assembly-CSharp.csproj";
+
+        public const string EditorProjectFileName = "Assembly-CSharp-Editor.csproj";
+
     }
 
     public delegate void ProgressUpdater(string message, float progress);

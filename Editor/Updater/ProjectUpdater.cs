@@ -334,6 +334,8 @@ namespace Editor.Updater
             {
                 ProgressBg(1, 4, "sloc is up to date");
                 Finish(Progress.Status.Succeeded);
+                if (!silent)
+                    EditorUtility.DisplayDialog("sloc update", "sloc is up to date.", "OK");
                 Log("sloc is up to date.");
                 return false;
             }
