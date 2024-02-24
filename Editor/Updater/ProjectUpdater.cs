@@ -350,7 +350,7 @@ namespace Editor.Updater
                 ProgressBg(1, 4, "Waiting for user confirmation...");
             else
                 EditorUtility.DisplayProgressBar("sloc Update", "Waiting for user confirmation...", -1);
-            var update = EditorUtility.DisplayDialog("sloc update", $"An update is available. Would you like to install it?\nYour version:{API.CurrentVersion}\nLatest version: {version}{(preRelease ? PreReleaseWarning : "")}", "Yes", "Skip");
+            var update = EditorUtility.DisplayDialog("sloc update", $"An update is available. Would you like to install it?\nYour version: {API.CurrentVersion}\nLatest version: {version}{(preRelease ? PreReleaseWarning : "")}", "Yes", "Skip");
             if (!update)
                 Finish(Progress.Status.Canceled);
             return update;

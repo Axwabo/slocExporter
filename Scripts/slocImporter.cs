@@ -59,7 +59,6 @@ public static class slocImporter
 
     private static void DoImport(out int importedCount, out string objectName, ProgressUpdater updateProgress = null)
     {
-        EnsureColorsDirectoryExists();
         MaterialHandler.SkipForAll = false;
         MaterialHandler.CreateForAll = false;
         var lastView = SceneView.lastActiveSceneView;
@@ -70,12 +69,6 @@ public static class slocImporter
         objectName = Path.GetFileNameWithoutExtension(fullPath);
         parent.name = $"Imported-{objectName}";
         importedCount = spawned;
-    }
-
-    private static void EnsureColorsDirectoryExists()
-    {
-        if (!Directory.Exists("Assets/Colors"))
-            Directory.CreateDirectory("Assets/Colors");
     }
 
 }

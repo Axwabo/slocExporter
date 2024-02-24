@@ -22,7 +22,7 @@ namespace slocExporter
 
         public const ushort slocVersion = 5;
 
-        public static string CurrentVersion = "5.0.4";
+        public static string CurrentVersion = "5.1.0";
 
         #region Reader Declarations
 
@@ -151,7 +151,7 @@ namespace slocExporter
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
             {
                 if (handle)
-                    HandleNoMaterial(primitive, toy);
+                    HandleNoMaterial(primitive.MaterialColor, toy);
                 return toy;
             }
 

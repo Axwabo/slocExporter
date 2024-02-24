@@ -1,28 +1,27 @@
 ﻿using System.Collections.Generic;
-using slocExporter.Objects;
 using UnityEditor;
 using UnityEngine;
 
 namespace slocExporter
 {
 
-    internal static class MaterialHandler
+    public static class MaterialHandler
     {
 
         private static readonly Dictionary<Color, Material> MaterialCache = new();
 
         public static void ClearMaterialCache() => MaterialCache.Clear();
 
-        public static void HandleNoMaterial(PrimitiveObject primitive, GameObject created)
+        public static void HandleNoMaterial(Color color, GameObject created)
         {
             if (SkipForAll)
                 return;
-            var result = EditorUtility.DisplayDialogComplex("No Material", "No material found for color " + primitive.MaterialColor + ".\nCreate it now?", "Create", "Create for All", "Skip");
+            var result = EditorUtility.DisplayDialogComplex("No Material", "No material found for color " + color + ".\nCreate it now?", "Create", "Create for All", "Skip");
             switch (result)
             {
                 case 0:
                 case 1:
-                    CreateMaterial(primitive.MaterialColor, out var mat);
+                    CreateMaterial(color, out var mat);
                     created.GetComponent<MeshRenderer>().sharedMaterial = mat;
                     CreateForAll = result == 1;
                     break;
@@ -49,6 +48,7 @@ namespace slocExporter
         {
             if (MaterialCache.Count > 0)
                 return;
+            EnsureColorsDirectoryExists();
             EditorUtility.DisplayProgressBar("slocImporter - Building material cache", "Collecting assets", -1f);
             var assets = AssetDatabase.FindAssets("t:material", slocImporter.SearchInColorsFolderOnly ? new[] {"Assets/Colors"} : null);
             var count = assets.Length;
@@ -103,6 +103,12 @@ namespace slocExporter
         public static bool CreateForAll;
 
         public static bool SkipForAll;
+
+        private static void EnsureColorsDirectoryExists()
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Colors"))
+                AssetDatabase.CreateFolder("Assets", "Colors");
+        }
 
     }
 
