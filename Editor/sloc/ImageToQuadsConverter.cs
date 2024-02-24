@@ -16,7 +16,11 @@ namespace Editor.sloc
 
         private static bool _merge;
 
+        private static float _mergeThreshold = 0.01f;
+
         private const string MergeQuadsDescription = "Should multiple neighboring quads (per row) with the same color be merged into a single one?";
+
+        private const string MergeThresholdDescription = "The threshold for merging quads. A value of 0.01 means that the difference between two colors must be less than 1% to be considered the same. Alpha is not taken into account.";
 
         private void OnGUI()
         {
@@ -24,7 +28,9 @@ namespace Editor.sloc
             _image = (Texture2D) EditorGUI.ObjectField(new Rect(5, 20, 100, 100), _image, typeof(Texture2D), true);
             GUILayout.Space(105);
             _merge = EditorGUILayout.Toggle(new GUIContent("Merge Quads*", MergeQuadsDescription), _merge);
-            GUILayout.Space(5);
+            if (_merge)
+                _mergeThreshold = EditorGUILayout.Slider(new GUIContent("Merge Threshold*", MergeThresholdDescription), _mergeThreshold, 0f, 1f);
+            EditorGUILayout.HelpBox("This operation may create an excessive amount of GameObjects. Make sure to use it on small images.", MessageType.Warning);
             if (GUILayout.Button("Generate"))
                 Generate();
         }
@@ -65,8 +71,11 @@ namespace Editor.sloc
 
         public static void GenerateQuadsMerged(GameObject parent)
         {
-            for (var y = 0; y < _image.height; y++)
+            var height = (float) _image.height;
+            for (var y = 0; y < height; y++)
             {
+                var progress = y / height;
+                EditorUtility.DisplayProgressBar($"Generating quads (merged): {progress:P2}", $"Processing row {y}", progress);
                 var x = 0;
                 while (x < _image.width)
                 {
@@ -82,19 +91,32 @@ namespace Editor.sloc
         private static int CalculateWidth(int x, int y, Color color)
         {
             var width = 1;
-            while (x + width < _image.width && _image.GetPixel(x + width, y) == color)
+            while (x + width < _image.width)
+            {
+                var nextColor = _image.GetPixel(x + width, y);
+                if (CheckThreshold(nextColor.r, color.r) || CheckThreshold(nextColor.g, color.g) || CheckThreshold(nextColor.b, color.b))
+                    break;
                 width++;
+            }
+
             return width;
         }
 
+        private static bool CheckThreshold(float a, float b) => Mathf.Abs(a - b) > _mergeThreshold;
+
         private static void GenerateQuadsNotMerged(GameObject parent)
         {
-            for (var x = 0; x < _image.width; x++)
-            for (var y = 0; y < _image.height; y++)
+            var height = (float) _image.height;
+            for (var y = 0; y < height; y++)
             {
-                var color = _image.GetPixel(x, y);
-                if (color.a > 0f)
-                    CreatePrimitive(new Vector3(x, 1, y), _image.GetPixel(x, y), 1, parent);
+                var progress = y / height;
+                EditorUtility.DisplayProgressBar($"Generating quads: {progress:P2}", $"Processing row {y}", progress);
+                for (var x = 0; x < _image.width; x++)
+                {
+                    var color = _image.GetPixel(x, y);
+                    if (color.a > 0f)
+                        CreatePrimitive(new Vector3(x, 1, y), _image.GetPixel(x, y), 1, parent);
+                }
             }
         }
 
