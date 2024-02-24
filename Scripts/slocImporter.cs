@@ -43,6 +43,7 @@ public static class slocImporter
 
         try
         {
+            AssetDatabase.DisallowAutoRefresh();
             DoImport(out var importedCount, out var objectName, updateProgress);
             EditorUtility.DisplayDialog("Import complete", $"Imported {importedCount} GameObject(s) as {objectName}", "OK");
         }
@@ -53,6 +54,9 @@ public static class slocImporter
         }
         finally
         {
+            AssetDatabase.AllowAutoRefresh();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             _inProgress = false;
         }
     }

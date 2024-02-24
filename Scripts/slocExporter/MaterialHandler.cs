@@ -8,9 +8,15 @@ namespace slocExporter
     public static class MaterialHandler
     {
 
+        private static bool _wasBuilt;
+
         private static readonly Dictionary<Color, Material> MaterialCache = new();
 
-        public static void ClearMaterialCache() => MaterialCache.Clear();
+        public static void ClearMaterialCache()
+        {
+            MaterialCache.Clear();
+            _wasBuilt = false;
+        }
 
         public static void HandleNoMaterial(Color color, GameObject created)
         {
@@ -46,7 +52,7 @@ namespace slocExporter
 
         private static void BuildCache(Color color, ref Material material)
         {
-            if (MaterialCache.Count > 0)
+            if (MaterialCache.Count > 0 || _wasBuilt)
                 return;
             EnsureColorsDirectoryExists();
             EditorUtility.DisplayProgressBar("slocImporter - Building material cache", "Collecting assets", -1f);
@@ -71,6 +77,9 @@ namespace slocExporter
                 EditorUtility.UnloadUnusedAssetsImmediate();
                 loaded = 0;
             }
+
+            EditorUtility.ClearProgressBar();
+            _wasBuilt = true;
         }
 
         private static bool ProcessAfterFind(Color color, ref Material material, ref bool handle)
@@ -98,6 +107,7 @@ namespace slocExporter
                 color = color
             };
             AssetDatabase.CreateAsset(material, "Assets/Colors/" + $"Material-{color.ToString()}" + ".mat");
+            MaterialCache[color] = material;
         }
 
         public static bool CreateForAll;

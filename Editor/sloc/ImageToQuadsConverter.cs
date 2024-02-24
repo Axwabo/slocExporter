@@ -1,3 +1,4 @@
+using System;
 using slocExporter;
 using UnityEditor;
 using UnityEngine;
@@ -30,18 +31,36 @@ namespace Editor.sloc
 
         private static void Generate()
         {
-            MaterialHandler.ClearMaterialCache();
-            var rootObject = new GameObject($"{_image.name}-container");
-            if (_image == null)
+            if (_image == null || !_image.isReadable)
             {
-                EditorUtility.DisplayDialog("Conversion Error", "You must provide an image!", "OK");
+                EditorUtility.DisplayDialog("Conversion Error", "You must provide a readable image! Make sure to apply the proper import settings.", "OK");
                 return;
             }
 
-            if (_merge)
-                GenerateQuadsMerged(rootObject);
-            else
-                GenerateQuadsNotMerged(rootObject);
+            MaterialHandler.ClearMaterialCache();
+            MaterialHandler.SkipForAll = false;
+            MaterialHandler.CreateForAll = false;
+            try
+            {
+                AssetDatabase.DisallowAutoRefresh();
+                var rootObject = new GameObject($"{_image.name}-container");
+                if (_merge)
+                    GenerateQuadsMerged(rootObject);
+                else
+                    GenerateQuadsNotMerged(rootObject);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                EditorUtility.DisplayDialog("Conversion failed", "Failed to convert the image. See the debug log for details.", "OK");
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+                AssetDatabase.AllowAutoRefresh();
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
         }
 
         public static void GenerateQuadsMerged(GameObject parent)
@@ -79,12 +98,12 @@ namespace Editor.sloc
             }
         }
 
-        private static void CreatePrimitive(Vector3 position, Color color, int runLength, GameObject parent)
+        private static void CreatePrimitive(Vector3 position, Color color, int width, GameObject parent)
         {
             var gameObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
             var t = gameObject.transform;
             t.position = position;
-            t.localScale = new Vector3(runLength, 1, 1f);
+            t.localScale = new Vector3(width, 1, 1f);
             t.rotation = Quaternion.Euler(90f, 0f, 0f);
             DestroyImmediate(gameObject.GetComponent<MeshCollider>());
             t.SetParent(parent.transform);
