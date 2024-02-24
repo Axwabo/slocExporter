@@ -41,8 +41,8 @@ namespace Editor.Updater
                 return;
             }
 
-            var projectFile = File.ReadAllLines(Constants.ProjectFileName).ToList();
-            var editorProjectFile = File.ReadAllLines(Constants.EditorProjectFileName).ToList();
+            var projectFile = File.Exists(Constants.ProjectFileName) ? File.ReadAllLines(Constants.ProjectFileName).ToList() : new List<string>();
+            var editorProjectFile = File.Exists(Constants.EditorProjectFileName) ? File.ReadAllLines(Constants.EditorProjectFileName).ToList() : new List<string>();
             var count = files.Length;
             var fc = (float) count;
             for (var i = 0; i < count; i++)
@@ -61,8 +61,10 @@ namespace Editor.Updater
                 update(name, (i + 1) / fc);
             }
 
-            File.WriteAllLines(Constants.ProjectFileName, projectFile);
-            File.WriteAllLines(Constants.EditorProjectFileName, editorProjectFile);
+            if (projectFile.Count != 0)
+                File.WriteAllLines(Constants.ProjectFileName, projectFile);
+            if (editorProjectFile.Count != 0)
+                File.WriteAllLines(Constants.EditorProjectFileName, editorProjectFile);
         }
 
         private static void ProcessPatch(ChangedFile file, ZipArchiveEntry entry, bool wasRemoved, string assets, List<string> projectFile, List<string> editorProjectFile)
@@ -93,7 +95,7 @@ namespace Editor.Updater
 
         private static void ModifyCsproj(string path, bool wasRemoved, string assets, List<string> list)
         {
-            if (!path.EndsWith(".cs"))
+            if (!path.EndsWith(".cs") || list.Count == 0)
                 return;
             var pathFromRoot = Path.GetRelativePath(Directory.GetParent(assets)!.FullName, path).Replace('\\', '/');
             var existingIndex = list.FindIndex(s =>
