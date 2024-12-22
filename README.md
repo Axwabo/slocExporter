@@ -23,7 +23,8 @@ Laboratory.
 
 An **sloc** file can contain various primitive Unity objects, including spheres, cubes etc., and also lights.
 
-Note: SCP:SL only supports spawning **point lights** remotely, therefore **it's not yet possible to create spot, directional or area lights.**
+> [!NOTE]
+> Currently, only point lights are supported.
 
 To create an **sloc** file, add the **ObjectExporter** script to an empty object. Select the path to export to and click **Export Objects**
 
