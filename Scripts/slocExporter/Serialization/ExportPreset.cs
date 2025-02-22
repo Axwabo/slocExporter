@@ -14,7 +14,7 @@ namespace slocExporter.Serialization
         public bool lossyColors;
 
         [Tooltip("The default flags to use for primitive objects.")]
-        public PrimitiveObjectFlags defaultPrimitiveFlags = PrimitiveObject.DefaultFlags;
+        public PrimitiveObjectFlags defaultPrimitiveFlags;
 
         [Tooltip("Exports trigger actions for every primitive, even if their flags don't specify it as a trigger.")]
         public bool exportAllTriggerActions;

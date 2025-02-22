@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using slocExporter;
-using slocExporter.Objects;
 using slocExporter.Serialization;
+using slocExporter.Serialization.Exporting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -113,28 +114,22 @@ namespace Editor.sloc
 
         private static void Export(bool selectedOnly)
         {
-            if (!ObjectExporter.Init(_debug, _filePath, CreateAttributes(), PrimitiveObject.ColliderCreationMode.Unset)) // TODO
-            {
-                EditorUtility.DisplayDialog(ProgressbarTitle, "Export is already in progress", "OK");
-                return;
-            }
-
-            EditorUtility.DisplayProgressBar(ProgressbarTitle, "Starting export", -1f);
-            ObjectExporter.TryExport(selectedOnly, ProgressbarUpdate);
-            EditorUtility.ClearProgressBar();
-        }
-
-        private static slocAttributes CreateAttributes()
-        {
+            // TODO: validate path
             var preset = _selectedPreset ? _selectedPreset : _settings;
-            var attribute = slocAttributes.None;
-            if (preset.lossyColors)
-                attribute |= slocAttributes.LossyColors;
-            if (preset.defaultPrimitiveFlags != PrimitiveObjectFlags.None)
-                attribute |= slocAttributes.DefaultFlags;
-            if (preset.exportAllTriggerActions)
-                attribute |= slocAttributes.ExportAllTriggerActions;
-            return attribute;
+            try
+            {
+                using var exporter = new FileExporter(_filePath, _debug, preset, ProgressbarUpdate);
+                exporter.Export(selectedOnly);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                EditorUtility.DisplayDialog(ProgressbarTitle, "Failed to export! See the console for details.", "OK");
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
         }
 
         private static void ProgressbarUpdate(string info, float progress) => EditorUtility.DisplayProgressBar(ProgressbarTitle, info, progress);
