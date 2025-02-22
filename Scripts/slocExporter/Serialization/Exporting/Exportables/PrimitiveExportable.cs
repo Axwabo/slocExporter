@@ -13,6 +13,8 @@ namespace slocExporter.Serialization.Exporting.Exportables
 
         public PrimitiveObjectFlags ResolvedFlags;
 
+        public PrimitiveObjectFlags VetoedFlags;
+
         public PrimitiveObjectFlags OverriddenFlags;
 
         public Color MaterialColor;
@@ -25,7 +27,7 @@ namespace slocExporter.Serialization.Exporting.Exportables
             TriggerActions = TriggerActions.ToArray(),
             Flags = OverriddenFlags != PrimitiveObjectFlags.None
                 ? OverriddenFlags
-                : ResolvedFlags
+                : ResolvedFlags & ~VetoedFlags
         };
 
     }

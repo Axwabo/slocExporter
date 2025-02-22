@@ -31,30 +31,13 @@ namespace slocExporter.Serialization.Exporting
             var gameObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(e => e.WithAllChildren()).ToList();
             var exportables = new Dictionary<GameObject, IExportable<slocGameObject>>();
             foreach (var o in gameObjects)
-            {
-                IExportable<slocGameObject> exportable = null;
-                // TODO: progress
-                foreach (var identifier in IdentifierCache.Identifiers)
-                {
-                    exportable = identifier.Process(o);
-                    if (exportable != null)
-                        break;
-                }
-
-                if (exportable == null)
-                    continue;
-                foreach (var component in o.GetComponents<Component>())
-                {
-                    // TODO: process component
-                }
-
-                exportables.Add(o, exportable);
-            }
-
-            // TODO: post-process
+                if (o.TryIdentify(out var exportable))
+                    exportables.Add(o, exportable);
             var slocObjects = new List<slocGameObject>();
             foreach (var (o, exportable) in exportables)
             {
+                foreach (var component in o.GetComponents<Component>())
+                    exportable.TryProcess(component);
                 var exported = exportable.Export(o.GetInstanceID());
                 if (exported == null)
                     continue;
