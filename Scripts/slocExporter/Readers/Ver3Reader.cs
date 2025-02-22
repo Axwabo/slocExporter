@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using UnityEngine;
 
@@ -57,7 +58,7 @@ namespace slocExporter.Readers
                 ParentId = parentId,
                 Transform = slocTransform,
                 MaterialColor = color,
-                ColliderMode = creationMode
+                Flags = ColliderModeCompatibility.GetCollisionFlags(creationMode)
             };
         }
 
