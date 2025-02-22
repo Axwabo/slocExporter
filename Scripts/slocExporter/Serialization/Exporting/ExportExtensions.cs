@@ -3,6 +3,7 @@ using slocExporter.Objects;
 using slocExporter.Serialization.Exporting.Exportables;
 using slocExporter.Serialization.Exporting.Identifiers;
 using slocExporter.Serialization.Exporting.Processors;
+using slocExporter.TriggerActions;
 using UnityEngine;
 
 namespace slocExporter.Serialization.Exporting
@@ -36,6 +37,7 @@ namespace slocExporter.Serialization.Exporting
             (PrimitiveExportable primitive, Collider collider) => primitive.Process(collider, ColliderProcessor.Process),
             (PrimitiveExportable primitive, MeshRenderer renderer) => primitive.Process(renderer, MeshRendererProcessor.Process),
             (PrimitiveExportable primitive, PrimitiveFlagsSetter setter) => primitive.Process(setter, PrimitiveFlagsSetterProcessor.Process),
+            (PrimitiveExportable primitive, TriggerAction action) => primitive.Process(action, TriggerActionProcessor.Process),
             _ => false
         };
 
