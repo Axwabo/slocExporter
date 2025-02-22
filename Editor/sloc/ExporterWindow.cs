@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using slocExporter;
 using slocExporter.Objects;
+using slocExporter.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,12 +13,7 @@ namespace Editor.sloc
     {
 
         private const string ProgressbarTitle = "slocExporter";
-        private const string LossyColorDescription = "Uses a single 32-bit integer for colors instead of four 32-bit floats (16 bytes per color). This reduces file size but limits the RGB color range to 0-255 and therefore loses precision.";
-        private const string Asterisk = "Hover over an item with an * for more information.";
         private const string FilePathStateKey = "slocExporterExportFilePath";
-
-        private static readonly GUIContent FlagsLabel = new("Default Primitive Flags*", "The default flags to use for primitive objects");
-        private static readonly GUIContent TriggerActionsLabel = new("Export All Trigger Actions*", "Exports trigger actions for every primitive, even if their flags don't specify it as a trigger.");
 
         [MenuItem("sloc/Export")]
         public static void ShowWindow() => GetWindow<ExporterWindow>(true, "Export to sloc");
@@ -26,13 +22,19 @@ namespace Editor.sloc
 
         private static bool _debug;
 
-        private static bool _lossyColors;
+        private static ExportPreset _settings;
 
-        private static bool _exportAllTriggerActions;
+        private static SerializedObject _settingsSerialized;
 
-        private static PrimitiveObjectFlags _flags = PrimitiveObject.DefaultFlags;
+        private static ExportPreset _selectedPreset;
 
-        private void OnEnable() => _filePath = SessionState.GetString(FilePathStateKey, _filePath);
+        private void OnEnable()
+        {
+            _filePath = SessionState.GetString(FilePathStateKey, _filePath);
+            if (!_settings)
+                _settings = CreateInstance<ExportPreset>();
+            _settingsSerialized ??= new SerializedObject(_settings);
+        }
 
         private void OnGUI()
         {
@@ -56,9 +58,11 @@ namespace Editor.sloc
             SessionState.SetString(FilePathStateKey, _filePath);
             GUILayout.Space(10);
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
-            _lossyColors = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColors);
-            _flags = (PrimitiveObjectFlags) EditorGUILayout.EnumFlagsField(FlagsLabel, _flags);
-            _exportAllTriggerActions = EditorGUILayout.Toggle(TriggerActionsLabel, _exportAllTriggerActions);
+            _selectedPreset = EditorGUILayout.ObjectField("Preset", _selectedPreset, typeof(ExportPreset), false) as ExportPreset;
+            if (!_selectedPreset)
+                DrawDefaultSettingsEditor();
+            else if (GUILayout.Button("Copy Preset"))
+                CopyPreset();
             GUILayout.Space(10);
             GUILayout.Label("Export", EditorStyles.boldLabel);
             _debug = EditorGUILayout.Toggle("Show Debug", _debug);
@@ -67,9 +71,37 @@ namespace Editor.sloc
             if (GUILayout.Button("Export Selected"))
                 Export(true);
             GUILayout.Space(20);
-            GUILayout.Label(Asterisk, EditorStyles.centeredGreyMiniLabel);
             if (filePath != _filePath)
                 Repaint();
+        }
+
+        private static void DrawDefaultSettingsEditor()
+        {
+            GUILayout.Space(5);
+            EditorGUI.BeginChangeCheck();
+            _settingsSerialized.UpdateIfRequiredOrScript();
+            var iterator = _settingsSerialized.GetIterator();
+            for (var enterChildren = true; iterator.NextVisible(enterChildren); enterChildren = false)
+                if (iterator.propertyPath != "m_Script")
+                    EditorGUILayout.PropertyField(iterator, true);
+            _settingsSerialized.ApplyModifiedProperties();
+            EditorGUI.EndChangeCheck();
+            if (!GUILayout.Button("Save Preset"))
+                return;
+            var path = EditorUtility.SaveFilePanelInProject("Save Preset", ExportPreset.DefaultName, "asset", "Save preset");
+            if (string.IsNullOrEmpty(path))
+                return;
+            _selectedPreset = Instantiate(_settings);
+            AssetDatabase.CreateAsset(_selectedPreset, path);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void CopyPreset()
+        {
+            _settings.lossyColors = _selectedPreset.lossyColors;
+            _settings.defaultPrimitiveFlags = _selectedPreset.defaultPrimitiveFlags;
+            _settings.exportAllTriggerActions = _selectedPreset.exportAllTriggerActions;
+            _selectedPreset = null;
         }
 
         private static void Export(bool selectedOnly)
@@ -87,12 +119,13 @@ namespace Editor.sloc
 
         private static slocAttributes CreateAttributes()
         {
+            var preset = _selectedPreset ? _selectedPreset : _settings;
             var attribute = slocAttributes.None;
-            if (_lossyColors)
+            if (preset.lossyColors)
                 attribute |= slocAttributes.LossyColors;
-            if (_flags != PrimitiveObjectFlags.None)
+            if (preset.defaultPrimitiveFlags != PrimitiveObjectFlags.None)
                 attribute |= slocAttributes.DefaultFlags;
-            if (_exportAllTriggerActions)
+            if (preset.exportAllTriggerActions)
                 attribute |= slocAttributes.ExportAllTriggerActions;
             return attribute;
         }
