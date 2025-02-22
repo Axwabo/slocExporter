@@ -6,7 +6,7 @@ namespace slocExporter
 {
 
     [DisallowMultipleComponent]
-    [Obsolete]
+    [Obsolete("Use " + nameof(PrimitiveFlagsSetter) + " instead.")]
     public sealed class ColliderModeSetter : MonoBehaviour
     {
 

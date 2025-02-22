@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using slocExporter;
 using slocExporter.Objects;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static slocExporter.ColliderModeSetter;
 
 namespace Editor.sloc
 {
@@ -20,6 +16,9 @@ namespace Editor.sloc
         private const string Asterisk = "Hover over an item with an * for more information.";
         private const string FilePathStateKey = "slocExporterExportFilePath";
 
+        private static readonly GUIContent FlagsLabel = new("Default Primitive Flags*", "The default flags to use for primitive objects");
+        private static readonly GUIContent TriggerActionsLabel = new("Export All Trigger Actions*", "Exports trigger actions for every primitive, even if their flags don't specify it as a trigger.");
+
         [MenuItem("sloc/Export")]
         public static void ShowWindow() => GetWindow<ExporterWindow>(true, "Export to sloc");
 
@@ -31,14 +30,7 @@ namespace Editor.sloc
 
         private static bool _exportAllTriggerActions;
 
-        private static PrimitiveObject.ColliderCreationMode _collider;
-
-        private static readonly string[] OptionsArray = Enum.GetValues(typeof(PrimitiveObject.ColliderCreationMode))
-            .Cast<PrimitiveObject.ColliderCreationMode>()
-            .Select(ModeToString)
-            .ToArray();
-
-        private static readonly List<string> Options = new(OptionsArray);
+        private static PrimitiveObjectFlags _flags = PrimitiveObject.DefaultFlags;
 
         private void OnEnable() => _filePath = SessionState.GetString(FilePathStateKey, _filePath);
 
@@ -65,8 +57,8 @@ namespace Editor.sloc
             GUILayout.Space(10);
             GUILayout.Label("Attributes", EditorStyles.boldLabel);
             _lossyColors = EditorGUILayout.Toggle(new GUIContent("Lossy Colors*", LossyColorDescription), _lossyColors);
-            _collider = StringToMode(OptionsArray[EditorGUILayout.Popup(new GUIContent("Default Collider Mode*", "The default collider creation mode to use for primitive objects.\n" + GetModeDescription(_collider, true)), Options.IndexOf(ModeToString(_collider)), OptionsArray)]);
-            _exportAllTriggerActions = EditorGUILayout.Toggle(new GUIContent("Export All Trigger Actions*", "Exports trigger actions for every primitive, even if their collider mode can't be considered a trigger."), _exportAllTriggerActions);
+            _flags = (PrimitiveObjectFlags) EditorGUILayout.EnumFlagsField(FlagsLabel, _flags);
+            _exportAllTriggerActions = EditorGUILayout.Toggle(TriggerActionsLabel, _exportAllTriggerActions);
             GUILayout.Space(10);
             GUILayout.Label("Export", EditorStyles.boldLabel);
             _debug = EditorGUILayout.Toggle("Show Debug", _debug);
@@ -82,7 +74,7 @@ namespace Editor.sloc
 
         private static void Export(bool selectedOnly)
         {
-            if (!ObjectExporter.Init(_debug, _filePath, CreateAttributes(), _collider))
+            if (!ObjectExporter.Init(_debug, _filePath, CreateAttributes(), PrimitiveObject.ColliderCreationMode.Unset)) // TODO
             {
                 EditorUtility.DisplayDialog(ProgressbarTitle, "Export is already in progress", "OK");
                 return;
@@ -98,8 +90,8 @@ namespace Editor.sloc
             var attribute = slocAttributes.None;
             if (_lossyColors)
                 attribute |= slocAttributes.LossyColors;
-            if (_collider != PrimitiveObject.ColliderCreationMode.Unset)
-                attribute |= slocAttributes.DefaultColliderMode;
+            if (_flags != PrimitiveObjectFlags.None)
+                attribute |= slocAttributes.DefaultFlags;
             if (_exportAllTriggerActions)
                 attribute |= slocAttributes.ExportAllTriggerActions;
             return attribute;

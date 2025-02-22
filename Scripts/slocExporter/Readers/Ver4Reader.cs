@@ -2,6 +2,8 @@
 using slocExporter.Objects;
 using slocExporter.TriggerActions;
 
+#pragma warning disable CS0618
+
 namespace slocExporter.Readers
 {
 

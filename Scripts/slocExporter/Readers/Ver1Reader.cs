@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using slocExporter.Objects;
 
+#pragma warning disable CS0612
+
 namespace slocExporter.Readers
 {
 

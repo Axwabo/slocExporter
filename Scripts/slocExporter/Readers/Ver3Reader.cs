@@ -3,6 +3,9 @@ using slocExporter.Extensions;
 using slocExporter.Objects;
 using UnityEngine;
 
+#pragma warning disable CS0612
+#pragma warning disable CS0618
+
 namespace slocExporter.Readers
 {
 
