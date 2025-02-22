@@ -22,7 +22,6 @@ namespace Editor.sloc
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox("This component is obsolete. Use the PrimitiveFlagsSetter component instead.", MessageType.Warning);
             var targetsCache = targets;
             if (targetsCache.Length < 1)
                 return;
