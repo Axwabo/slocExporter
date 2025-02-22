@@ -118,7 +118,7 @@ namespace Editor.sloc
             var preset = _selectedPreset ? _selectedPreset : _settings;
             try
             {
-                using var exporter = new FileExporter(_filePath, _debug, preset, ProgressbarUpdate);
+                using var exporter = new FileExporter(_filePath.ToFullAppDataPath(), _debug, preset, ProgressbarUpdate);
                 exporter.Export(selectedOnly);
             }
             catch (Exception e)
