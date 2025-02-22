@@ -27,10 +27,9 @@ namespace slocExporter.Readers
             Version = version;
             Attributes = attributes;
             DefaultColliderMode = defaultColliderMode;
-            if (Attributes.HasFlagFast(slocAttributes.DefaultColliderMode))
-                DefaultFlags = PrimitiveObjectFlags.Visible | ColliderModeCompatibility.GetCollisionFlags(defaultColliderMode);
-            else
-                DefaultFlags = PrimitiveObjectFlags.None;
+            DefaultFlags = Attributes.HasFlagFast(slocAttributes.DefaultColliderMode)
+                ? ColliderModeCompatibility.GetPrimitiveFlags(defaultColliderMode)
+                : PrimitiveObjectFlags.None;
         }
 
         [Obsolete]

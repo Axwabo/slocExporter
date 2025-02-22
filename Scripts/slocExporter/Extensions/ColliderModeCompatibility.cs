@@ -9,7 +9,7 @@ namespace slocExporter.Extensions
     public static class ColliderModeCompatibility
     {
 
-        public static PrimitiveObjectFlags GetCollisionFlags(PrimitiveObject.ColliderCreationMode mode) => mode switch
+        public static PrimitiveObjectFlags GetPrimitiveFlags(PrimitiveObject.ColliderCreationMode mode) => PrimitiveObjectFlags.Visible | mode switch
         {
             PrimitiveObject.ColliderCreationMode.Unset => PrimitiveObjectFlags.None,
             PrimitiveObject.ColliderCreationMode.NoCollider => PrimitiveObjectFlags.None,

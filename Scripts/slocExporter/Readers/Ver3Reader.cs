@@ -61,7 +61,7 @@ namespace slocExporter.Readers
                 ParentId = parentId,
                 Transform = slocTransform,
                 MaterialColor = color,
-                Flags = ColliderModeCompatibility.GetCollisionFlags(creationMode)
+                Flags = ColliderModeCompatibility.GetPrimitiveFlags(creationMode)
             };
         }
 
