@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Serialization.Exporting.Exportables;
 using slocExporter.Serialization.Exporting.Identifiers;
@@ -56,6 +58,39 @@ namespace slocExporter.Serialization.Exporting
             var parent = t.parent;
             if (parent)
                 exported.ParentId = parent.gameObject.GetInstanceID();
+        }
+
+        public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context)
+        {
+            var slocObjects = new List<slocGameObject>();
+            foreach (var (o, exportable) in exportables)
+            {
+                var skip = o.CompareTag(Identify.ExporterIgnoredTag);
+                ProcessComponents(o, exportable, ref skip);
+                if (skip)
+                    continue;
+                var exported = exportable.Export(o.GetInstanceID(), context);
+                if (exported == null)
+                    continue;
+                exported.ApplyTransform(o);
+                slocObjects.Add(exported);
+            }
+
+            return slocObjects;
+        }
+
+        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable, ref bool skip)
+        {
+            foreach (var component in o.GetComponents<Component>())
+            {
+                if (component is ExporterIgnored)
+                {
+                    skip = true;
+                    break;
+                }
+
+                exportable.TryProcess(component);
+            }
         }
 
     }
