@@ -33,7 +33,14 @@ namespace Editor.sloc
             _filePath = SessionState.GetString(FilePathStateKey, _filePath);
             if (!_settings)
                 _settings = CreateInstance<ExportPreset>();
-            _settingsSerialized ??= new SerializedObject(_settings);
+            _settingsSerialized?.Dispose();
+            _settingsSerialized = new SerializedObject(_settings);
+        }
+
+        private void OnDestroy()
+        {
+            _settingsSerialized.Dispose();
+            _settingsSerialized = null;
         }
 
         private void OnGUI()
