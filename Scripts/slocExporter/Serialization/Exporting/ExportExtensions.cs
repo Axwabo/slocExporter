@@ -67,10 +67,7 @@ namespace slocExporter.Serialization.Exporting
             {
                 var skip = o.CompareTag(Identify.ExporterIgnoredTag);
                 ProcessComponents(o, exportable, ref skip);
-                if (skip)
-                    continue;
-                var exported = exportable.Export(o.GetInstanceID(), context);
-                if (exported == null)
+                if (skip || exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
                     continue;
                 exported.ApplyTransform(o);
                 slocObjects.Add(exported);
