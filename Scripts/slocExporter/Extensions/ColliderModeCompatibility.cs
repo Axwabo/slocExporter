@@ -1,5 +1,6 @@
 ﻿using System;
 using slocExporter.Objects;
+using static slocExporter.Objects.PrimitiveObject;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
@@ -9,17 +10,17 @@ namespace slocExporter.Extensions
     public static class ColliderModeCompatibility
     {
 
-        public static PrimitiveObjectFlags GetPrimitiveFlags(PrimitiveObject.ColliderCreationMode mode) => PrimitiveObjectFlags.Visible | mode switch
+        public static PrimitiveObjectFlags GetPrimitiveFlags(ColliderCreationMode mode) => PrimitiveObjectFlags.Visible | mode switch
         {
-            PrimitiveObject.ColliderCreationMode.Unset => PrimitiveObjectFlags.None,
-            PrimitiveObject.ColliderCreationMode.NoCollider => PrimitiveObjectFlags.None,
-            PrimitiveObject.ColliderCreationMode.ClientOnly => PrimitiveObjectFlags.ClientCollidable,
-            PrimitiveObject.ColliderCreationMode.ServerOnly => PrimitiveObjectFlags.ServerCollidable,
-            PrimitiveObject.ColliderCreationMode.Both => PrimitiveObjectFlags.ClientCollidable | PrimitiveObjectFlags.ServerCollidable,
-            PrimitiveObject.ColliderCreationMode.Trigger => PrimitiveObjectFlags.Trigger,
-            PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger => PrimitiveObjectFlags.Trigger | PrimitiveObjectFlags.NotSpawned,
-            PrimitiveObject.ColliderCreationMode.ServerOnlyNonSpawned => PrimitiveObjectFlags.ServerCollidable | PrimitiveObjectFlags.NotSpawned,
-            PrimitiveObject.ColliderCreationMode.NoColliderNonSpawned => PrimitiveObjectFlags.NotSpawned,
+            ColliderCreationMode.Unset => PrimitiveObjectFlags.None,
+            ColliderCreationMode.NoCollider => PrimitiveObjectFlags.None,
+            ColliderCreationMode.ClientOnly => PrimitiveObjectFlags.ClientCollider,
+            ColliderCreationMode.ServerOnly => PrimitiveObjectFlags.ServerCollider,
+            ColliderCreationMode.Both => PrimitiveObjectFlags.ClientCollider | PrimitiveObjectFlags.ServerCollider,
+            ColliderCreationMode.Trigger => PrimitiveObjectFlags.ServerCollider | PrimitiveObjectFlags.Trigger,
+            ColliderCreationMode.NonSpawnedTrigger => PrimitiveObjectFlags.ServerCollider | PrimitiveObjectFlags.Trigger | PrimitiveObjectFlags.NotSpawned,
+            ColliderCreationMode.ServerOnlyNonSpawned => PrimitiveObjectFlags.ServerCollider | PrimitiveObjectFlags.NotSpawned,
+            ColliderCreationMode.NoColliderNonSpawned => PrimitiveObjectFlags.NotSpawned,
             _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown collider creation mode")
         };
 

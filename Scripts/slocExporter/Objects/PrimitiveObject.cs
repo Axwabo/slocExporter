@@ -12,7 +12,7 @@ namespace slocExporter.Objects
     public sealed class PrimitiveObject : slocGameObject
     {
 
-        public const PrimitiveObjectFlags DefaultFlags = PrimitiveObjectFlags.Visible | PrimitiveObjectFlags.ClientCollidable | PrimitiveObjectFlags.ServerCollidable;
+        public const PrimitiveObjectFlags DefaultFlags = PrimitiveObjectFlags.Visible | PrimitiveObjectFlags.ClientCollider | PrimitiveObjectFlags.ServerCollider;
 
         public PrimitiveObject(ObjectType type) : this(0, type)
         {

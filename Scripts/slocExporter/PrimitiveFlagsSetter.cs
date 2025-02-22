@@ -19,8 +19,8 @@ namespace slocExporter
         public static string ModeToString(PrimitiveObjectFlags mode) => mode switch
         {
             PrimitiveObjectFlags.Visible => Visible,
-            PrimitiveObjectFlags.ClientCollidable => ClientCollidable,
-            PrimitiveObjectFlags.ServerCollidable => ServerCollidable,
+            PrimitiveObjectFlags.ClientCollider => ClientCollidable,
+            PrimitiveObjectFlags.ServerCollider => ServerCollidable,
             PrimitiveObjectFlags.Trigger => Trigger,
             PrimitiveObjectFlags.NotSpawned => NotSpawned,
             _ => "None"
@@ -29,8 +29,8 @@ namespace slocExporter
         public static PrimitiveObjectFlags StringToMode(string mode) => mode switch
         {
             Visible => PrimitiveObjectFlags.Visible,
-            ClientCollidable => PrimitiveObjectFlags.ClientCollidable,
-            ServerCollidable => PrimitiveObjectFlags.ServerCollidable,
+            ClientCollidable => PrimitiveObjectFlags.ClientCollider,
+            ServerCollidable => PrimitiveObjectFlags.ServerCollider,
             Trigger => PrimitiveObjectFlags.Trigger,
             NotSpawned => PrimitiveObjectFlags.NotSpawned,
             _ => PrimitiveObjectFlags.None

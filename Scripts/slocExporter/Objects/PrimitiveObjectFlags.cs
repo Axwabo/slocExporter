@@ -9,8 +9,8 @@ namespace slocExporter.Objects
 
         None = 0,
         Visible = 1,
-        ClientCollidable = 2,
-        ServerCollidable = 4,
+        ClientCollider = 2,
+        ServerCollider = 4,
         Trigger = 8,
         NotSpawned = 16
 
