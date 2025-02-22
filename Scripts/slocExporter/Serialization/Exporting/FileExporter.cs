@@ -34,43 +34,25 @@ namespace slocExporter.Serialization.Exporting
                 if (o.TryIdentify(out var exportable))
                     exportables.Add(o, exportable);
             var slocObjects = new List<slocGameObject>();
+            var context = ExportContext.From(_preset);
             foreach (var (o, exportable) in exportables)
             {
                 foreach (var component in o.GetComponents<Component>())
                     exportable.TryProcess(component);
-                var exported = exportable.Export(o.GetInstanceID());
+                var exported = exportable.Export(o.GetInstanceID(), context);
                 if (exported == null)
                     continue;
-                var t = o.transform;
-                exported.Transform = t;
-                var parent = t.parent;
-                if (parent)
-                    exported.ParentId = parent.gameObject.GetInstanceID();
+                exported.ApplyTransform(o);
                 slocObjects.Add(exported);
             }
 
             _writer.Write(API.slocVersion);
             var count = slocObjects.Count;
-            var header = new slocHeader(API.slocVersion, count, Attributes, _preset.defaultPrimitiveFlags);
+            var header = new slocHeader(API.slocVersion, count, context.Attributes, context.DefaultPrimitiveFlags);
             header.WriteTo(_writer);
             foreach (var o in slocObjects)
                 o.WriteTo(_writer, header);
             EditorUtility.DisplayDialog("Export Completed", $"sloc created with {slocObjects.Count} object(s).", "OK");
-        }
-
-        public slocAttributes Attributes
-        {
-            get
-            {
-                var attributes = slocAttributes.None;
-                if (_preset.lossyColors)
-                    attributes |= slocAttributes.LossyColors;
-                if (_preset.exportAllTriggerActions)
-                    attributes |= slocAttributes.ExportAllTriggerActions;
-                if (_preset.defaultPrimitiveFlags != PrimitiveObjectFlags.None)
-                    attributes |= slocAttributes.DefaultFlags;
-                return attributes;
-            }
         }
 
         public void Dispose() => _writer?.Dispose();

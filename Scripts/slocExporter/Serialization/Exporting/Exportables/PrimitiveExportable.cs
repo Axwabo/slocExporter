@@ -21,13 +21,13 @@ namespace slocExporter.Serialization.Exporting.Exportables
 
         public readonly List<BaseTriggerActionData> TriggerActions = new();
 
-        public PrimitiveObject Export(int instanceId) => new(instanceId, PrimitiveType)
+        public PrimitiveObject Export(int instanceId, ExportContext context) => new(instanceId, PrimitiveType)
         {
             MaterialColor = MaterialColor,
             TriggerActions = TriggerActions.ToArray(),
             Flags = OverriddenFlags != PrimitiveObjectFlags.None
                 ? OverriddenFlags
-                : ResolvedFlags & ~VetoedFlags
+                : (ResolvedFlags | context.DefaultPrimitiveFlags) & ~VetoedFlags
         };
 
     }

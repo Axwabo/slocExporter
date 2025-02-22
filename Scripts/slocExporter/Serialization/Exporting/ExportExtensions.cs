@@ -47,6 +47,15 @@ namespace slocExporter.Serialization.Exporting
             return true;
         }
 
+        public static void ApplyTransform(this slocGameObject exported, GameObject o)
+        {
+            var t = o.transform;
+            exported.Transform = t;
+            var parent = t.parent;
+            if (parent)
+                exported.ParentId = parent.gameObject.GetInstanceID();
+        }
+
     }
 
 }

@@ -8,7 +8,7 @@ namespace slocExporter.Serialization.Exporting.Exportables
 
         public StructureObject.StructureType StructureType;
 
-        public StructureObject Export(int instanceId) => new(instanceId, StructureType);
+        public StructureObject Export(int instanceId, ExportContext context) => new(instanceId, StructureType);
 
     }
 
