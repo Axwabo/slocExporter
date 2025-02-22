@@ -10,7 +10,8 @@ namespace slocExporter.Serialization.Exporting
         public static readonly IObjectIdentifier<IExportable<slocGameObject>>[] Identifiers =
         {
             new OverriddenStructureIdentifier(),
-            new PrefabStructureIdentifier()
+            new PrefabStructureIdentifier(),
+            new PrimitiveIdentifier()
         };
 
     }
