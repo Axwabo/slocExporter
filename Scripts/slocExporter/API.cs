@@ -20,9 +20,9 @@ namespace slocExporter
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 5;
+        public const ushort slocVersion = 6;
 
-        public static string CurrentVersion = "5.1.1";
+        public static string CurrentVersion = "6.0.0";
 
         #region Reader Declarations
 
