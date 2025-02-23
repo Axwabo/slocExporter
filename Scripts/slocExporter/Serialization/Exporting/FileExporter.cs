@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Readers;
 using UnityEditor;
@@ -33,20 +34,29 @@ namespace slocExporter.Serialization.Exporting
             var gameObjects = ExportCollector.GetObjects(selectedOnly);
 
             var exportables = new Dictionary<GameObject, IExportable<slocGameObject>>();
+            var i = 0;
+            var gameObjectsCount = gameObjects.Count;
             foreach (var o in gameObjects)
+            {
+                _progress.Count(++i, gameObjectsCount, "Identifying objects {2:P2} ({0} of {1})");
                 if (o.TryIdentify(out var exportable))
                     exportables.Add(o, exportable);
+            }
 
             var context = ExportContext.From(_preset);
-            var slocObjects = exportables.ProcessAndExportObjects(context);
+            var slocObjects = exportables.ProcessAndExportObjects(context, _progress);
 
             _writer.Write(API.slocVersion);
-            var count = slocObjects.Count;
-            var header = new slocHeader(API.slocVersion, count, context.Attributes, context.DefaultPrimitiveFlags);
+            var slocObjectsCount = slocObjects.Count;
+            var header = new slocHeader(API.slocVersion, slocObjectsCount, context.Attributes, context.DefaultPrimitiveFlags);
             header.WriteTo(_writer);
 
-            foreach (var o in slocObjects)
+            for (i = 0; i < slocObjects.Count; i++)
+            {
+                _progress.Count(i, slocObjectsCount, "Writing objects {2:P2} ({0} of {1})");
+                var o = slocObjects[i];
                 o.WriteTo(_writer, header);
+            }
 
             EditorUtility.DisplayDialog("Export Completed", $"sloc created with {slocObjects.Count} object(s).", "OK");
         }

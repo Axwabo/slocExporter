@@ -60,11 +60,14 @@ namespace slocExporter.Serialization.Exporting
                 exported.ParentId = parent.gameObject.GetInstanceID();
         }
 
-        public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context)
+        public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context, ProgressUpdater progress)
         {
             var slocObjects = new List<slocGameObject>();
+            var i = 0;
+            var exportablesCount = exportables.Count;
             foreach (var (o, exportable) in exportables)
             {
+                progress.Count(++i, exportablesCount, "Processing objects {2:P2} ({0} of {1})");
                 var skip = o.CompareTag(Identify.ExporterIgnoredTag);
                 ProcessComponents(o, exportable, ref skip);
                 if (skip || exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
