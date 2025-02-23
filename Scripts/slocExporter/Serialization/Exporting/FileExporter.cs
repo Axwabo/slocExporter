@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using slocExporter.Objects;
 using slocExporter.Readers;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace slocExporter.Serialization.Exporting
 {
@@ -29,11 +27,10 @@ namespace slocExporter.Serialization.Exporting
             _writer = new BinaryWriter(File.Open(path, FileMode.Create), Encoding.UTF8);
         }
 
-        // TODO: refactor
         public void Export(bool selectedOnly)
         {
             _progress("Collecting objects to export", -1);
-            var gameObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(e => e.WithAllChildren()).ToHashSet();
+            var gameObjects = ExportCollector.GetObjects(selectedOnly);
 
             var exportables = new Dictionary<GameObject, IExportable<slocGameObject>>();
             foreach (var o in gameObjects)

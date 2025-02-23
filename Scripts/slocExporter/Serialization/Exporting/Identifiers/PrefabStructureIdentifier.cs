@@ -9,6 +9,8 @@ namespace slocExporter.Serialization.Exporting.Identifiers
     public sealed class PrefabStructureIdentifier : IObjectIdentifier<StructureExportable>
     {
 
+        public static readonly PrefabStructureIdentifier Instance = new();
+
         public StructureExportable Process(GameObject o)
         {
             if (!PrefabUtility.IsOutermostPrefabInstanceRoot(o))
