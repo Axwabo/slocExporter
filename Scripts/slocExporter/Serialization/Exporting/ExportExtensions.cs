@@ -18,7 +18,8 @@ namespace slocExporter.Serialization.Exporting
         {
             new OverriddenStructureIdentifier(),
             PrefabStructureIdentifier.Instance,
-            new PrimitiveIdentifier()
+            new PrimitiveIdentifier(),
+            new EmptyIdentifier()
         };
 
         public static bool TryIdentify(this GameObject o, out IExportable<slocGameObject> exportable)
