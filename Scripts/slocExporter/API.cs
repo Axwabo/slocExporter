@@ -173,9 +173,14 @@ namespace slocExporter
             var toy = new GameObject("Point Light");
             var lightComponent = toy.AddComponent<Light>();
             lightComponent.color = light.LightColor;
-            lightComponent.intensity = light.Intensity;
             lightComponent.range = light.Range;
-            lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
+            lightComponent.intensity = light.Intensity;
+            lightComponent.shadows = light.ShadowType;
+            lightComponent.shadowStrength = light.ShadowStrength;
+            lightComponent.type = light.LightType;
+            lightComponent.shape = light.Shape;
+            lightComponent.spotAngle = light.SpotAngle;
+            lightComponent.innerSpotAngle = light.InnerSpotAngle;
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(light.Transform);
             return toy;
