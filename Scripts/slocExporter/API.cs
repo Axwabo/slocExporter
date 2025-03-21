@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Readers;
 using slocExporter.TriggerActions;
@@ -134,6 +135,7 @@ namespace slocExporter
             var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
             gameObject.SetAbsoluteTransformFrom(parent);
             gameObject.SetLocalTransform(structure.Transform);
+            gameObject.ApplyNameAndTag(structure.Name, structure.Tag);
             if (structure.RemoveDefaultLoot)
                 gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
             return gameObject;
@@ -144,6 +146,7 @@ namespace slocExporter
             var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(primitive.Transform);
+            toy.ApplyNameAndTag(primitive.Name, primitive.Tag);
             var flags = primitive.Flags;
             if (flags is not PrimitiveObject.DefaultFlags)
                 toy.AddComponent<PrimitiveFlagsSetter>().flags = flags;
@@ -183,6 +186,7 @@ namespace slocExporter
             lightComponent.innerSpotAngle = light.InnerSpotAngle;
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(light.Transform);
+            toy.ApplyNameAndTag(light.Name, light.Tag);
             return toy;
         }
 
@@ -191,6 +195,7 @@ namespace slocExporter
             var emptyObject = new GameObject("Empty");
             emptyObject.SetAbsoluteTransformFrom(parent);
             emptyObject.SetLocalTransform(obj.Transform);
+            emptyObject.ApplyNameAndTag(obj.Name, obj.Tag);
             return emptyObject;
         }
 
