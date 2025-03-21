@@ -144,9 +144,9 @@ namespace slocExporter
             var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(primitive.Transform);
-            var colliderMode = primitive.ColliderMode;
-            if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
-                toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
+            var flags = primitive.Flags;
+            if (flags is not PrimitiveObject.DefaultFlags)
+                toy.AddComponent<PrimitiveFlagsSetter>().flags = flags;
             AddTriggerActionComponents(primitive.TriggerActions, toy);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
             {
@@ -341,9 +341,11 @@ namespace slocExporter
 
         #region Bit Math
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
             (PrimitiveObject.ColliderCreationMode) CombineSafe((byte) a, (byte) b);
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b)
         {
             SplitSafe((byte) combined, out var x, out var y);
@@ -402,6 +404,7 @@ namespace slocExporter
 
         public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static bool IsTrigger(this PrimitiveObject.ColliderCreationMode colliderMode) => colliderMode is PrimitiveObject.ColliderCreationMode.Trigger or PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger;
 
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;
