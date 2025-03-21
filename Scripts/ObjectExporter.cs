@@ -22,13 +22,19 @@ public static class ObjectExporter
 
     #region Primitives and Constants
 
+    [Obsolete("Moved to class Identify.")]
     public const string ExporterIgnoredTag = Identify.ExporterIgnoredTag;
+
+    [Obsolete("Moved to class Identify.")]
     public const string RoomTag = Identify.RoomTag;
 
+    [Obsolete("Moved to class Identify.")]
     public static readonly Dictionary<Regex, ObjectType> PrimitiveTypes = Identify.PrimitiveTypes;
 
+    [Obsolete("Moved to Identify::PrimitiveObjectType.")]
     public static ObjectType FindObjectType(string meshName) => Identify.PrimitiveObjectType(meshName);
 
+    [Obsolete("Moved to class Identify.")]
     public static readonly Dictionary<string, StructureObject.StructureType> StructureGuids = Identify.StructureGuids;
 
     #endregion
