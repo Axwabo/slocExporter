@@ -53,13 +53,19 @@ namespace slocExporter.Serialization.Exporting
             return true;
         }
 
-        public static void ApplyTransform(this slocGameObject exported, GameObject o)
+        public static void ApplyTransformFrom(this slocGameObject exported, GameObject o)
         {
             var t = o.transform;
             exported.Transform = t;
             var parent = t.parent;
             if (parent)
                 exported.ParentId = parent.gameObject.GetInstanceID();
+        }
+
+        public static void ApplyNameAndTagFrom(this slocGameObject exported, GameObject o)
+        {
+            exported.Name = o.name;
+            exported.Tag = o.CompareTag("Untagged") ? null : o.tag;
         }
 
         public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context, ProgressUpdater progress)
@@ -74,7 +80,8 @@ namespace slocExporter.Serialization.Exporting
                 ProcessComponents(o, exportable, ref skip);
                 if (skip || exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
                     continue;
-                exported.ApplyTransform(o);
+                exported.ApplyTransformFrom(o);
+                exported.ApplyNameAndTagFrom(o);
                 slocObjects.Add(exported);
             }
 

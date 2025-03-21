@@ -19,6 +19,9 @@ namespace slocExporter.Serialization
         [Tooltip("Exports trigger actions for every primitive, even if their flags don't specify it as a trigger.")]
         public bool exportAllTriggerActions;
 
+        [Tooltip("Includes the name and tag (if any) of each object.")]
+        public bool exportNamesAndTags;
+
     }
 
 }

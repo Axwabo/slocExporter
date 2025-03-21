@@ -11,10 +11,12 @@ namespace slocExporter.Serialization.Exporting
             var attributes = slocAttributes.None;
             if (preset.lossyColors)
                 attributes |= slocAttributes.LossyColors;
-            if (preset.exportAllTriggerActions)
-                attributes |= slocAttributes.ExportAllTriggerActions;
             if (preset.defaultPrimitiveFlags != PrimitiveObjectFlags.None)
                 attributes |= slocAttributes.DefaultFlags;
+            if (preset.exportAllTriggerActions)
+                attributes |= slocAttributes.ExportAllTriggerActions;
+            if (preset.exportNamesAndTags)
+                attributes |= slocAttributes.NamesAndTags;
             return new ExportContext(attributes, preset.defaultPrimitiveFlags);
         }
 

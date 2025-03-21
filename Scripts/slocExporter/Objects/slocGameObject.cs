@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Readers;
 
 namespace slocExporter.Objects
@@ -19,6 +20,10 @@ namespace slocExporter.Objects
 
         public slocTransform Transform = new();
 
+        public string Name;
+
+        public string Tag;
+
         public virtual bool IsValid => Type != ObjectType.None;
 
         public void WriteTo(BinaryWriter writer, slocHeader header)
@@ -27,6 +32,12 @@ namespace slocExporter.Objects
             writer.Write(InstanceId);
             writer.Write(ParentId);
             Transform.WriteTo(writer);
+            if (header.HasAttribute(slocAttributes.NamesAndTags))
+            {
+                writer.WriteNullableString(Name);
+                writer.WriteNullableString(Tag);
+            }
+
             WriteData(writer, header);
         }
 

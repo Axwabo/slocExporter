@@ -109,6 +109,7 @@ namespace Editor.sloc
             _settings.lossyColors = _selectedPreset.lossyColors;
             _settings.defaultPrimitiveFlags = _selectedPreset.defaultPrimitiveFlags;
             _settings.exportAllTriggerActions = _selectedPreset.exportAllTriggerActions;
+            _settings.exportNamesAndTags = _selectedPreset.exportNamesAndTags;
             _selectedPreset = null;
         }
 

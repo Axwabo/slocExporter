@@ -14,7 +14,8 @@ namespace slocExporter
         DefaultColliderMode = DefaultFlags,
 
         DefaultFlags = 2,
-        ExportAllTriggerActions = 4
+        ExportAllTriggerActions = 4,
+        NamesAndTags = 8
 
     }
 
