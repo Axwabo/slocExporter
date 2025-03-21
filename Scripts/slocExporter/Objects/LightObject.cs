@@ -45,7 +45,7 @@ namespace slocExporter.Objects
 
         public float ShadowStrength = 1;
 
-        public LightType LightType;
+        public LightType LightType = LightType.Point;
 
         public LightShape Shape;
 

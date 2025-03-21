@@ -79,7 +79,7 @@ namespace slocExporter.Readers
                 ParentId = parentId,
                 Transform = transform,
                 LightColor = lightColor,
-                Shadows = shadows,
+                ShadowType = shadows ? LightShadows.Soft : LightShadows.None,
                 Range = range,
                 Intensity = intensity,
             };
