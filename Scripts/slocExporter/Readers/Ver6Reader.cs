@@ -15,8 +15,8 @@ namespace slocExporter.Readers
             var count = stream.ReadObjectCount();
             var attributes = (slocAttributes) stream.ReadByte();
             var defaultFlags = attributes.HasFlagFast(slocAttributes.DefaultFlags)
-                ? PrimitiveObjectFlags.None
-                : (PrimitiveObjectFlags) stream.ReadByte();
+                ? (PrimitiveObjectFlags) stream.ReadByte()
+                : PrimitiveObjectFlags.None;
             return new slocHeader(6, count, attributes, defaultFlags);
         }
 
