@@ -45,7 +45,7 @@ namespace slocExporter.Objects
                 writer.WriteColor(MaterialColor);
 
             writer.Write((byte) Flags);
-            if (DefaultFlags.IsTrigger() || header.HasAttribute(slocAttributes.ExportAllTriggerActions))
+            if (Flags.IsTrigger() || header.HasAttribute(slocAttributes.ExportAllTriggerActions))
                 ActionManager.WriteActions(writer, TriggerActions);
         }
 

@@ -21,7 +21,8 @@ namespace slocExporter.Serialization.Exporting
 
         private static void TranverseChildren(HashSet<GameObject> set, GameObject gameObject, Transform transform)
         {
-            if (PrefabUtility.IsPartOfAnyPrefab(gameObject) && PrefabStructureIdentifier.Instance.Process(gameObject) != null)
+            if (PrefabUtility.IsPartOfAnyPrefab(gameObject) && PrefabStructureIdentifier.Instance.Process(gameObject) != null
+                || !set.Add(gameObject))
                 return;
             var count = transform.childCount;
             for (var i = 0; i < count; i++)
