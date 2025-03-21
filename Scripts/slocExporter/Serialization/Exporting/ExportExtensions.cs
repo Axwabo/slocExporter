@@ -64,9 +64,26 @@ namespace slocExporter.Serialization.Exporting
 
         public static void ApplyNameAndTagFrom(this slocGameObject exported, GameObject o)
         {
-            exported.Name = o.name;
+            var name = o.name;
+            exported.Name = name == exported.GetDefaultName() ? null : name;
             exported.Tag = o.CompareTag("Untagged") ? null : o.tag;
         }
+
+        public static string GetDefaultName(this slocGameObject o) => o switch
+        {
+            EmptyObject => "GameObject",
+            LightObject light => light.LightType switch
+            {
+                LightType.Spot => "Spot Light",
+                LightType.Directional => "Directional Light",
+                LightType.Point => "Point Light",
+                LightType.Area => "Area Light",
+                LightType.Disc => "Disc Light",
+                _ => null
+            },
+            PrimitiveObject primitive => primitive.Type.ToString(),
+            _ => null
+        };
 
         public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context, ProgressUpdater progress)
         {
