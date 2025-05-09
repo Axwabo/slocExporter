@@ -17,7 +17,6 @@ namespace slocExporter.Serialization.Exporting.Identifiers
                 Shadows = light.shadows,
                 ShadowStrength = light.shadowStrength,
                 Type = light.type,
-                Shape = light.shape,
                 SpotAngle = light.spotAngle,
                 InnerSpotAngle = light.innerSpotAngle
             };

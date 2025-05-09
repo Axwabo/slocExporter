@@ -18,6 +18,8 @@ namespace slocExporter.Serialization.Exporting
         {
             new OverriddenStructureIdentifier(),
             PrefabStructureIdentifier.Instance,
+            new CameraIdentifier(),
+            new CapybaraIdentifier(),
             new LightIdentifier(),
             new PrimitiveIdentifier(),
             new EmptyIdentifier()
@@ -77,8 +79,11 @@ namespace slocExporter.Serialization.Exporting
                 LightType.Spot => "Spot Light",
                 LightType.Directional => "Directional Light",
                 LightType.Point => "Point Light",
-                LightType.Area => "Area Light",
+                LightType.Rectangle => "Rectangle Light",
                 LightType.Disc => "Disc Light",
+                LightType.Pyramid => "Pyramid Light",
+                LightType.Box => "Box Light",
+                LightType.Tube => "Tube Light",
                 _ => null
             },
             PrimitiveObject primitive => primitive.Type.ToString(),

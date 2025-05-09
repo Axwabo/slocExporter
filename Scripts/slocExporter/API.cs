@@ -126,6 +126,15 @@ namespace slocExporter
             {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"}
         };
 
+        public static readonly Dictionary<Scp079CameraType, string> CameraGuids = new()
+        {
+            {Scp079CameraType.EntranceZoneArm, "a31748482d734bf4d8d1f5072350cc1e"},
+            {Scp079CameraType.EntranceZone, "a84330ac72c094545a485544b2e6af7a"},
+            {Scp079CameraType.HeavyContainmentZone, "3286e25ccfcf04b4999f6fd1c6c1e676"},
+            {Scp079CameraType.LightContainmentZone, "08ab6e9d3ebaeaa42b277c53875bc8fc"},
+            {Scp079CameraType.SurfaceZone, "7b630b3a7d13ee047a84205b3c099c3c"}
+        };
+
         private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
             if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
@@ -182,7 +191,6 @@ namespace slocExporter
             lightComponent.shadows = light.ShadowType;
             lightComponent.shadowStrength = light.ShadowStrength;
             lightComponent.type = light.LightType;
-            lightComponent.shape = light.Shape;
             lightComponent.spotAngle = light.SpotAngle;
             lightComponent.innerSpotAngle = light.InnerSpotAngle;
             toy.SetAbsoluteTransformFrom(parent);

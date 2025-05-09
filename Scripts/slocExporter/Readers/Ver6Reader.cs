@@ -34,6 +34,8 @@ namespace slocExporter.Readers
                     ObjectType.Cylinder or
                     ObjectType.Plane or
                     ObjectType.Quad => ReadPrimitive(stream, type, header),
+                ObjectType.Capybara => ReadCapybara(stream, header),
+                ObjectType.Scp079Camera => ReadCamera(stream, header),
                 _ => null
             };
         }
@@ -45,15 +47,14 @@ namespace slocExporter.Readers
             var range = stream.ReadSingle();
             var intensity = stream.ReadSingle();
             var lightData = stream.ReadByte();
-            LightObject.ByteToLightEnums(lightData, out var lightShadows, out var lightType, out var lightShape);
+            LightObject.ByteToLightEnums(lightData, out var lightShadows, out var lightType);
             var light = new LightObject(properties.InstanceId)
             {
                 LightColor = color,
                 Range = range,
                 Intensity = intensity,
                 ShadowType = lightShadows,
-                LightType = lightType,
-                Shape = lightShape
+                LightType = lightType
             }.ApplyProperties(properties);
             if (lightShadows != LightShadows.None)
                 light.ShadowStrength = stream.ReadShortAsFloat();
@@ -80,7 +81,7 @@ namespace slocExporter.Readers
             return new EmptyObject(properties.InstanceId).ApplyProperties(properties);
         }
 
-        private static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header)
+        public static PrimitiveObject ReadPrimitive(BinaryReader stream, ObjectType type, slocHeader header)
         {
             var properties = CommonObjectProperties.FromStream(stream, header);
             var color = Ver3Reader.ReadColor(stream, header.HasAttribute(slocAttributes.LossyColors));
@@ -95,6 +96,36 @@ namespace slocExporter.Readers
             var reader = ActionManager.GetReader(header.Version);
             primitive.TriggerActions = ActionManager.ReadActions(stream, reader);
             return primitive;
+        }
+
+        public static CapybaraObject ReadCapybara(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var collidable = stream.ReadBoolean();
+            return new CapybaraObject(properties.InstanceId) {Collidable = collidable}.ApplyProperties(properties);
+        }
+
+        public static Scp079CameraObject ReadCamera(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var label = stream.ReadNullableString();
+            var type = (Scp079CameraType) stream.ReadByte();
+            var vMin = stream.ReadShortAsFloat();
+            var vMax = stream.ReadShortAsFloat();
+            var hMin = stream.ReadShortAsFloat();
+            var hMax = stream.ReadShortAsFloat();
+            var zoomMin = stream.ReadShortAsFloat();
+            var zoomMax = stream.ReadShortAsFloat();
+            return new Scp079CameraObject(type, properties.InstanceId)
+            {
+                Label = label,
+                VerticalMinimum = vMin,
+                VerticalMaximum = vMax,
+                HorizontalMinimum = hMin,
+                HorizontalMaximum = hMax,
+                ZoomMinimum = zoomMin,
+                ZoomMaximum = zoomMax
+            }.ApplyProperties(properties);
         }
 
     }

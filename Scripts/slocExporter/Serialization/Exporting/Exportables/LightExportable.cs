@@ -19,8 +19,6 @@ namespace slocExporter.Serialization.Exporting.Exportables
 
         public LightType Type;
 
-        public LightShape Shape;
-
         public float SpotAngle;
 
         public float InnerSpotAngle;
@@ -33,7 +31,6 @@ namespace slocExporter.Serialization.Exporting.Exportables
             ShadowType = Shadows,
             ShadowStrength = ShadowStrength,
             LightType = Type,
-            Shape = Shape,
             SpotAngle = SpotAngle,
             InnerSpotAngle = InnerSpotAngle
         };
