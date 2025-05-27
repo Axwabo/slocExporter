@@ -18,6 +18,7 @@ namespace slocExporter.Serialization.Exporting
         {
             new OverriddenStructureIdentifier(),
             PrefabStructureIdentifier.Instance,
+            new SpeakerIdentifier(),
             new CameraIdentifier(),
             new CapybaraIdentifier(),
             new LightIdentifier(),
