@@ -36,6 +36,7 @@ namespace slocExporter.Readers
                     ObjectType.Quad => ReadPrimitive(stream, type, header),
                 ObjectType.Capybara => ReadCapybara(stream, header),
                 ObjectType.Scp079Camera => ReadCamera(stream, header),
+                ObjectType.Speaker => ReadSpeaker(stream, header),
                 _ => null
             };
         }
@@ -125,6 +126,24 @@ namespace slocExporter.Readers
                 HorizontalMaximum = hMax,
                 ZoomMinimum = zoomMin,
                 ZoomMaximum = zoomMax
+            }.ApplyProperties(properties);
+        }
+
+        public static SpeakerObject ReadSpeaker(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var id = stream.ReadByte();
+            var spatial = stream.ReadBoolean();
+            var volume = stream.ReadSingle();
+            var minDistance = stream.ReadSingle();
+            var maxDistance = stream.ReadSingle();
+            return new SpeakerObject(properties.InstanceId)
+            {
+                ControllerId = id,
+                Spatial = spatial,
+                Volume = volume,
+                MinDistance = minDistance,
+                MaxDistance = maxDistance
             }.ApplyProperties(properties);
         }
 
