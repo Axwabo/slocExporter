@@ -123,7 +123,18 @@ namespace slocExporter
             {StructureObject.StructureType.Scp1853Pedestal, "8e1c86dc26ed42e4eb519aedd0e9fcd1"},
             {StructureObject.StructureType.Scp2176Pedestal, "6ad060242329d2d46ab64c47fd417146"},
             {StructureObject.StructureType.SportTarget, "b39d8037aa87d5348af5c3ad54251890"},
-            {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"}
+            {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"},
+            {StructureObject.StructureType.HczBulkDoor, "ab9c18f65e576d348919305d12d586fe"},
+            {StructureObject.StructureType.SimpleBoxesOpenConnector, "8a05a18949b73fe48a47078964793259"},
+            {StructureObject.StructureType.PipesShortOpenConnector, "c5888d47e309c0d4a84b54bbd414a84c"},
+            {StructureObject.StructureType.BoxesLadderOpenConnector, "260aee9bc75150d4c9668d08761f0b9b"},
+            {StructureObject.StructureType.TankSupportedShelfOpenConnector, "a776426ba68c1954286b03da727c29a3"},
+            {StructureObject.StructureType.AngledFencesOpenConnector, "9306ff7f65cd7bb4fab67396e81bce18"},
+            {StructureObject.StructureType.HugeOrangePipesOpenConnector, "6da45c4a867e7ad4783ebc372f11a38a"},
+            {StructureObject.StructureType.PipesLongOpenConnector, "2c0d9f60fb6b3004c971278c4009ed69"},
+            {StructureObject.StructureType.AntiScp207Pedestal, "24eb8239c0bd44a4fa6f6b55c3cd4ee9"},
+            {StructureObject.StructureType.Scp1344Pedestal, "0ee79ed5668cc2d488181dd52d7c27dc"},
+            {StructureObject.StructureType.ExperimentalWeaponLocker, "b3d9c13de72fb7943b01b9c1733b1eff"}
         };
 
         public static readonly Dictionary<Scp079CameraType, string> CameraGuids = new()
