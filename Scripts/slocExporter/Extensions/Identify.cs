@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using slocExporter.Objects;
+using UnityEngine;
 
 namespace slocExporter.Extensions
 {
@@ -29,6 +30,8 @@ namespace slocExporter.Extensions
             = API.CameraGuids.ToDictionary(k => k.Value, v => v.Key);
 
         public static ObjectType PrimitiveObjectType(string meshName) => PrimitiveTypes.FirstOrDefault(e => e.Key.IsMatch(meshName)).Value;
+
+        public static bool IsIgnored(this GameObject o) => o.tag is ExporterIgnoredTag or RoomTag || o.TryGetComponent(out ExporterIgnored _);
 
     }
 

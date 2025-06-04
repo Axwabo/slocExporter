@@ -22,6 +22,11 @@ namespace slocExporter.Serialization
         [Tooltip("Includes the name and tag (if any) of each object.")]
         public bool exportNamesAndTags;
 
+        public bool includeInactiveObjects;
+
+        [Tooltip("Whether to include prefabs and their children.")]
+        public bool traversePrefabs;
+
     }
 
 }

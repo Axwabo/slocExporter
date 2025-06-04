@@ -31,7 +31,7 @@ namespace slocExporter.Serialization.Exporting
         public void Export(bool selectedOnly)
         {
             _progress("Collecting objects to export", -1);
-            var gameObjects = ExportCollector.GetObjects(selectedOnly);
+            var gameObjects = ExportCollector.GetObjects(selectedOnly, _preset);
 
             var exportables = new Dictionary<GameObject, IExportable<slocGameObject>>();
             var i = 0;

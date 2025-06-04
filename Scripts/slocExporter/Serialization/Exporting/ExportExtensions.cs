@@ -99,9 +99,8 @@ namespace slocExporter.Serialization.Exporting
             foreach (var (o, exportable) in exportables)
             {
                 progress.Count(++i, exportablesCount, "Processing objects {2:P2} ({0} of {1})");
-                var skip = o.CompareTag(Identify.ExporterIgnoredTag);
-                ProcessComponents(o, exportable, ref skip);
-                if (skip || exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
+                ProcessComponents(o, exportable);
+                if (exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
                     continue;
                 exported.ApplyTransformFrom(o);
                 exported.ApplyNameAndTagFrom(o);
@@ -111,18 +110,11 @@ namespace slocExporter.Serialization.Exporting
             return slocObjects;
         }
 
-        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable, ref bool skip)
+        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable)
         {
             foreach (var component in o.GetComponents<Component>())
-            {
-                if (component is ExporterIgnored)
-                {
-                    skip = true;
-                    break;
-                }
-
-                exportable.TryProcess(component);
-            }
+                if (component is not (Transform or ExporterIgnored))
+                    exportable.TryProcess(component);
         }
 
     }
