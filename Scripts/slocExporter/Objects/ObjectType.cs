@@ -17,7 +17,8 @@
         Capybara = 10,
         InvisibleInteractable = 11,
         Scp079Camera = 12,
-        Speaker = 13
+        Speaker = 13,
+        Text
 
     }
 

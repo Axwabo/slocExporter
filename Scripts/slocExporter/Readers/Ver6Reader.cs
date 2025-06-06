@@ -37,6 +37,7 @@ namespace slocExporter.Readers
                 ObjectType.Capybara => ReadCapybara(stream, header),
                 ObjectType.Scp079Camera => ReadCamera(stream, header),
                 ObjectType.Speaker => ReadSpeaker(stream, header),
+                ObjectType.Text => ReadText(stream, header),
                 _ => null
             };
         }
@@ -144,6 +145,23 @@ namespace slocExporter.Readers
                 Volume = volume,
                 MinDistance = minDistance,
                 MaxDistance = maxDistance
+            }.ApplyProperties(properties);
+        }
+
+        public static TextObject ReadText(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var format = stream.ReadString();
+            var argumentCount = stream.ReadInt32();
+            var arguments = new string[argumentCount];
+            for (var i = 0; i < argumentCount; i++)
+                arguments[i] = stream.ReadString();
+            var width = stream.ReadSingle();
+            var height = stream.ReadSingle();
+            return new TextObject(format, properties.InstanceId)
+            {
+                Arguments = arguments,
+                DisplaySize = new Vector2(width, height)
             }.ApplyProperties(properties);
         }
 

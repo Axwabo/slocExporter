@@ -21,6 +21,8 @@ namespace slocExporter.Serialization.Exporting
             new SpeakerIdentifier(),
             new CameraIdentifier(),
             new CapybaraIdentifier(),
+            new TextMeshProIdentifier(),
+            new TextIdentifier(),
             new LightIdentifier(),
             new PrimitiveIdentifier(),
             new EmptyIdentifier()
@@ -45,6 +47,8 @@ namespace slocExporter.Serialization.Exporting
             (PrimitiveExportable primitive, MeshRenderer renderer) => primitive.Process(renderer, MeshRendererProcessor.Process),
             (PrimitiveExportable primitive, PrimitiveFlagsSetter setter) => primitive.Process(setter, PrimitiveFlagsSetterProcessor.Process),
             (PrimitiveExportable primitive, TriggerAction action) => primitive.Process(action, TriggerActionProcessor.Process),
+            (TextExportable text, RectTransform transform) => text.Process(transform, TextProcessor.ProcessTransform),
+            (TextExportable text, TextProperties properties) => text.Process(properties, TextProcessor.ProcessProperties),
             _ => false
         };
 
