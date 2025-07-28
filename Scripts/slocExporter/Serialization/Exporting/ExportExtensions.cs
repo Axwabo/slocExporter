@@ -24,21 +24,19 @@ namespace slocExporter.Serialization.Exporting
             new TextMeshProIdentifier(),
             new TextIdentifier(),
             new LightIdentifier(),
-            new PrimitiveIdentifier(),
-            new EmptyIdentifier()
+            new PrimitiveIdentifier()
         };
 
-        public static bool TryIdentify(this GameObject o, out IExportable<slocGameObject> exportable)
+        public static IExportable<slocGameObject> ToExportable(this GameObject o)
         {
             foreach (var identifier in Identifiers)
             {
-                exportable = identifier.Process(o);
+                var exportable = identifier.Process(o);
                 if (exportable != null)
-                    return true;
+                    return exportable;
             }
 
-            exportable = null;
-            return false;
+            return EmptyExportable.Instance;
         }
 
         public static bool TryProcess(this IExportable<slocGameObject> exportable, Component component) => (exportable, component) switch

@@ -29,9 +29,7 @@ namespace slocExporter.Serialization.Exporting
             for (var i = 0; i < count; i++)
             {
                 var child = transform.GetChild(i);
-                var go = child.gameObject;
-                if (set.ConditionalAdd(go, preset))
-                    TraverseChildren(set, go, child, preset);
+                TraverseChildren(set, child.gameObject, child, preset);
             }
         }
 

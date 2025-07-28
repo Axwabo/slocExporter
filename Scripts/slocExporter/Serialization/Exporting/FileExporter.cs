@@ -39,8 +39,7 @@ namespace slocExporter.Serialization.Exporting
             foreach (var o in gameObjects)
             {
                 _progress.Count(++i, gameObjectsCount, "Identifying objects {2:P2} ({0} of {1})");
-                if (o.TryIdentify(out var exportable))
-                    exportables.Add(o, exportable);
+                exportables.Add(o, o.ToExportable());
             }
 
             var context = ExportContext.From(_preset);
@@ -54,11 +53,10 @@ namespace slocExporter.Serialization.Exporting
             for (i = 0; i < slocObjects.Count; i++)
             {
                 _progress.Count(i, slocObjectsCount, "Writing objects {2:P2} ({0} of {1})");
-                var o = slocObjects[i];
-                o.WriteTo(_writer, header);
+                slocObjects[i].WriteTo(_writer, header);
             }
 
-            EditorUtility.DisplayDialog("Export Completed", $"sloc created with {slocObjects.Count} object(s).", "OK");
+            EditorUtility.DisplayDialog("Export Completed", $"sloc created with {slocObjectsCount} object(s).", "OK");
         }
 
         public void Dispose() => _writer?.Dispose();

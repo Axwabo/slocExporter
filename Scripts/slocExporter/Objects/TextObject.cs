@@ -11,7 +11,11 @@ namespace slocExporter.Objects
 
         public static Vector2 DefaultDisplaySize => new(200f, 50f);
 
-        public TextObject(string format, int instanceId = 0) : base(instanceId) => Format = format;
+        public TextObject(string format, int instanceId = 0) : base(instanceId)
+        {
+            Type = ObjectType.Text;
+            Format = format;
+        }
 
         public string Format;
 
