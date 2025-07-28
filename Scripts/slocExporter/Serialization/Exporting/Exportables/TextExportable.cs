@@ -1,12 +1,10 @@
-﻿using System;
-using slocExporter.Objects;
-using TMPro;
+﻿using slocExporter.Objects;
 using UnityEngine;
 
 namespace slocExporter.Serialization.Exporting.Exportables
 {
 
-    public class TextExportable : IExportable<TextObject>
+    public sealed class TextExportable : IExportable<TextObject>
     {
 
         public string Format;
@@ -20,19 +18,6 @@ namespace slocExporter.Serialization.Exporting.Exportables
             Arguments = Arguments,
             DisplaySize = DisplaySize
         };
-
-    }
-
-    public sealed class TextMeshProExportable : TextExportable
-    {
-
-        public TMP_Text Text { get; }
-
-        public TextMeshProExportable(TMP_Text text)
-        {
-            Text = text;
-            Arguments = Array.Empty<string>();
-        }
 
     }
 
