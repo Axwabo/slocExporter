@@ -10,7 +10,7 @@ namespace slocExporter.Serialization.Exporting.Processors
         public static void ProcessTransform(TextExportable text, RectTransform transform)
         {
             if (text.DisplaySize == Vector2.zero)
-                text.DisplaySize = transform.sizeDelta;
+                text.DisplaySize = transform.rect.size;
         }
 
         public static void ProcessProperties(TextExportable text, TextProperties properties)
