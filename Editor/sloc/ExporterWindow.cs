@@ -32,8 +32,17 @@ namespace Editor.sloc
         private void OnEnable()
         {
             _filePath = SessionState.GetString(FilePathStateKey, _filePath);
+            OnDidOpenScene();
+        }
+
+        private void OnDidOpenScene()
+        {
             if (!_settings)
+            {
                 _settings = CreateInstance<ExportPreset>();
+                DontDestroyOnLoad(_settings);
+            }
+
             _settingsSerialized?.Dispose();
             _settingsSerialized = new SerializedObject(_settings);
         }

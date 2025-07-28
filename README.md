@@ -23,14 +23,14 @@ Laboratory.
 
 An **sloc** file can contain various primitive Unity objects, including spheres, cubes etc., and also lights.
 
-> [!NOTE]
-> Currently, only point lights are supported.
-
 To create an **sloc** file, add the **ObjectExporter** script to an empty object. Select the path to export to and click **Export Objects**
 
 **_sloc files are not text_**, but raw bytes. This means that opening one in a text editor will produce gibberish, since it's not meant to be interpreted as text. It is a sequence of **int**egers and **float**s.
 
 # Setup
+
+> [!IMPORTANT]
+> Unity 6 (6000.x) is required.
 
 1. Download the archive from the [releases page](https://github.com/Axwabo/slocExporter/releases/latest/)
 2. Extract the archive to your Unity project's `Assets` folder
@@ -96,7 +96,8 @@ Teleporter immunity is a special trigger action. It makes interacting objects im
 
 A maximum of 60 seconds can be specified but this can be stacked by using the `Add` duration mode.
 
-**WARNING:** if you use the `Add` duration mode in `Stay` it may result in very long durations of teleporter immunity.
+> [!WARNING]
+> If you use the `Add` duration mode in `Stay` it may result in very long durations of teleporter immunity.
 
 A way to clear immunity is by setting the duration mode to `Absolute` and the duration to 0 seconds.
 
