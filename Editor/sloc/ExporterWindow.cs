@@ -38,11 +38,7 @@ namespace Editor.sloc
         private void OnDidOpenScene()
         {
             if (!_settings)
-            {
                 _settings = CreateInstance<ExportPreset>();
-                DontDestroyOnLoad(_settings);
-            }
-
             _settingsSerialized?.Dispose();
             _settingsSerialized = new SerializedObject(_settings);
         }
