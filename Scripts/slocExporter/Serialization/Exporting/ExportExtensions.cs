@@ -115,7 +115,7 @@ namespace slocExporter.Serialization.Exporting
         private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable)
         {
             foreach (var component in o.GetComponents<Component>())
-                if (component is not (Transform or ExporterIgnored))
+                if (component is RectTransform or not (Transform or ExporterIgnored))
                     exportable.TryProcess(component);
         }
 
