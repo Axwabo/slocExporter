@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 
 namespace slocExporter.Readers
@@ -32,12 +33,12 @@ namespace slocExporter.Readers
             var instanceId = stream.ReadInt32();
             var parentId = stream.ReadInt32();
             var transform = stream.ReadTransform();
-            var typeData = stream.ReadByte();
-            return new StructureObject(instanceId, (StructureObject.StructureType) (typeData & ~StructureObject.RemoveDefaultLootBit))
+            stream.ReadByteWithBool(out var type, out var removeDefaultLoot);
+            return new StructureObject(instanceId, (StructureObject.StructureType) type)
             {
                 ParentId = parentId,
                 Transform = transform,
-                RemoveDefaultLoot = (typeData & StructureObject.RemoveDefaultLootBit) != 0
+                RemoveDefaultLoot = removeDefaultLoot
             };
         }
 

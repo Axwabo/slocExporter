@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Readers;
 
 namespace slocExporter.Objects
@@ -7,14 +8,13 @@ namespace slocExporter.Objects
     public sealed class InvisibleInteractableObject : slocGameObject
     {
 
-        public InvisibleInteractableObject(ColliderShape shape, int instanceId = 0)
+        public InvisibleInteractableObject(int instanceId = 0)
             : base(instanceId)
-        {
-            Type = ObjectType.InvisibleInteractable;
-            Shape = shape;
-        }
+            => Type = ObjectType.InvisibleInteractable;
 
         public ColliderShape Shape;
+
+        public bool Locked;
 
         public float InteractionDuration;
 
@@ -22,7 +22,7 @@ namespace slocExporter.Objects
 
         protected override void WriteData(BinaryWriter writer, slocHeader header)
         {
-            writer.Write((byte) Shape);
+            writer.WriteByteWithBool((byte) Shape, Locked);
             writer.Write(InteractionDuration);
         }
 

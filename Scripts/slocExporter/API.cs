@@ -97,6 +97,7 @@ namespace slocExporter
         {
             CapybaraObject capybara => CreateCapybara(parent, capybara),
             EmptyObject => CreateEmpty(parent, obj),
+            InvisibleInteractableObject interactable => CreateInteractable(parent, interactable),
             LightObject light => CreateLight(parent, light),
             PrimitiveObject primitive => CreatePrimitive(parent, primitive),
             Scp079CameraObject camera => CreateCamera(parent, camera),
@@ -173,6 +174,24 @@ namespace slocExporter
             emptyObject.SetLocalTransform(obj.Transform);
             emptyObject.ApplyNameAndTag(obj);
             return emptyObject;
+        }
+
+        private static GameObject CreateInteractable(GameObject parent, InvisibleInteractableObject interactable)
+        {
+            var o = new GameObject();
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(interactable.Transform);
+            o.ApplyNameAndTag(interactable);
+            o.AddComponent(interactable.Shape switch
+            {
+                InvisibleInteractableObject.ColliderShape.Capsule => typeof(CapsuleCollider),
+                InvisibleInteractableObject.ColliderShape.Sphere => typeof(SphereCollider),
+                _ => typeof(BoxCollider)
+            });
+            var properties = o.AddComponent<InvisibleInteractableProperties>();
+            properties.locked = interactable.Locked;
+            properties.interactionDuration = interactable.InteractionDuration;
+            return o;
         }
 
         private static GameObject CreateLight(GameObject parent, LightObject light)

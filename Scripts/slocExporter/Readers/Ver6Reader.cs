@@ -71,10 +71,10 @@ namespace slocExporter.Readers
         public static StructureObject ReadStructure(BinaryReader stream, slocHeader header)
         {
             var properties = CommonObjectProperties.FromStream(stream, header);
-            var typeData = stream.ReadByte();
-            return new StructureObject(properties.InstanceId, (StructureObject.StructureType) (typeData & ~StructureObject.RemoveDefaultLootBit))
+            stream.ReadByteWithBool(out var type, out var removeDefaultLoot);
+            return new StructureObject(properties.InstanceId, (StructureObject.StructureType) type)
             {
-                RemoveDefaultLoot = (typeData & StructureObject.RemoveDefaultLootBit) != 0
+                RemoveDefaultLoot = removeDefaultLoot
             }.ApplyProperties(properties);
         }
 
@@ -111,10 +111,12 @@ namespace slocExporter.Readers
         public static slocGameObject ReadInteractable(BinaryReader stream, slocHeader header)
         {
             var properties = CommonObjectProperties.FromStream(stream, header);
-            var shape = (InvisibleInteractableObject.ColliderShape) stream.ReadByte();
+            stream.ReadByteWithBool(out var shape, out var locked);
             var duration = stream.ReadSingle();
-            return new InvisibleInteractableObject(shape, properties.InstanceId)
+            return new InvisibleInteractableObject(properties.InstanceId)
             {
+                Shape = (InvisibleInteractableObject.ColliderShape) shape,
+                Locked = locked,
                 InteractionDuration = duration
             }.ApplyProperties(properties);
         }

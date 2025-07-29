@@ -17,6 +17,9 @@ namespace slocExporter
         [Tooltip("Used if overrideShape is false, or if no collider is present.")]
         public InvisibleInteractableObject.ColliderShape shape;
 
+        [Tooltip("Set to true to disable searching.")]
+        public bool locked;
+
     }
 
 }

@@ -18,6 +18,13 @@ namespace slocExporter.Extensions
             };
         }
 
+        public static void ReadByteWithBool(this BinaryReader reader, out byte value, out bool boolean)
+        {
+            var b = reader.ReadByte();
+            value = (byte) (b & ~BinaryWriterExtensions.BoolBit);
+            boolean = (b & BinaryWriterExtensions.BoolBit) != 0;
+        }
+
     }
 
 }
