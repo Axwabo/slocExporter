@@ -6,11 +6,11 @@ using System.Reflection;
 using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Readers;
+using slocExporter.Serialization.Exporting.Identifiers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
 
@@ -95,9 +95,12 @@ namespace slocExporter
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
         {
+            CapybaraObject capybara => CreateCapybara(parent, capybara),
             EmptyObject => CreateEmpty(parent, obj),
             LightObject light => CreateLight(parent, light),
             PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            Scp079CameraObject camera => CreateCamera(parent, camera),
+            SpeakerObject speaker => CreateSpeaker(parent, speaker),
             StructureObject structure => CreateStructure(parent, structure),
             TextObject textObject => CreateText(parent, textObject),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
@@ -148,6 +151,21 @@ namespace slocExporter
             {Scp079CameraType.SurfaceZone, "7b630b3a7d13ee047a84205b3c099c3c"}
         };
 
+        private static GameObject CreateCapybara(GameObject parent, CapybaraObject capybara)
+        {
+            if (!PrefabExtensions.TryLoadAsset(CapybaraIdentifier.CapybaraGuid, out var prefab))
+                return null;
+            var o = prefab.InstantiatePrefab();
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(capybara.Transform);
+            o.ApplyNameAndTag(capybara);
+            if (capybara.Collidable)
+                return o;
+            foreach (var collider in o.GetComponentsInChildren<Collider>())
+                collider.enabled = false;
+            return o;
+        }
+
         private static GameObject CreateEmpty(GameObject parent, slocGameObject obj)
         {
             var emptyObject = new GameObject();
@@ -177,12 +195,9 @@ namespace slocExporter
 
         private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
-            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
+            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
                 return null;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
-            if (prefab == null)
-                return null;
-            var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
+            var gameObject = prefab.InstantiatePrefab();
             gameObject.SetAbsoluteTransformFrom(parent);
             gameObject.SetLocalTransform(structure.Transform);
             gameObject.ApplyNameAndTag(structure);
@@ -210,6 +225,37 @@ namespace slocExporter
 
             toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
             return toy;
+        }
+
+        private static GameObject CreateCamera(GameObject parent, Scp079CameraObject camera)
+        {
+            if (!CameraGuids.TryGetValue(camera.CameraType, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
+                return null;
+            var o = prefab.InstantiatePrefab();
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(camera.Transform);
+            o.ApplyNameAndTag(camera);
+            var properties = o.AddComponent<Scp079CameraProperties>();
+            properties.label = camera.Label;
+            properties.horizontalMinimum = camera.HorizontalMinimum;
+            properties.horizontalMaximum = camera.HorizontalMaximum;
+            properties.verticalMinimum = camera.VerticalMinimum;
+            properties.verticalMaximum = camera.VerticalMaximum;
+            properties.zoomMinimum = camera.ZoomMinimum;
+            properties.zoomMaximum = camera.ZoomMaximum;
+            return o;
+        }
+
+        private static GameObject CreateSpeaker(GameObject parent, SpeakerObject speaker)
+        {
+            var o = CreateEmpty(parent, speaker);
+            var audio = o.AddComponent<AudioSource>();
+            audio.priority = speaker.ControllerId;
+            audio.volume = speaker.Volume;
+            audio.spatialBlend = speaker.Spatial ? 1 : 0;
+            audio.minDistance = speaker.MinDistance;
+            audio.maxDistance = speaker.MaxDistance;
+            return o;
         }
 
         private static GameObject CreateText(GameObject parent, TextObject text)

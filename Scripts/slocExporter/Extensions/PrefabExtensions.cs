@@ -26,6 +26,30 @@ namespace slocExporter.Extensions
             return true;
         }
 
+        public static bool TryLoadAsset(string guidString, out GameObject prefab)
+        {
+            if (GUID.TryParse(guidString, out var guid))
+                return TryLoadAsset(guid, out prefab);
+            prefab = null;
+            return false;
+        }
+
+        public static bool TryLoadAsset(GUID guid, out GameObject prefab)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (string.IsNullOrEmpty(path))
+            {
+                prefab = null;
+                return false;
+            }
+
+            prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return prefab != null;
+        }
+
+        public static GameObject InstantiatePrefab(this GameObject prefab)
+            => (GameObject) PrefabUtility.InstantiatePrefab(prefab);
+
     }
 
 }
