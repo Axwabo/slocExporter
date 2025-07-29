@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using slocExporter.Objects;
+using UnityEngine;
 
 namespace slocExporter.Extensions
 {
@@ -13,6 +14,9 @@ namespace slocExporter.Extensions
             if (tag != null)
                 o.tag = tag;
         }
+
+        public static void ApplyNameAndTag(this GameObject o, slocGameObject from)
+            => o.ApplyNameAndTag(from.Name, from.Tag);
 
     }
 

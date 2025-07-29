@@ -10,13 +10,17 @@ namespace slocExporter.Serialization.Exporting.Identifiers
     {
 
         public TextExportable Process(GameObject o)
-            => !o.TryGetComponent(out TMP_Text text)
-                ? null
-                : new TextExportable
-                {
-                    Format = text.text,
-                    Arguments = Array.Empty<string>()
-                };
+        {
+            if (!o.TryGetComponent(out TMP_Text text))
+                return null;
+            if (!Mathf.Approximately(text.fontSize, 1))
+                Debug.LogWarning("Inconsistent font size. Set it to 1 to ensure parity with the SL client.", text);
+            return new TextExportable
+            {
+                Format = text.text,
+                Arguments = Array.Empty<string>()
+            };
+        }
 
     }
 

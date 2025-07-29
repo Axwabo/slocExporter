@@ -9,6 +9,7 @@ using slocExporter.Readers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
@@ -94,10 +95,11 @@ namespace slocExporter
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
         {
-            StructureObject structure => CreateStructure(parent, structure),
-            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            EmptyObject => CreateEmpty(parent, obj),
             LightObject light => CreateLight(parent, light),
-            EmptyObject => CreateEmpty(obj, parent),
+            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            StructureObject structure => CreateStructure(parent, structure),
+            TextObject textObject => CreateText(parent, textObject),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
@@ -146,50 +148,13 @@ namespace slocExporter
             {Scp079CameraType.SurfaceZone, "7b630b3a7d13ee047a84205b3c099c3c"}
         };
 
-        private static GameObject CreateStructure(GameObject parent, StructureObject structure)
+        private static GameObject CreateEmpty(GameObject parent, slocGameObject obj)
         {
-            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
-                return null;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
-            if (prefab == null)
-                return null;
-            var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
-            gameObject.SetAbsoluteTransformFrom(parent);
-            gameObject.SetLocalTransform(structure.Transform);
-            gameObject.ApplyNameAndTag(structure.Name, structure.Tag);
-            if (structure.RemoveDefaultLoot)
-                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
-            return gameObject;
-        }
-
-        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
-        {
-            var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
-            toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(primitive.Transform);
-            toy.ApplyNameAndTag(primitive.Name, primitive.Tag);
-            var flags = primitive.Flags;
-            if (flags is not PrimitiveObject.DefaultFlags)
-                toy.AddComponent<PrimitiveFlagsSetter>().flags = flags;
-            AddTriggerActionComponents(primitive.TriggerActions, toy);
-            if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
-            {
-                if (handle)
-                    HandleNoMaterial(primitive.MaterialColor, toy);
-                return toy;
-            }
-
-            toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
-            return toy;
-        }
-
-        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject)
-        {
-            foreach (var data in actions)
-                if (data is SerializableTeleportToSpawnedObjectData tp)
-                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
-                else
-                    gameObject.AddComponent<TriggerAction>().SetData(data);
+            var emptyObject = new GameObject();
+            emptyObject.SetAbsoluteTransformFrom(parent);
+            emptyObject.SetLocalTransform(obj.Transform);
+            emptyObject.ApplyNameAndTag(obj);
+            return emptyObject;
         }
 
         private static GameObject CreateLight(GameObject parent, LightObject light)
@@ -206,17 +171,81 @@ namespace slocExporter
             lightComponent.innerSpotAngle = light.InnerSpotAngle;
             toy.SetAbsoluteTransformFrom(parent);
             toy.SetLocalTransform(light.Transform);
-            toy.ApplyNameAndTag(light.Name, light.Tag);
+            toy.ApplyNameAndTag(light);
             return toy;
         }
 
-        private static GameObject CreateEmpty(slocGameObject obj, GameObject parent)
+        private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
-            var emptyObject = new GameObject("Empty");
-            emptyObject.SetAbsoluteTransformFrom(parent);
-            emptyObject.SetLocalTransform(obj.Transform);
-            emptyObject.ApplyNameAndTag(obj.Name, obj.Tag);
-            return emptyObject;
+            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
+                return null;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
+            if (prefab == null)
+                return null;
+            var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
+            gameObject.SetAbsoluteTransformFrom(parent);
+            gameObject.SetLocalTransform(structure.Transform);
+            gameObject.ApplyNameAndTag(structure);
+            if (structure.RemoveDefaultLoot)
+                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
+            return gameObject;
+        }
+
+        private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
+        {
+            var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
+            toy.SetAbsoluteTransformFrom(parent);
+            toy.SetLocalTransform(primitive.Transform);
+            toy.ApplyNameAndTag(primitive);
+            var flags = primitive.Flags;
+            if (flags is not PrimitiveObject.DefaultFlags)
+                toy.AddComponent<PrimitiveFlagsSetter>().flags = flags;
+            AddTriggerActionComponents(primitive.TriggerActions, toy);
+            if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
+            {
+                if (handle)
+                    HandleNoMaterial(primitive.MaterialColor, toy);
+                return toy;
+            }
+
+            toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            return toy;
+        }
+
+        private static GameObject CreateText(GameObject parent, TextObject text)
+        {
+            var canvas = parent.GetComponentInParent<Canvas>();
+            if (!canvas)
+            {
+                canvas = parent.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                canvas.GetComponent<RectTransform>().sizeDelta = text.DisplaySize;
+            }
+
+            var o = new GameObject(text.Name);
+            o.ApplyNameAndTag(text);
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(text.Transform);
+            var tmp = o.AddComponent<TextMeshProUGUI>();
+            var textTransform = tmp.rectTransform;
+            textTransform.SetParent(canvas.transform);
+            textTransform.sizeDelta = text.DisplaySize;
+            tmp.fontSize = 1;
+            tmp.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            tmp.verticalAlignment = VerticalAlignmentOptions.Middle;
+            tmp.text = text.Format;
+            if (text.Arguments is {Length: not 0})
+                o.AddComponent<TextProperties>().arguments = text.Arguments;
+            return o;
+        }
+
+        private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject)
+        {
+            foreach (var data in actions)
+                if (data is SerializableTeleportToSpawnedObjectData tp)
+                    TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
+                else
+                    gameObject.AddComponent<TriggerAction>().SetData(data);
         }
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
