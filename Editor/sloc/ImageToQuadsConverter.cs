@@ -124,9 +124,8 @@ namespace Editor.sloc
         {
             var gameObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
             var t = gameObject.transform;
-            t.position = position;
+            t.SetPositionAndRotation(position, Quaternion.Euler(90, 0, 0));
             t.localScale = new Vector3(width, 1, 1f);
-            t.rotation = Quaternion.Euler(90f, 0f, 0f);
             DestroyImmediate(gameObject.GetComponent<MeshCollider>());
             t.SetParent(parent.transform);
             if (!MaterialHandler.TryGetMaterial(color, out var mat, out var handle))

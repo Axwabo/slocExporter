@@ -326,14 +326,8 @@ namespace slocExporter
             TpToSpawnedCache.Clear();
             try
             {
-                var go = new GameObject
-                {
-                    transform =
-                    {
-                        position = position,
-                        rotation = rotation
-                    }
-                };
+                var go = new GameObject();
+                go.transform.SetPositionAndRotation(position, rotation);
                 var created = 0;
                 var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
                 var processed = 0;
@@ -505,9 +499,8 @@ namespace slocExporter
             if (o == null)
                 return;
             var t = o.transform;
-            t.localPosition = transform.Position;
+            t.SetLocalPositionAndRotation(transform.Position, transform.Rotation);
             t.localScale = transform.Scale;
-            t.localRotation = transform.Rotation;
         }
 
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

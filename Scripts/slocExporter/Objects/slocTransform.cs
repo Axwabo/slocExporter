@@ -18,12 +18,16 @@ namespace slocExporter.Objects
             writer.WriteQuaternion(Rotation);
         }
 
-        public static implicit operator slocTransform(Transform transform) => new()
+        public static implicit operator slocTransform(Transform transform)
         {
-            Position = transform.localPosition,
-            Scale = transform.localScale,
-            Rotation = transform.localRotation
-        };
+            transform.GetLocalPositionAndRotation(out var position, out var rotation);
+            return new slocTransform
+            {
+                Position = position,
+                Scale = transform.localScale,
+                Rotation = rotation
+            };
+        }
 
     }
 
