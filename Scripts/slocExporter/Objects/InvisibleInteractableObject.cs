@@ -9,7 +9,10 @@ namespace slocExporter.Objects
 
         public InvisibleInteractableObject(ColliderShape shape, int instanceId = 0)
             : base(instanceId)
-            => Shape = shape;
+        {
+            Type = ObjectType.InvisibleInteractable;
+            Shape = shape;
+        }
 
         public ColliderShape Shape;
 
