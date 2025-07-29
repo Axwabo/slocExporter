@@ -7,9 +7,9 @@ namespace slocExporter.Extensions
     public static class PrefabExtensions
     {
 
-        public static bool TryGetPrefabGuid(this GameObject o, out GUID guid)
+        public static bool TryGetPrefabGuid(this GameObject o, out GUID guid, bool validateRoot = true)
         {
-            if (!PrefabUtility.IsOutermostPrefabInstanceRoot(o))
+            if (validateRoot && !PrefabUtility.IsAnyPrefabInstanceRoot(o))
             {
                 guid = default;
                 return false;
@@ -49,6 +49,12 @@ namespace slocExporter.Extensions
 
         public static GameObject InstantiatePrefab(this GameObject prefab)
             => (GameObject) PrefabUtility.InstantiatePrefab(prefab);
+
+        public static bool IsChildOfAnyPrefab(this GameObject o, bool includeAddedObjects, out bool isRoot)
+        {
+            isRoot = PrefabUtility.IsAnyPrefabInstanceRoot(o);
+            return !isRoot && (PrefabUtility.IsPartOfAnyPrefab(o) || includeAddedObjects && PrefabUtility.IsAddedGameObjectOverride(o));
+        }
 
     }
 

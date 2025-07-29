@@ -22,8 +22,14 @@ namespace slocExporter.Serialization.Exporting
 
         private static void TraverseChildren(HashSet<GameObject> set, GameObject gameObject, Transform transform, ExportPreset preset, bool debug)
         {
-            if (PrefabUtility.IsPartOfAnyPrefab(gameObject) && PrefabStructureIdentifier.Instance.Process(gameObject) != null
-                || !set.ConditionalAdd(gameObject, preset))
+            if (gameObject.IsChildOfKnownPrefab())
+            {
+                if (debug)
+                    Debug.Log("Skipping object as it's part of an SL prefab", gameObject);
+                return;
+            }
+
+            if (!set.ConditionalAdd(gameObject, preset))
             {
                 if (debug)
                     Debug.Log("Skipping object", gameObject);
@@ -43,7 +49,20 @@ namespace slocExporter.Serialization.Exporting
 
         public static bool ShouldInclude(this ExportPreset preset, GameObject gameObject)
             => (gameObject.activeSelf || preset.includeInactiveObjects)
-               && (preset.traversePrefabs || !PrefabUtility.IsAnyPrefabInstanceRoot(gameObject));
+               && (preset.traversePrefabs || !gameObject.IsChildOfAnyPrefab(true, out _));
+
+        public static bool IsChildOfKnownPrefab(this GameObject gameObject)
+        {
+            if (!gameObject.IsChildOfAnyPrefab(false, out var isRoot))
+                return false;
+            var root = isRoot ? gameObject : PrefabUtility.GetNearestPrefabInstanceRoot(gameObject);
+            if (!root.TryGetPrefabGuid(out var guid, false))
+                return false;
+            if (guid == CapybaraIdentifier.CapybaraGuid)
+                return true;
+            var guidString = guid.ToString();
+            return Identify.CameraGuids.ContainsKey(guidString) || Identify.StructureGuids.ContainsKey(guidString);
+        }
 
     }
 

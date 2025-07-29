@@ -7,9 +7,7 @@ namespace slocExporter.Extensions
     public static class StopwatchExtensions
     {
 
-        private const double Frequency = 1000000000;
-
-        private const double TickFrequency = TimeSpan.TicksPerSecond / Frequency;
+        public static readonly double TickFrequency = (double) TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
         public static long Timestamp => Stopwatch.GetTimestamp();
 
