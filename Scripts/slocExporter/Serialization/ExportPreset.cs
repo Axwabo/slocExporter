@@ -24,7 +24,7 @@ namespace slocExporter.Serialization
 
         public bool includeInactiveObjects;
 
-        [Tooltip("Whether to include prefabs and their children.")]
+        [Tooltip("Whether to include prefabs' children. Outermost prefab root objects are always exported.")]
         public bool traversePrefabs;
 
     }
