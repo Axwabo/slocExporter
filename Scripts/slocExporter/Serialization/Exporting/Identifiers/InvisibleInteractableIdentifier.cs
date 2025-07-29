@@ -15,7 +15,8 @@ namespace slocExporter.Serialization.Exporting.Identifiers
                 : new InvisibleInteractableExportable
                 {
                     Shape = !properties.overrideShape && TryIdentifyShape(o, out var shape) ? shape : properties.shape,
-                    Locked = properties.locked
+                    Locked = properties.locked,
+                    InteractionDuration = properties.interactionDuration
                 };
 
         private static bool TryIdentifyShape(GameObject o, out InvisibleInteractableObject.ColliderShape shape)

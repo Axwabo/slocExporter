@@ -189,6 +189,7 @@ namespace slocExporter
                 _ => typeof(BoxCollider)
             });
             var properties = o.AddComponent<InvisibleInteractableProperties>();
+            properties.shape = interactable.Shape;
             properties.locked = interactable.Locked;
             properties.interactionDuration = interactable.InteractionDuration;
             return o;
