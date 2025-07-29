@@ -11,25 +11,30 @@ namespace slocExporter.Serialization.Exporting
     public static class ExportCollector
     {
 
-        public static HashSet<GameObject> GetObjects(bool selectedOnly, ExportPreset preset)
+        public static HashSet<GameObject> GetObjects(bool selectedOnly, ExportPreset preset, bool debug)
         {
             var set = new HashSet<GameObject>();
             var initial = selectedOnly ? Selection.gameObjects : SceneManager.GetActiveScene().GetRootGameObjects();
             foreach (var gameObject in initial)
-                TraverseChildren(set, gameObject, gameObject.transform, preset);
+                TraverseChildren(set, gameObject, gameObject.transform, preset, debug);
             return set;
         }
 
-        private static void TraverseChildren(HashSet<GameObject> set, GameObject gameObject, Transform transform, ExportPreset preset)
+        private static void TraverseChildren(HashSet<GameObject> set, GameObject gameObject, Transform transform, ExportPreset preset, bool debug)
         {
             if (PrefabUtility.IsPartOfAnyPrefab(gameObject) && PrefabStructureIdentifier.Instance.Process(gameObject) != null
                 || !set.ConditionalAdd(gameObject, preset))
+            {
+                if (debug)
+                    Debug.Log("Skipping object", gameObject);
                 return;
+            }
+
             var count = transform.childCount;
             for (var i = 0; i < count; i++)
             {
                 var child = transform.GetChild(i);
-                TraverseChildren(set, child.gameObject, child, preset);
+                TraverseChildren(set, child.gameObject, child, preset, debug);
             }
         }
 

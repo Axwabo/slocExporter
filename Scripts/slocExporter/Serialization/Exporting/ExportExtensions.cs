@@ -103,9 +103,16 @@ namespace slocExporter.Serialization.Exporting
             foreach (var (o, exportable) in exportables)
             {
                 progress.Count(++i, exportablesCount, "Processing objects {2:P2} ({0} of {1})");
-                ProcessComponents(o, exportable);
+                ProcessComponents(o, exportable, context.Debug);
                 if (exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
+                {
+                    if (context.Debug)
+                        Debug.Log("Exported object was not valid", o);
                     continue;
+                }
+
+                if (context.Debug)
+                    Debug.Log($"Exported object as {exported}", o);
                 exported.ApplyTransformFrom(o);
                 exported.ApplyNameAndTagFrom(o);
                 slocObjects.Add(exported);
@@ -114,11 +121,12 @@ namespace slocExporter.Serialization.Exporting
             return slocObjects;
         }
 
-        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable)
+        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable, bool debug)
         {
             foreach (var component in o.GetComponents<Component>())
                 if (component is RectTransform or not (Transform or ExporterIgnored))
-                    exportable.TryProcess(component);
+                    if (exportable.TryProcess(component) && debug)
+                        Debug.Log($"Processed component {component}", component);
         }
 
     }

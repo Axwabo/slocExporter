@@ -3,10 +3,10 @@
 namespace slocExporter.Serialization.Exporting
 {
 
-    public sealed class ExportContext
+    public readonly struct ExportContext
     {
 
-        public static ExportContext From(ExportPreset preset)
+        public static ExportContext From(ExportPreset preset, bool debug = false)
         {
             var attributes = slocAttributes.None;
             if (preset.lossyColors)
@@ -17,17 +17,20 @@ namespace slocExporter.Serialization.Exporting
                 attributes |= slocAttributes.ExportAllTriggerActions;
             if (preset.exportNamesAndTags)
                 attributes |= slocAttributes.NamesAndTags;
-            return new ExportContext(attributes, preset.defaultPrimitiveFlags);
+            return new ExportContext(attributes, preset.defaultPrimitiveFlags, debug);
         }
 
         public readonly slocAttributes Attributes;
 
         public readonly PrimitiveObjectFlags DefaultPrimitiveFlags;
 
-        public ExportContext(slocAttributes attributes, PrimitiveObjectFlags defaultPrimitiveFlags)
+        public readonly bool Debug;
+
+        public ExportContext(slocAttributes attributes, PrimitiveObjectFlags defaultPrimitiveFlags, bool debug = false)
         {
             Attributes = attributes;
             DefaultPrimitiveFlags = defaultPrimitiveFlags;
+            Debug = debug;
         }
 
     }

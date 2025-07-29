@@ -5,13 +5,12 @@ using System.Text;
 using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Readers;
-using UnityEditor;
 using UnityEngine;
 
 namespace slocExporter.Serialization.Exporting
 {
 
-    public sealed class FileExporter : IDisposable
+    public readonly struct FileExporter : IDisposable
     {
 
         private readonly bool _debug;
@@ -28,23 +27,30 @@ namespace slocExporter.Serialization.Exporting
             _writer = new BinaryWriter(File.Open(path, FileMode.Create), Encoding.UTF8);
         }
 
-        public void Export(bool selectedOnly)
+        public int Export(bool selectedOnly)
         {
+            Log("Collecting objects");
             _progress("Collecting objects to export", -1);
-            var gameObjects = ExportCollector.GetObjects(selectedOnly, _preset);
+            var gameObjects = ExportCollector.GetObjects(selectedOnly, _preset, _debug);
 
+            Log("Identifying objects");
             var exportables = new Dictionary<GameObject, IExportable<slocGameObject>>();
             var i = 0;
             var gameObjectsCount = gameObjects.Count;
             foreach (var o in gameObjects)
             {
                 _progress.Count(++i, gameObjectsCount, "Identifying objects {2:P2} ({0} of {1})");
-                exportables.Add(o, o.ToExportable());
+                var exportable = o.ToExportable();
+                if (_debug)
+                    Debug.Log($"Created {exportable}", o);
+                exportables.Add(o, exportable);
             }
 
-            var context = ExportContext.From(_preset);
+            Log("Processing & exporting");
+            var context = ExportContext.From(_preset, _debug);
             var slocObjects = exportables.ProcessAndExportObjects(context, _progress);
 
+            Log("Writing file");
             _writer.Write(API.slocVersion);
             var slocObjectsCount = slocObjects.Count;
             var header = new slocHeader(API.slocVersion, slocObjectsCount, context.Attributes, context.DefaultPrimitiveFlags);
@@ -56,7 +62,13 @@ namespace slocExporter.Serialization.Exporting
                 slocObjects[i].WriteTo(_writer, header);
             }
 
-            EditorUtility.DisplayDialog("Export Completed", $"sloc created with {slocObjectsCount} object(s).", "OK");
+            return slocObjectsCount;
+        }
+
+        private void Log(string message)
+        {
+            if (_debug)
+                Debug.Log(message);
         }
 
         public void Dispose() => _writer?.Dispose();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using slocExporter;
+using slocExporter.Extensions;
 using slocExporter.Serialization;
 using slocExporter.Serialization.Exporting;
 using UnityEditor;
@@ -124,8 +125,13 @@ namespace Editor.sloc
             var preset = _selectedPreset ? _selectedPreset : _settings;
             try
             {
+                var start = StopwatchExtensions.Timestamp;
                 using var exporter = new FileExporter(_filePath.ToFullAppDataPath(), _debug, preset, ProgressbarUpdate);
-                exporter.Export(selectedOnly);
+                var count = exporter.Export(selectedOnly);
+                var elapsed = StopwatchExtensions.GetElapsedTime(start);
+                if (_debug)
+                    Debug.Log($"Export completed in {elapsed}");
+                EditorUtility.DisplayDialog("Export Completed", $"sloc created with {count} object(s).\nElapsed time: {elapsed}", "OK");
             }
             catch (Exception e)
             {
