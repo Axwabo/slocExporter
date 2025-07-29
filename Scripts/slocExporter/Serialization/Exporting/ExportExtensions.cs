@@ -24,7 +24,8 @@ namespace slocExporter.Serialization.Exporting
             new TextMeshProIdentifier(),
             new TextIdentifier(),
             new LightIdentifier(),
-            new PrimitiveIdentifier()
+            new PrimitiveIdentifier(),
+            new ColliderOnlyIdentifier()
         };
 
         public static IExportable<slocGameObject> ToExportable(this GameObject o)
