@@ -8,13 +8,13 @@ namespace slocExporter.Serialization.Exporting.Exportables
 
         public byte ControllerId;
 
-        public bool Spatial = true;
+        public bool Spatial;
 
-        public float Volume = 1;
+        public float Volume;
 
-        public float MinDistance = 1f;
+        public float MinDistance;
 
-        public float MaxDistance = 1f;
+        public float MaxDistance;
 
         public SpeakerObject Export(int instanceId, ExportContext context) => new(instanceId)
         {
