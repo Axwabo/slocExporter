@@ -15,21 +15,10 @@ namespace slocExporter.Serialization.Exporting.Identifiers
             if (components.Length != 2 || components[0] is not Transform || components[1] is not BoxCollider collider)
                 return null;
             collider.CheckGameSize();
-            var resolved = PrimitiveObjectFlags.ServerCollider;
-            var vetoed = PrimitiveObjectFlags.Visible;
-            if (collider.isTrigger)
-            {
-                resolved |= PrimitiveObjectFlags.Trigger;
-                vetoed |= PrimitiveObjectFlags.ClientCollider;
-            }
-            else
-                resolved |= PrimitiveObjectFlags.ClientCollider;
-
             return new PrimitiveExportable
             {
                 PrimitiveType = ObjectType.Cube,
-                ResolvedFlags = resolved,
-                VetoedFlags = vetoed
+                VetoedFlags = PrimitiveObjectFlags.Visible
             };
         }
 
