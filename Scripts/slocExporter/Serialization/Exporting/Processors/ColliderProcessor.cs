@@ -10,9 +10,12 @@ namespace slocExporter.Serialization.Exporting.Processors
 
         public static void Process(PrimitiveExportable primitive, Collider collider)
         {
+            if (collider.isTrigger)
+                primitive.ResolvedFlags |= PrimitiveObjectFlags.Trigger;
+
             if (!collider.enabled)
             {
-                primitive.VetoedFlags |= PrimitiveObjectFlags.ClientCollider | PrimitiveObjectFlags.ServerCollider | PrimitiveObjectFlags.Trigger;
+                primitive.VetoedFlags |= PrimitiveObjectFlags.ClientCollider | PrimitiveObjectFlags.ServerCollider;
                 return;
             }
 
@@ -22,7 +25,7 @@ namespace slocExporter.Serialization.Exporting.Processors
                 return;
             }
 
-            primitive.ResolvedFlags |= PrimitiveObjectFlags.ServerCollider | PrimitiveObjectFlags.Trigger;
+            primitive.ResolvedFlags |= PrimitiveObjectFlags.ServerCollider;
             primitive.VetoedFlags |= PrimitiveObjectFlags.ClientCollider;
         }
 
