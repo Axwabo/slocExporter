@@ -20,7 +20,7 @@ namespace Editor.sloc
         [MenuItem("sloc/Export")]
         public static void ShowWindow() => GetWindow<ExporterWindow>(true, "Export to sloc");
 
-        private static string _filePath = @"%appdata%\EXILED\Plugins\sloc\Objects\MyObject";
+        private static string _filePath = "%appdata%/SCP Secret Laboratory/configs/7777/slocLoader/Objects/MyObject.sloc";
 
         private static bool _debug;
 
@@ -121,12 +121,19 @@ namespace Editor.sloc
 
         private static void Export(bool selectedOnly)
         {
-            // TODO: validate path
+            var finalPath = _filePath.ToFullAppDataPath();
+            var parent = Path.GetDirectoryName(finalPath);
+            if (!Directory.Exists(parent))
+            {
+                EditorUtility.DisplayDialog(ProgressbarTitle, "The target directory does not exist.", "OK");
+                return;
+            }
+
             var preset = _selectedPreset ? _selectedPreset : _settings;
             try
             {
                 var start = StopwatchExtensions.Timestamp;
-                using var exporter = new FileExporter(_filePath.ToFullAppDataPath(), _debug, preset, ProgressbarUpdate);
+                using var exporter = new FileExporter(finalPath, _debug, preset, ProgressbarUpdate);
                 var count = exporter.Export(selectedOnly);
                 var elapsed = StopwatchExtensions.GetElapsedTime(start);
                 if (_debug)

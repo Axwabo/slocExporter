@@ -507,7 +507,7 @@ namespace slocExporter
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
 
-        public static string ToShortAppDataPath(this string path) => path.Replace('/', '\\').Replace(AppData, "%appdata%");
+        public static string ToShortAppDataPath(this string path) => path.Replace(AppData, "%appdata%");
 
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
 

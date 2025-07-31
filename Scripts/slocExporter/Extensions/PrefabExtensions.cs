@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using slocExporter.Serialization.Exporting.Identifiers;
+using UnityEditor;
 using UnityEngine;
 
 namespace slocExporter.Extensions
@@ -54,6 +55,19 @@ namespace slocExporter.Extensions
         {
             isRoot = PrefabUtility.IsAnyPrefabInstanceRoot(o);
             return !isRoot && (PrefabUtility.IsPartOfAnyPrefab(o) || includeAddedObjects && PrefabUtility.IsAddedGameObjectOverride(o));
+        }
+
+        public static bool IsChildOfKnownPrefab(this GameObject gameObject)
+        {
+            if (!gameObject.IsChildOfAnyPrefab(false, out var isRoot))
+                return false;
+            var root = isRoot ? gameObject : PrefabUtility.GetNearestPrefabInstanceRoot(gameObject);
+            if (!root.TryGetPrefabGuid(out var guid, false))
+                return false;
+            if (guid == CapybaraIdentifier.CapybaraGuid)
+                return true;
+            var guidString = guid.ToString();
+            return Identify.CameraGuids.ContainsKey(guidString) || Identify.StructureGuids.ContainsKey(guidString);
         }
 
     }
