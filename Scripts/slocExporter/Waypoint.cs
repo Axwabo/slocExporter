@@ -25,8 +25,7 @@ namespace slocExporter
 
         private void OnDrawGizmosSelected()
         {
-            if (!isStatic)
-                Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.matrix = isStatic ? Matrix4x4.Translate(transform.position) : transform.localToWorldMatrix;
             Gizmos.DrawWireCube(Vector3.zero, Size);
         }
 

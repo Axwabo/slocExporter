@@ -1,5 +1,4 @@
 ﻿using slocExporter;
-using slocExporter.Serialization.Exporting.Identifiers;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,9 +16,12 @@ namespace Editor.sloc
             foreach (var o in targets)
             {
                 var waypoint = (Waypoint) o;
-                if (!waypoint.isStatic || waypoint.transform.lossyScale == Vector3.one)
+                if (!waypoint.isStatic)
                     continue;
-                EditorGUILayout.HelpBox(WaypointIdentifier.Warning, MessageType.Warning);
+                var t = waypoint.transform;
+                if (t.lossyScale == Vector3.one && t.eulerAngles == Vector3.zero)
+                    continue;
+                EditorGUILayout.HelpBox("Static waypoints aren't affected by scale or rotation.", MessageType.Info);
                 break;
             }
         }
