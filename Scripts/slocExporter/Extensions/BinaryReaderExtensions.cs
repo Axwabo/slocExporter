@@ -25,6 +25,14 @@ namespace slocExporter.Extensions
             boolean = (b & BinaryWriterExtensions.BoolBit) != 0;
         }
 
+        public static void ReadTwoBools(this BinaryReader reader, out bool a, out bool b)
+        {
+            var value = reader.ReadByte();
+            API.SplitSafe(value, out var byteA, out var byteB);
+            a = byteA != 0;
+            b = byteB != 0;
+        }
+
     }
 
 }

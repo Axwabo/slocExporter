@@ -39,6 +39,8 @@ namespace slocExporter.Readers
                 ObjectType.Scp079Camera => ReadCamera(stream, header),
                 ObjectType.Speaker => ReadSpeaker(stream, header),
                 ObjectType.Text => ReadText(stream, header),
+                ObjectType.Waypoint => ReadWaypoint(stream, header),
+                ObjectType.CullingParent => ReadCullingParent(stream, header),
                 _ => null
             };
         }
@@ -176,6 +178,29 @@ namespace slocExporter.Readers
             {
                 Arguments = arguments,
                 DisplaySize = new Vector2(width, height)
+            }.ApplyProperties(properties);
+        }
+
+        public static WaypointObject ReadWaypoint(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var priority = stream.ReadSingle();
+            stream.ReadTwoBools(out var isStatic, out var visualizeBounds);
+            return new WaypointObject(properties.InstanceId)
+            {
+                Priority = priority,
+                IsStatic = isStatic,
+                VisualizeBounds = visualizeBounds
+            }.ApplyProperties(properties);
+        }
+
+        public static CullingParentObject ReadCullingParent(BinaryReader stream, slocHeader header)
+        {
+            var properties = CommonObjectProperties.FromStream(stream, header);
+            var boundsSize = stream.ReadVector();
+            return new CullingParentObject(properties.InstanceId)
+            {
+                BoundsSize = boundsSize
             }.ApplyProperties(properties);
         }
 
