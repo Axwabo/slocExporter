@@ -5,6 +5,7 @@ namespace Editor.sloc
 {
 
     [CustomEditor(typeof(Scp079CameraProperties))]
+    [CanEditMultipleObjects]
     public sealed class CameraPropertiesEditor : UnityEditor.Editor
     {
 
