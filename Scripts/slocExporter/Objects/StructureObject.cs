@@ -63,7 +63,8 @@ namespace slocExporter.Objects
             PipesLongOpenConnector = 29,
             AntiScp207Pedestal = 30,
             Scp1344Pedestal = 31,
-            ExperimentalWeaponLocker = 32
+            ExperimentalWeaponLocker = 32,
+            UnsecuredPryableGate = 33
 
         }
 

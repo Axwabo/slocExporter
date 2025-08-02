@@ -140,7 +140,8 @@ namespace slocExporter
             {StructureObject.StructureType.PipesLongOpenConnector, "2c0d9f60fb6b3004c971278c4009ed69"},
             {StructureObject.StructureType.AntiScp207Pedestal, "24eb8239c0bd44a4fa6f6b55c3cd4ee9"},
             {StructureObject.StructureType.Scp1344Pedestal, "0ee79ed5668cc2d488181dd52d7c27dc"},
-            {StructureObject.StructureType.ExperimentalWeaponLocker, "b3d9c13de72fb7943b01b9c1733b1eff"}
+            {StructureObject.StructureType.ExperimentalWeaponLocker, "b3d9c13de72fb7943b01b9c1733b1eff"},
+            {StructureObject.StructureType.UnsecuredPryableGate, "99068201fb3f67f42aab9c8a7c9b4385"} // TODO: check guid when client releases
         };
 
         public static readonly Dictionary<Scp079CameraType, string> CameraGuids = new()
