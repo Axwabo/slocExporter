@@ -25,6 +25,7 @@ namespace slocExporter.Serialization.Exporting
             new TextIdentifier(),
             new LightIdentifier(),
             new WaypointIdentifier(),
+            new CullingParentIdentifier(),
             new InvisibleInteractableIdentifier(),
             new PrimitiveIdentifier(),
             new ColliderOnlyIdentifier()
