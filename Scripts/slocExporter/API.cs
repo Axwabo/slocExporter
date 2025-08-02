@@ -160,9 +160,7 @@ namespace slocExporter
             if (!PrefabExtensions.TryLoadAsset(CapybaraIdentifier.CapybaraGuid, out var prefab))
                 return null;
             var o = prefab.InstantiatePrefab();
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(capybara.Transform);
-            o.ApplyNameAndTag(capybara);
+            o.ApplyCommonData(capybara, parent);
             if (capybara.Collidable)
                 return o;
             foreach (var collider in o.GetComponentsInChildren<Collider>())
@@ -173,28 +171,22 @@ namespace slocExporter
         private static GameObject CreateCullingParent(GameObject parent, CullingParentObject cullingParent)
         {
             var o = new GameObject();
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(cullingParent.Transform);
-            o.ApplyNameAndTag(cullingParent);
+            o.ApplyCommonData(cullingParent, parent);
             o.AddComponent<CullingParent>().size = cullingParent.BoundsSize;
             return o;
         }
 
         private static GameObject CreateEmpty(GameObject parent, slocGameObject obj)
         {
-            var emptyObject = new GameObject();
-            emptyObject.SetAbsoluteTransformFrom(parent);
-            emptyObject.SetLocalTransform(obj.Transform);
-            emptyObject.ApplyNameAndTag(obj);
-            return emptyObject;
+            var o = new GameObject();
+            o.ApplyCommonData(obj, parent);
+            return o;
         }
 
         private static GameObject CreateInteractable(GameObject parent, InvisibleInteractableObject interactable)
         {
             var o = new GameObject();
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(interactable.Transform);
-            o.ApplyNameAndTag(interactable);
+            o.ApplyCommonData(interactable, parent);
             o.AddComponent(interactable.Shape switch
             {
                 InvisibleInteractableObject.ColliderShape.Capsule => typeof(CapsuleCollider),
@@ -210,8 +202,8 @@ namespace slocExporter
 
         private static GameObject CreateLight(GameObject parent, LightObject light)
         {
-            var toy = new GameObject("Point Light");
-            var lightComponent = toy.AddComponent<Light>();
+            var o = new GameObject("Point Light");
+            var lightComponent = o.AddComponent<Light>();
             lightComponent.color = light.LightColor;
             lightComponent.range = light.Range;
             lightComponent.intensity = light.Intensity;
@@ -220,44 +212,38 @@ namespace slocExporter
             lightComponent.type = light.LightType;
             lightComponent.spotAngle = light.SpotAngle;
             lightComponent.innerSpotAngle = light.InnerSpotAngle;
-            toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(light.Transform);
-            toy.ApplyNameAndTag(light);
-            return toy;
+            o.ApplyCommonData(light, parent);
+            return o;
         }
 
         private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
             if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
                 return null;
-            var gameObject = prefab.InstantiatePrefab();
-            gameObject.SetAbsoluteTransformFrom(parent);
-            gameObject.SetLocalTransform(structure.Transform);
-            gameObject.ApplyNameAndTag(structure);
+            var o = prefab.InstantiatePrefab();
+            o.ApplyCommonData(structure, parent);
             if (structure.RemoveDefaultLoot)
-                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
-            return gameObject;
+                o.AddComponent<StructureOverride>().removeDefaultLoot = true;
+            return o;
         }
 
         private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
         {
-            var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
-            toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(primitive.Transform);
-            toy.ApplyNameAndTag(primitive);
+            var o = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
+            o.ApplyCommonData(primitive, parent);
             var flags = primitive.Flags;
             if (flags is not PrimitiveObject.DefaultFlags)
-                toy.AddComponent<PrimitiveFlagsSetter>().flags = flags;
-            AddTriggerActionComponents(primitive.TriggerActions, toy);
+                o.AddComponent<PrimitiveFlagsSetter>().flags = flags;
+            AddTriggerActionComponents(primitive.TriggerActions, o);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
             {
                 if (handle)
-                    HandleNoMaterial(primitive.MaterialColor, toy);
-                return toy;
+                    HandleNoMaterial(primitive.MaterialColor, o);
+                return o;
             }
 
-            toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
-            return toy;
+            o.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            return o;
         }
 
         private static GameObject CreateCamera(GameObject parent, Scp079CameraObject camera)
@@ -265,9 +251,7 @@ namespace slocExporter
             if (!CameraGuids.TryGetValue(camera.CameraType, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
                 return null;
             var o = prefab.InstantiatePrefab();
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(camera.Transform);
-            o.ApplyNameAndTag(camera);
+            o.ApplyCommonData(camera, parent);
             var properties = o.AddComponent<Scp079CameraProperties>();
             properties.label = camera.Label;
             properties.horizontalMinimum = camera.HorizontalMinimum;
@@ -302,9 +286,7 @@ namespace slocExporter
             }
 
             var o = new GameObject(text.Name);
-            o.ApplyNameAndTag(text);
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(text.Transform);
+            o.ApplyCommonData(text, parent);
             var tmp = o.AddComponent<TextMeshProUGUI>();
             var textTransform = tmp.rectTransform;
             textTransform.SetParent(canvas.transform);
@@ -321,9 +303,7 @@ namespace slocExporter
         private static GameObject CreateWaypoint(GameObject parent, WaypointObject waypoint)
         {
             var o = new GameObject(waypoint.Name);
-            o.ApplyNameAndTag(waypoint);
-            o.SetAbsoluteTransformFrom(parent);
-            o.SetLocalTransform(waypoint.Transform);
+            o.ApplyCommonData(waypoint, parent);
             var properties = o.AddComponent<Waypoint>();
             properties.priority = waypoint.Priority;
             properties.isStatic = waypoint.IsStatic;
