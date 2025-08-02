@@ -79,6 +79,7 @@ namespace slocExporter.Serialization.Exporting
 
         public static string GetDefaultName(this slocGameObject o) => o switch
         {
+            CapybaraObject => "CapybaraToy",
             EmptyObject => "GameObject",
             LightObject light => light.LightType switch
             {
@@ -93,6 +94,8 @@ namespace slocExporter.Serialization.Exporting
                 _ => null
             },
             PrimitiveObject primitive => primitive.Type.ToString(),
+            SpeakerObject => "Audio Source",
+            TextObject => "Text (TMP)",
             _ => null
         };
 
