@@ -8,7 +8,7 @@ namespace slocExporter
 
         private static readonly Vector3 Size = Vector3.one * 256;
 
-        [Tooltip("When two waypoints overlap, the one with higher squared priority will be used.")]
+        [Tooltip("When two waypoints overlap, the one with higher priority will be used.")]
         public float priority;
 
         [Tooltip("Should only be enabled if used for extending the map area.")]

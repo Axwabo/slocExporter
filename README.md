@@ -184,6 +184,20 @@ as an invisible cube primitive with collision flags resolved as described [here]
 > [!CAUTION]
 > Do not change the collider's size or center. Move and scale the object instead.
 
+## Culling Parent
+
+Add the `Culling Parent` to an object to create an area which will be culled on the client.
+Objects are deactivated when the bounding box isn't in the player's view.
+
+The size sets the bounds which must be in the view frustrum for objects to be active.
+The position sets the center of the bounds.
+
+> [!NOTE]
+> Reduce nesting of culling parents as much as possible, try to keep them at root level.
+
+> [!TIP]
+> A red wire cube gizmo indicates the culling bounds.
+
 ## Invisible Interactable
 
 > [!NOTE]
@@ -242,3 +256,21 @@ Setting the type to `None` on a prefab will retain the original object type.
 Right click in the hierarchy, and select `UI` -> `Text - TextMeshPro`
 
 Resize the text to match the display size you need.
+
+## Waypoint
+
+Add the `Waypoint` script to create a [relative positioning](https://youtu.be/XADYO51sUwU) waypoint.
+
+A static waypoint creates a maximum 256x256x256 unit area where relative positioning is calculated.
+Scaling and rotation does not affect detection.
+
+Non-static waypoints **are** affected by scaling and rotation, which can alter the default 256x256x256 detection area.
+When a player goes outside of this area, the waypoint is not considered.
+
+Change the `Priority` to prioritize a waypoint when two or more waypoints overlap.
+The higher the priority, the further a player can be for it to be used over others.
+
+The `Visualize Bounds` property will show the bounds of the waypoint in-game.
+
+> [!TIP]
+> A white wire cube gizmo indicates the waypoint bounds.
