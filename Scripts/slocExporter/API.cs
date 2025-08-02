@@ -96,6 +96,7 @@ namespace slocExporter
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
         {
             CapybaraObject capybara => CreateCapybara(parent, capybara),
+            CullingParentObject cullingParent => CreateCullingParent(parent, cullingParent),
             EmptyObject => CreateEmpty(parent, obj),
             InvisibleInteractableObject interactable => CreateInteractable(parent, interactable),
             LightObject light => CreateLight(parent, light),
@@ -104,6 +105,7 @@ namespace slocExporter
             SpeakerObject speaker => CreateSpeaker(parent, speaker),
             StructureObject structure => CreateStructure(parent, structure),
             TextObject textObject => CreateText(parent, textObject),
+            WaypointObject waypoint => CreateWaypoint(parent, waypoint),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
@@ -165,6 +167,16 @@ namespace slocExporter
                 return o;
             foreach (var collider in o.GetComponentsInChildren<Collider>())
                 collider.enabled = false;
+            return o;
+        }
+
+        private static GameObject CreateCullingParent(GameObject parent, CullingParentObject cullingParent)
+        {
+            var o = new GameObject();
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(cullingParent.Transform);
+            o.ApplyNameAndTag(cullingParent);
+            o.AddComponent<CullingParent>().size = cullingParent.BoundsSize;
             return o;
         }
 
@@ -303,6 +315,19 @@ namespace slocExporter
             tmp.text = text.Format;
             if (text.Arguments is {Length: not 0})
                 o.AddComponent<TextProperties>().arguments = text.Arguments;
+            return o;
+        }
+
+        private static GameObject CreateWaypoint(GameObject parent, WaypointObject waypoint)
+        {
+            var o = new GameObject(waypoint.Name);
+            o.ApplyNameAndTag(waypoint);
+            o.SetAbsoluteTransformFrom(parent);
+            o.SetLocalTransform(waypoint.Transform);
+            var properties = o.AddComponent<Waypoint>();
+            properties.priority = waypoint.Priority;
+            properties.isStatic = waypoint.IsStatic;
+            properties.visualizeBounds = waypoint.VisualizeBounds;
             return o;
         }
 
