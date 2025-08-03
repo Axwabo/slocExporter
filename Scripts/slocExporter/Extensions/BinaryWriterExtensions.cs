@@ -23,8 +23,9 @@ namespace slocExporter.Extensions
                 return;
             }
 
-            writer.Write((ushort) (value.Length + 1));
-            writer.Write(Encoding.UTF8.GetBytes(value));
+            var bytes = Encoding.UTF8.GetBytes(value);
+            writer.Write((ushort) (bytes.Length + 1));
+            writer.Write(bytes);
         }
 
         public static void WriteByteWithBool(this BinaryWriter writer, byte value, bool boolean)
