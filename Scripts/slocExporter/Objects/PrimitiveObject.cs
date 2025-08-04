@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Readers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
@@ -10,6 +11,8 @@ namespace slocExporter.Objects
 
     public sealed class PrimitiveObject : slocGameObject
     {
+
+        public const PrimitiveObjectFlags DefaultFlags = PrimitiveObjectFlags.Visible | PrimitiveObjectFlags.ClientCollider | PrimitiveObjectFlags.ServerCollider;
 
         public PrimitiveObject(ObjectType type) : this(0, type)
         {
@@ -24,10 +27,14 @@ namespace slocExporter.Objects
 
         public Color MaterialColor = Color.gray;
 
+        [Obsolete("Use Flags instead.")]
         public ColliderCreationMode ColliderMode = ColliderCreationMode.Both;
 
         public BaseTriggerActionData[] TriggerActions = Array.Empty<BaseTriggerActionData>();
 
+        public PrimitiveObjectFlags Flags = DefaultFlags;
+
+        [Obsolete("Use Flags instead.")]
         public ColliderCreationMode GetNonUnsetColliderMode() => ColliderMode is ColliderCreationMode.Unset ? ColliderCreationMode.Both : ColliderMode;
 
         protected override void WriteData(BinaryWriter writer, slocHeader header)
@@ -37,11 +44,12 @@ namespace slocExporter.Objects
             else
                 writer.WriteColor(MaterialColor);
 
-            writer.Write((byte) ColliderMode);
-            if (ColliderMode.IsTrigger() || header.HasAttribute(slocAttributes.ExportAllTriggerActions))
+            writer.Write((byte) Flags);
+            if (Flags.IsTrigger() || header.HasAttribute(slocAttributes.ExportAllTriggerActions))
                 ActionManager.WriteActions(writer, TriggerActions);
         }
 
+        [Obsolete("Use PrimitiveObjectFlags instead.")]
         public enum ColliderCreationMode : byte
         {
 

@@ -1,10 +1,12 @@
-﻿using slocExporter.Objects;
+﻿using System;
+using slocExporter.Objects;
 using UnityEngine;
 
 namespace slocExporter
 {
 
     [DisallowMultipleComponent]
+    [Obsolete("Use " + nameof(PrimitiveFlagsSetter) + " instead.")]
     public sealed class ColliderModeSetter : MonoBehaviour
     {
 

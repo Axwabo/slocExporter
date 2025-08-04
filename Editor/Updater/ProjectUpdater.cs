@@ -320,7 +320,7 @@ namespace Editor.Updater
                 return;
             }
 
-            _files = r.files;
+            _files = r.files.Where(e => !e.filename.EndsWith(".md") || e.filename.Contains("README")).ToArray();
         }
 
         private static bool TryAskForUpdate(out string latest, bool silent, bool preRelease = false)

@@ -9,8 +9,13 @@ namespace slocExporter
 
         None = 0,
         LossyColors = 1,
-        DefaultColliderMode = 2,
-        ExportAllTriggerActions = 4
+
+        [Obsolete("Use DefaultFlags instead.")]
+        DefaultColliderMode = DefaultFlags,
+
+        DefaultFlags = 2,
+        ExportAllTriggerActions = 4,
+        NamesAndTags = 8
 
     }
 

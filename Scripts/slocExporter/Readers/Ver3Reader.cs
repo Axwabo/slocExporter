@@ -1,6 +1,10 @@
 ﻿using System.IO;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using UnityEngine;
+
+#pragma warning disable CS0612
+#pragma warning disable CS0618
 
 namespace slocExporter.Readers
 {
@@ -57,7 +61,11 @@ namespace slocExporter.Readers
                 ParentId = parentId,
                 Transform = slocTransform,
                 MaterialColor = color,
-                ColliderMode = creationMode
+                Flags = ColliderModeCompatibility.GetPrimitiveFlags(
+                    creationMode == PrimitiveObject.ColliderCreationMode.Unset
+                        ? PrimitiveObject.ColliderCreationMode.Both
+                        : creationMode
+                )
             };
         }
 
@@ -75,7 +83,7 @@ namespace slocExporter.Readers
                 ParentId = parentId,
                 Transform = transform,
                 LightColor = lightColor,
-                Shadows = shadows,
+                ShadowType = shadows ? LightShadows.Soft : LightShadows.None,
                 Range = range,
                 Intensity = intensity,
             };

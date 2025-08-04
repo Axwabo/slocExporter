@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using slocExporter.Extensions;
 using slocExporter.Objects;
 using slocExporter.Readers;
+using slocExporter.Serialization.Exporting.Identifiers;
 using slocExporter.TriggerActions;
 using slocExporter.TriggerActions.Data;
 using slocExporter.TriggerActions.Enums;
-using UnityEditor;
+using TMPro;
 using UnityEngine;
 using static slocExporter.MaterialHandler;
 
@@ -20,13 +22,13 @@ namespace slocExporter
 
         public const float ColorDivisionMultiplier = 1f / 255f;
 
-        public const ushort slocVersion = 5;
+        public const ushort slocVersion = 6;
 
-        public static string CurrentVersion = "5.1.1";
+        public static string CurrentVersion = "6.0.3";
 
         #region Reader Declarations
 
-        public static readonly IObjectReader DefaultReader = new Ver5Reader();
+        public static readonly IObjectReader DefaultReader = new Ver6Reader();
 
         private static readonly Dictionary<ushort, IObjectReader> VersionReaders = new()
         {
@@ -34,7 +36,8 @@ namespace slocExporter
             {2, new Ver2Reader()},
             {3, new Ver3Reader()},
             {4, new Ver4Reader()},
-            {5, new Ver5Reader()}
+            {5, new Ver5Reader()},
+            {6, DefaultReader}
         };
 
         public static bool TryGetReader(ushort version, out IObjectReader reader) => VersionReaders.TryGetValue(version, out reader);
@@ -92,13 +95,21 @@ namespace slocExporter
 
         public static GameObject CreateObject(this slocGameObject obj, GameObject parent = null, bool throwOnError = true) => obj switch
         {
-            StructureObject structure => CreateStructure(parent, structure),
-            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            CapybaraObject capybara => CreateCapybara(parent, capybara),
+            CullingParentObject cullingParent => CreateCullingParent(parent, cullingParent),
+            EmptyObject => CreateEmpty(parent, obj),
+            InvisibleInteractableObject interactable => CreateInteractable(parent, interactable),
             LightObject light => CreateLight(parent, light),
-            EmptyObject => CreateEmpty(obj, parent),
+            PrimitiveObject primitive => CreatePrimitive(parent, primitive),
+            Scp079CameraObject camera => CreateCamera(parent, camera),
+            SpeakerObject speaker => CreateSpeaker(parent, speaker),
+            StructureObject structure => CreateStructure(parent, structure),
+            TextObject textObject => CreateText(parent, textObject),
+            WaypointObject waypoint => CreateWaypoint(parent, waypoint),
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
+        [Obsolete("Prefab GUIDs are unreliable", error: true)]
         public static readonly Dictionary<StructureObject.StructureType, string> StructureGuids = new()
         {
             {StructureObject.StructureType.Adrenaline, "c9027d87e276243499d0855914516728"},
@@ -121,42 +132,231 @@ namespace slocExporter
             {StructureObject.StructureType.Scp1853Pedestal, "8e1c86dc26ed42e4eb519aedd0e9fcd1"},
             {StructureObject.StructureType.Scp2176Pedestal, "6ad060242329d2d46ab64c47fd417146"},
             {StructureObject.StructureType.SportTarget, "b39d8037aa87d5348af5c3ad54251890"},
-            {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"}
+            {StructureObject.StructureType.Workstation, "67777259bd9055040bc1be50789f9624"},
+            {StructureObject.StructureType.HczBulkDoor, "ab9c18f65e576d348919305d12d586fe"},
+            {StructureObject.StructureType.SimpleBoxesOpenConnector, "8a05a18949b73fe48a47078964793259"},
+            {StructureObject.StructureType.PipesShortOpenConnector, "c5888d47e309c0d4a84b54bbd414a84c"},
+            {StructureObject.StructureType.BoxesLadderOpenConnector, "260aee9bc75150d4c9668d08761f0b9b"},
+            {StructureObject.StructureType.TankSupportedShelfOpenConnector, "a776426ba68c1954286b03da727c29a3"},
+            {StructureObject.StructureType.AngledFencesOpenConnector, "9306ff7f65cd7bb4fab67396e81bce18"},
+            {StructureObject.StructureType.HugeOrangePipesOpenConnector, "6da45c4a867e7ad4783ebc372f11a38a"},
+            {StructureObject.StructureType.PipesLongOpenConnector, "2c0d9f60fb6b3004c971278c4009ed69"},
+            {StructureObject.StructureType.AntiScp207Pedestal, "24eb8239c0bd44a4fa6f6b55c3cd4ee9"},
+            {StructureObject.StructureType.Scp1344Pedestal, "0ee79ed5668cc2d488181dd52d7c27dc"},
+            {StructureObject.StructureType.ExperimentalWeaponLocker, "b3d9c13de72fb7943b01b9c1733b1eff"},
+            {StructureObject.StructureType.UnsecuredPryableGate, "99068201fb3f67f42aab9c8a7c9b4385"}
         };
+
+        [Obsolete("Prefab GUIDs are unreliable", error: true)]
+        public static readonly Dictionary<Scp079CameraType, string> CameraGuids = new()
+        {
+            {Scp079CameraType.EntranceZoneArm, "a31748482d734bf4d8d1f5072350cc1e"},
+            {Scp079CameraType.EntranceZone, "a84330ac72c094545a485544b2e6af7a"},
+            {Scp079CameraType.HeavyContainmentZone, "3286e25ccfcf04b4999f6fd1c6c1e676"},
+            {Scp079CameraType.LightContainmentZone, "08ab6e9d3ebaeaa42b277c53875bc8fc"},
+            {Scp079CameraType.SurfaceZone, "7b630b3a7d13ee047a84205b3c099c3c"}
+        };
+
+        public static readonly Dictionary<StructureObject.StructureType, string> StructurePrefabNames = new()
+        {
+            {StructureObject.StructureType.Adrenaline, "AdrenalineMedkitStructure"},
+            {StructureObject.StructureType.BinaryTarget, "binaryTargetPrefab"},
+            {StructureObject.StructureType.DboyTarget, "dboyTargetPrefab"},
+            {StructureObject.StructureType.EzBreakableDoor, "EZ BreakableDoor"},
+            {StructureObject.StructureType.Generator, "GeneratorStructure"},
+            {StructureObject.StructureType.HczBreakableDoor, "HCZ BreakableDoor"},
+            {StructureObject.StructureType.LargeGunLocker, "LargeGunLocker"},
+            {StructureObject.StructureType.LczBreakableDoor, "LCZ BreakableDoor"},
+            {StructureObject.StructureType.Medkit, "RegularMedkitStructure"},
+            {StructureObject.StructureType.MiscellaneousLocker, "MiscLocker"},
+            {StructureObject.StructureType.RifleRack, "RifleRackStructure"},
+            {StructureObject.StructureType.Scp018Pedestal, "Scp018PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp207Pedestal, "Scp207PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp244Pedestal, "Scp244PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp268Pedestal, "Scp268PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp500Pedestal, "Scp500PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1576Pedestal, "Scp1576PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1853Pedestal, "Scp1853PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp2176Pedestal, "Scp2176PedestalStructure Variant"},
+            {StructureObject.StructureType.SportTarget, "sportTargetPrefab"},
+            {StructureObject.StructureType.Workstation, "Spawnable Work Station Structure"},
+            {StructureObject.StructureType.HczBulkDoor, "HCZ BulkDoor"},
+            {StructureObject.StructureType.SimpleBoxesOpenConnector, "Simple Boxes Open Connector"},
+            {StructureObject.StructureType.PipesShortOpenConnector, "Pipes Short Open Connector"},
+            {StructureObject.StructureType.BoxesLadderOpenConnector, "Boxes Ladder Open Connector"},
+            {StructureObject.StructureType.TankSupportedShelfOpenConnector, "Tank-Supported Shelf Open Connector"},
+            {StructureObject.StructureType.AngledFencesOpenConnector, "Angled Fences Open Connector"},
+            {StructureObject.StructureType.HugeOrangePipesOpenConnector, "Huge Orange Pipes Open Connector"},
+            {StructureObject.StructureType.PipesLongOpenConnector, "Pipes Long Open Connector"},
+            {StructureObject.StructureType.AntiScp207Pedestal, "AntiScp207PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1344Pedestal, "Scp1344PedestalStructure Variant"},
+            {StructureObject.StructureType.ExperimentalWeaponLocker, "Experimental Weapon Locker"},
+            {StructureObject.StructureType.UnsecuredPryableGate, "Spawnable Unsecured Pryable GateDoor"}
+        };
+
+        public static readonly Dictionary<Scp079CameraType, string> CameraPrefabNames = new()
+        {
+            {Scp079CameraType.EntranceZoneArm, "EzArmCameraToy"},
+            {Scp079CameraType.EntranceZone, "EzCameraToy"},
+            {Scp079CameraType.HeavyContainmentZone, "HczCameraToy"},
+            {Scp079CameraType.LightContainmentZone, "LczCameraToy"},
+            {Scp079CameraType.SurfaceZone, "SzCameraToy"}
+        };
+
+        private static GameObject CreateCapybara(GameObject parent, CapybaraObject capybara)
+        {
+            if (!PrefabExtensions.TryLoadPrefabByName(CapybaraIdentifier.CapybaraPrefabName, out var prefab))
+                return null;
+            var o = prefab.InstantiatePrefab();
+            o.ApplyCommonData(capybara, parent);
+            if (capybara.Collidable)
+                return o;
+            foreach (var collider in o.GetComponentsInChildren<Collider>())
+                collider.enabled = false;
+            return o;
+        }
+
+        private static GameObject CreateCullingParent(GameObject parent, CullingParentObject cullingParent)
+        {
+            var o = new GameObject();
+            o.ApplyCommonData(cullingParent, parent);
+            o.AddComponent<CullingParent>().size = cullingParent.BoundsSize;
+            return o;
+        }
+
+        private static GameObject CreateEmpty(GameObject parent, slocGameObject obj)
+        {
+            var o = new GameObject();
+            o.ApplyCommonData(obj, parent);
+            return o;
+        }
+
+        private static GameObject CreateInteractable(GameObject parent, InvisibleInteractableObject interactable)
+        {
+            var o = new GameObject();
+            o.ApplyCommonData(interactable, parent);
+            o.AddComponent(interactable.Shape switch
+            {
+                InvisibleInteractableObject.ColliderShape.Capsule => typeof(CapsuleCollider),
+                InvisibleInteractableObject.ColliderShape.Sphere => typeof(SphereCollider),
+                _ => typeof(BoxCollider)
+            });
+            var properties = o.AddComponent<InvisibleInteractableProperties>();
+            properties.shape = interactable.Shape;
+            properties.locked = interactable.Locked;
+            properties.interactionDuration = interactable.InteractionDuration;
+            return o;
+        }
+
+        private static GameObject CreateLight(GameObject parent, LightObject light)
+        {
+            var o = new GameObject("Point Light");
+            var lightComponent = o.AddComponent<Light>();
+            lightComponent.color = light.LightColor;
+            lightComponent.range = light.Range;
+            lightComponent.intensity = light.Intensity;
+            lightComponent.shadows = light.ShadowType;
+            lightComponent.shadowStrength = light.ShadowStrength;
+            lightComponent.type = light.LightType;
+            lightComponent.spotAngle = light.SpotAngle;
+            lightComponent.innerSpotAngle = light.InnerSpotAngle;
+            o.ApplyCommonData(light, parent);
+            return o;
+        }
 
         private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
-            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !GUID.TryParse(guidString, out var guid))
+            if (!StructurePrefabNames.TryGetValue(structure.Structure, out var name) || !PrefabExtensions.TryLoadPrefabByName(name, out var prefab))
                 return null;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
-            if (prefab == null)
-                return null;
-            var gameObject = (GameObject) PrefabUtility.InstantiatePrefab(prefab);
-            gameObject.SetAbsoluteTransformFrom(parent);
-            gameObject.SetLocalTransform(structure.Transform);
+            var o = prefab.InstantiatePrefab();
+            o.ApplyCommonData(structure, parent);
             if (structure.RemoveDefaultLoot)
-                gameObject.AddComponent<StructureOverride>().removeDefaultLoot = true;
-            return gameObject;
+                o.AddComponent<StructureOverride>().removeDefaultLoot = true;
+            return o;
         }
 
         private static GameObject CreatePrimitive(GameObject parent, PrimitiveObject primitive)
         {
-            var toy = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
-            toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(primitive.Transform);
-            var colliderMode = primitive.ColliderMode;
-            if (colliderMode is not PrimitiveObject.ColliderCreationMode.Unset)
-                toy.AddComponent<ColliderModeSetter>().mode = colliderMode;
-            AddTriggerActionComponents(primitive.TriggerActions, toy);
+            var o = GameObject.CreatePrimitive(primitive.Type.ToPrimitiveType());
+            o.ApplyCommonData(primitive, parent);
+            var flags = primitive.Flags;
+            if (flags is not PrimitiveObject.DefaultFlags)
+                o.AddComponent<PrimitiveFlagsSetter>().flags = flags;
+            AddTriggerActionComponents(primitive.TriggerActions, o);
             if (!TryGetMaterial(primitive.MaterialColor, out var mat, out var handle))
             {
                 if (handle)
-                    HandleNoMaterial(primitive.MaterialColor, toy);
-                return toy;
+                    HandleNoMaterial(primitive.MaterialColor, o);
+                return o;
             }
 
-            toy.GetComponent<MeshRenderer>().sharedMaterial = mat;
-            return toy;
+            o.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            return o;
+        }
+
+        private static GameObject CreateCamera(GameObject parent, Scp079CameraObject camera)
+        {
+            if (!CameraPrefabNames.TryGetValue(camera.CameraType, out var name) || !PrefabExtensions.TryLoadPrefabByName(name, out var prefab))
+                return null;
+            var o = prefab.InstantiatePrefab();
+            o.ApplyCommonData(camera, parent);
+            var properties = o.AddComponent<Scp079CameraProperties>();
+            properties.label = camera.Label;
+            properties.horizontalMinimum = camera.HorizontalMinimum;
+            properties.horizontalMaximum = camera.HorizontalMaximum;
+            properties.verticalMinimum = camera.VerticalMinimum;
+            properties.verticalMaximum = camera.VerticalMaximum;
+            properties.zoomMinimum = camera.ZoomMinimum;
+            properties.zoomMaximum = camera.ZoomMaximum;
+            return o;
+        }
+
+        private static GameObject CreateSpeaker(GameObject parent, SpeakerObject speaker)
+        {
+            var o = CreateEmpty(parent, speaker);
+            var audio = o.AddComponent<AudioSource>();
+            audio.priority = speaker.ControllerId;
+            audio.volume = speaker.Volume;
+            audio.spatialBlend = speaker.Spatial ? 1 : 0;
+            audio.minDistance = speaker.MinDistance;
+            audio.maxDistance = speaker.MaxDistance;
+            return o;
+        }
+
+        private static GameObject CreateText(GameObject parent, TextObject text)
+        {
+            var canvas = parent.GetComponentInParent<Canvas>();
+            if (!canvas)
+            {
+                canvas = parent.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                canvas.GetComponent<RectTransform>().sizeDelta = text.DisplaySize;
+            }
+
+            var o = new GameObject(text.Name);
+            o.ApplyCommonData(text, parent);
+            var tmp = o.AddComponent<TextMeshProUGUI>();
+            var textTransform = tmp.rectTransform;
+            textTransform.SetParent(canvas.transform);
+            textTransform.sizeDelta = text.DisplaySize;
+            tmp.fontSize = 1;
+            tmp.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            tmp.verticalAlignment = VerticalAlignmentOptions.Middle;
+            tmp.text = text.Format;
+            if (text.Arguments is {Length: not 0})
+                o.AddComponent<TextProperties>().arguments = text.Arguments;
+            return o;
+        }
+
+        private static GameObject CreateWaypoint(GameObject parent, WaypointObject waypoint)
+        {
+            var o = new GameObject(waypoint.Name);
+            o.ApplyCommonData(waypoint, parent);
+            var properties = o.AddComponent<Waypoint>();
+            properties.priority = waypoint.Priority;
+            properties.isStatic = waypoint.IsStatic;
+            properties.visualizeBounds = waypoint.VisualizeBounds;
+            return o;
         }
 
         private static void AddTriggerActionComponents(BaseTriggerActionData[] actions, GameObject gameObject)
@@ -166,27 +366,6 @@ namespace slocExporter
                     TpToSpawnedCache.GetOrAdd(gameObject, () => new List<SerializableTeleportToSpawnedObjectData>()).Add(tp);
                 else
                     gameObject.AddComponent<TriggerAction>().SetData(data);
-        }
-
-        private static GameObject CreateLight(GameObject parent, LightObject light)
-        {
-            var toy = new GameObject("Point Light");
-            var lightComponent = toy.AddComponent<Light>();
-            lightComponent.color = light.LightColor;
-            lightComponent.intensity = light.Intensity;
-            lightComponent.range = light.Range;
-            lightComponent.shadows = light.Shadows ? LightShadows.Soft : LightShadows.None;
-            toy.SetAbsoluteTransformFrom(parent);
-            toy.SetLocalTransform(light.Transform);
-            return toy;
-        }
-
-        private static GameObject CreateEmpty(slocGameObject obj, GameObject parent)
-        {
-            var emptyObject = new GameObject("Empty");
-            emptyObject.SetAbsoluteTransformFrom(parent);
-            emptyObject.SetLocalTransform(obj.Transform);
-            return emptyObject;
         }
 
         public static GameObject CreateObjects(IEnumerable<slocGameObject> objects, Vector3 position, Quaternion rotation = default, ProgressUpdater updateProgress = null) => CreateObjects(objects, out _, position, rotation, updateProgress);
@@ -201,14 +380,8 @@ namespace slocExporter
             TpToSpawnedCache.Clear();
             try
             {
-                var go = new GameObject
-                {
-                    transform =
-                    {
-                        position = position,
-                        rotation = rotation
-                    }
-                };
+                var go = new GameObject();
+                go.transform.SetPositionAndRotation(position, rotation);
                 var created = 0;
                 var total = objects is ICollection<slocGameObject> l ? l.Count : -1;
                 var processed = 0;
@@ -224,6 +397,8 @@ namespace slocExporter
                         CreatedInstances[o.InstanceId] = gameObject;
                         created++;
                     }
+                    else
+                        Debug.LogWarning($"Failed creating object {o}");
 
                     processed++;
                     updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);
@@ -336,9 +511,11 @@ namespace slocExporter
 
         #region Bit Math
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static PrimitiveObject.ColliderCreationMode CombineSafe(PrimitiveObject.ColliderCreationMode a, PrimitiveObject.ColliderCreationMode b) =>
             (PrimitiveObject.ColliderCreationMode) CombineSafe((byte) a, (byte) b);
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static void SplitSafe(PrimitiveObject.ColliderCreationMode combined, out PrimitiveObject.ColliderCreationMode a, out PrimitiveObject.ColliderCreationMode b)
         {
             SplitSafe((byte) combined, out var x, out var y);
@@ -378,16 +555,15 @@ namespace slocExporter
             if (o == null)
                 return;
             var t = o.transform;
-            t.localPosition = transform.Position;
+            t.SetLocalPositionAndRotation(transform.Position, transform.Rotation);
             t.localScale = transform.Scale;
-            t.localRotation = transform.Rotation;
         }
 
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         public static string ToFullAppDataPath(this string path) => path.Replace("%appdata%", AppData);
 
-        public static string ToShortAppDataPath(this string path) => path.Replace('/', '\\').Replace(AppData, "%appdata%");
+        public static string ToShortAppDataPath(this string path) => path.Replace(AppData, "%appdata%");
 
         public static IEnumerable<GameObject> WithAllChildren(this GameObject o) => o.GetComponentsInChildren<Transform>().Select(e => e.gameObject);
 
@@ -397,6 +573,7 @@ namespace slocExporter
 
         public static int ToLossyColor(this Color color) => color.r.ToRgbRange() << 24 | color.g.ToRgbRange() << 16 | color.b.ToRgbRange() << 8 | color.a.ToRgbRange();
 
+        [Obsolete("Collider modes have been replaced by primitive flags.")]
         public static bool IsTrigger(this PrimitiveObject.ColliderCreationMode colliderMode) => colliderMode is PrimitiveObject.ColliderCreationMode.Trigger or PrimitiveObject.ColliderCreationMode.NonSpawnedTrigger;
 
         public static bool HasAttribute(this slocHeader header, slocAttributes attribute) => (header.Attributes & attribute) == attribute;

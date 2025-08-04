@@ -1,4 +1,5 @@
-﻿using slocExporter.Objects;
+﻿using slocExporter.Extensions;
+using slocExporter.Objects;
 using slocExporter.TriggerActions;
 using UnityEditor;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace Editor.sloc.TriggerActions.Renderers
         private static bool IsValidObject(GameObject o)
             => o != null &&
                (o.TryGetComponent(out Light _) ||
-                o.TryGetComponent(out MeshFilter mesh) && ObjectExporter.FindObjectType(mesh.sharedMesh.name) != ObjectType.None);
+                o.TryGetComponent(out MeshFilter mesh) && Identify.PrimitiveObjectType(mesh.sharedMesh.name) != ObjectType.None);
 
     }
 

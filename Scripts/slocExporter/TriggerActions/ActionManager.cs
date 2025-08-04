@@ -18,7 +18,8 @@ namespace slocExporter.TriggerActions
         private static readonly Dictionary<ushort, ITriggerActionDataReader> Readers = new()
         {
             {4, new Ver4ActionDataReader()},
-            {5, DefaultReader}
+            {5, DefaultReader},
+            {6, DefaultReader}
         };
 
         public static readonly ICollection<TargetType> TargetTypeValues = new List<TargetType>

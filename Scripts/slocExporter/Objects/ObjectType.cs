@@ -13,7 +13,14 @@
         Plane = 6,
         Quad = 7,
         Empty = 8,
-        Structure = 9
+        Structure = 9,
+        Capybara = 10,
+        InvisibleInteractable = 11,
+        Scp079Camera = 12,
+        Speaker = 13,
+        Text = 14,
+        Waypoint = 15,
+        CullingParent = 16
 
     }
 

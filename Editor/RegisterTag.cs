@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using slocExporter.Extensions;
+using UnityEditor;
 
 namespace Editor
 {
@@ -7,7 +8,7 @@ namespace Editor
     public sealed class RegisterTag
     {
 
-        static RegisterTag() => AddTag(ObjectExporter.ExporterIgnoredTag);
+        static RegisterTag() => AddTag(Identify.ExporterIgnoredTag);
 
         private static void AddTag(string tagName)
         {

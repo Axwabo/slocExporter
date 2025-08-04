@@ -1,0 +1,139 @@
+﻿using System;
+using System.Collections.Generic;
+using slocExporter.Extensions;
+using slocExporter.Objects;
+using slocExporter.Serialization.Exporting.Exportables;
+using slocExporter.Serialization.Exporting.Identifiers;
+using slocExporter.Serialization.Exporting.Processors;
+using slocExporter.TriggerActions;
+using UnityEngine;
+
+namespace slocExporter.Serialization.Exporting
+{
+
+    public static class ExportExtensions
+    {
+
+        private static readonly IObjectIdentifier<IExportable<slocGameObject>>[] Identifiers =
+        {
+            new OverriddenStructureIdentifier(),
+            PrefabStructureIdentifier.Instance,
+            new SpeakerIdentifier(),
+            new CameraIdentifier(),
+            new CapybaraIdentifier(),
+            new TextMeshProIdentifier(),
+            new TextIdentifier(),
+            new LightIdentifier(),
+            new WaypointIdentifier(),
+            new CullingParentIdentifier(),
+            new InvisibleInteractableIdentifier(),
+            new PrimitiveIdentifier(),
+            new ColliderOnlyIdentifier()
+        };
+
+        public static IExportable<slocGameObject> ToExportable(this GameObject o)
+        {
+            foreach (var identifier in Identifiers)
+            {
+                var exportable = identifier.Process(o);
+                if (exportable != null)
+                    return exportable;
+            }
+
+            return EmptyExportable.Instance;
+        }
+
+        public static bool TryProcess(this IExportable<slocGameObject> exportable, Component component) => (exportable, component) switch
+        {
+            (PrimitiveExportable primitive, Collider collider) => primitive.Process(collider, ColliderProcessor.Process),
+            (PrimitiveExportable primitive, MeshRenderer renderer) => primitive.Process(renderer, MeshRendererProcessor.Process),
+            (PrimitiveExportable primitive, PrimitiveFlagsSetter setter) => primitive.Process(setter, PrimitiveFlagsSetterProcessor.Process),
+            (PrimitiveExportable primitive, TriggerAction action) => primitive.Process(action, TriggerActionProcessor.Process),
+            (TextExportable text, RectTransform transform) => text.Process(transform, TextProcessor.ProcessTransform),
+            (TextExportable text, TextProperties properties) => text.Process(properties, TextProcessor.ProcessProperties),
+            _ => false
+        };
+
+        private static bool Process<TExportable, TComponent>(this TExportable exportable, TComponent component, Action<TExportable, TComponent> process)
+            where TExportable : IExportable<slocGameObject>
+            where TComponent : Component
+        {
+            process(exportable, component);
+            return true;
+        }
+
+        public static void ApplyTransformFrom(this slocGameObject exported, GameObject o)
+        {
+            var t = o.transform;
+            exported.Transform = t;
+            var parent = t.parent;
+            if (parent)
+                exported.ParentId = parent.gameObject.GetInstanceID();
+        }
+
+        public static void ApplyNameAndTagFrom(this slocGameObject exported, GameObject o)
+        {
+            var name = o.name;
+            exported.Name = name == exported.GetDefaultName() ? null : name;
+            exported.Tag = o.CompareTag("Untagged") ? null : o.tag;
+        }
+
+        public static string GetDefaultName(this slocGameObject o) => o switch
+        {
+            CapybaraObject => "CapybaraToy",
+            EmptyObject => "GameObject",
+            LightObject light => light.LightType switch
+            {
+                LightType.Spot => "Spot Light",
+                LightType.Directional => "Directional Light",
+                LightType.Point => "Point Light",
+                LightType.Rectangle => "Rectangle Light",
+                LightType.Disc => "Disc Light",
+                LightType.Pyramid => "Pyramid Light",
+                LightType.Box => "Box Light",
+                LightType.Tube => "Tube Light",
+                _ => null
+            },
+            PrimitiveObject primitive => primitive.Type.ToString(),
+            SpeakerObject => "Audio Source",
+            TextObject => "Text (TMP)",
+            _ => null
+        };
+
+        public static List<slocGameObject> ProcessAndExportObjects(this Dictionary<GameObject, IExportable<slocGameObject>> exportables, ExportContext context, ProgressUpdater progress)
+        {
+            var slocObjects = new List<slocGameObject>();
+            var i = 0;
+            var exportablesCount = exportables.Count;
+            foreach (var (o, exportable) in exportables)
+            {
+                progress.Count(++i, exportablesCount, "Processing objects {2:P2} ({0} of {1})");
+                ProcessComponents(o, exportable, context.Debug);
+                if (exportable.Export(o.GetInstanceID(), context) is not {IsValid: true} exported)
+                {
+                    if (context.Debug)
+                        Debug.Log("Exported object was not valid", o);
+                    continue;
+                }
+
+                if (context.Debug)
+                    Debug.Log($"Exported object as {exported}", o);
+                exported.ApplyTransformFrom(o);
+                exported.ApplyNameAndTagFrom(o);
+                slocObjects.Add(exported);
+            }
+
+            return slocObjects;
+        }
+
+        private static void ProcessComponents(GameObject o, IExportable<slocGameObject> exportable, bool debug)
+        {
+            foreach (var component in o.GetComponents<Component>())
+                if (component is RectTransform or not (Transform or ExporterIgnored))
+                    if (exportable.TryProcess(component) && debug)
+                        Debug.Log($"Processed component {component}", component);
+        }
+
+    }
+
+}

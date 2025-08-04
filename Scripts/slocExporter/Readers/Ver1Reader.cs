@@ -1,5 +1,8 @@
 ﻿using System.IO;
 using slocExporter.Objects;
+using UnityEngine;
+
+#pragma warning disable CS0612
 
 namespace slocExporter.Readers
 {
@@ -47,7 +50,7 @@ namespace slocExporter.Readers
             {
                 Transform = transform,
                 LightColor = lightColor,
-                Shadows = shadows,
+                ShadowType = shadows ? LightShadows.Soft : LightShadows.None,
                 Range = range,
                 Intensity = intensity,
             };
