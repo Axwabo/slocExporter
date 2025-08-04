@@ -11,7 +11,7 @@ namespace slocExporter.Serialization.Exporting.Identifiers
         public static readonly PrefabStructureIdentifier Instance = new();
 
         public StructureExportable Process(GameObject o)
-            => o.TryGetPrefabGuid(out var guid) && Identify.StructureGuids.TryGetValue(guid.ToString(), out var type)
+            => o.TryGetPrefabName(out var name) && Identify.StructurePrefabNames.TryGetValue(name, out var type)
                 ? new StructureExportable {StructureType = type}
                 : null;
 

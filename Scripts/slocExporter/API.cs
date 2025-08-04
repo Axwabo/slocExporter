@@ -24,7 +24,7 @@ namespace slocExporter
 
         public const ushort slocVersion = 6;
 
-        public static string CurrentVersion = "6.0.2";
+        public static string CurrentVersion = "6.0.3";
 
         #region Reader Declarations
 
@@ -109,6 +109,7 @@ namespace slocExporter
             _ => throwOnError ? throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type, "Unknown object type") : null
         };
 
+        [Obsolete("Prefab GUIDs are unreliable", error: true)]
         public static readonly Dictionary<StructureObject.StructureType, string> StructureGuids = new()
         {
             {StructureObject.StructureType.Adrenaline, "c9027d87e276243499d0855914516728"},
@@ -143,9 +144,10 @@ namespace slocExporter
             {StructureObject.StructureType.AntiScp207Pedestal, "24eb8239c0bd44a4fa6f6b55c3cd4ee9"},
             {StructureObject.StructureType.Scp1344Pedestal, "0ee79ed5668cc2d488181dd52d7c27dc"},
             {StructureObject.StructureType.ExperimentalWeaponLocker, "b3d9c13de72fb7943b01b9c1733b1eff"},
-            {StructureObject.StructureType.UnsecuredPryableGate, "99068201fb3f67f42aab9c8a7c9b4385"} // TODO: check guid when client releases
+            {StructureObject.StructureType.UnsecuredPryableGate, "99068201fb3f67f42aab9c8a7c9b4385"}
         };
 
+        [Obsolete("Prefab GUIDs are unreliable", error: true)]
         public static readonly Dictionary<Scp079CameraType, string> CameraGuids = new()
         {
             {Scp079CameraType.EntranceZoneArm, "a31748482d734bf4d8d1f5072350cc1e"},
@@ -155,9 +157,55 @@ namespace slocExporter
             {Scp079CameraType.SurfaceZone, "7b630b3a7d13ee047a84205b3c099c3c"}
         };
 
+        public static readonly Dictionary<StructureObject.StructureType, string> StructurePrefabNames = new()
+        {
+            {StructureObject.StructureType.Adrenaline, "AdrenalineMedkitStructure"},
+            {StructureObject.StructureType.BinaryTarget, "binaryTargetPrefab"},
+            {StructureObject.StructureType.DboyTarget, "dboyTargetPrefab"},
+            {StructureObject.StructureType.EzBreakableDoor, "EZ BreakableDoor"},
+            {StructureObject.StructureType.Generator, "GeneratorStructure"},
+            {StructureObject.StructureType.HczBreakableDoor, "HCZ BreakableDoor"},
+            {StructureObject.StructureType.LargeGunLocker, "LargeGunLocker"},
+            {StructureObject.StructureType.LczBreakableDoor, "LCZ BreakableDoor"},
+            {StructureObject.StructureType.Medkit, "RegularMedkitStructure"},
+            {StructureObject.StructureType.MiscellaneousLocker, "MiscLocker"},
+            {StructureObject.StructureType.RifleRack, "RifleRackStructure"},
+            {StructureObject.StructureType.Scp018Pedestal, "Scp018PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp207Pedestal, "Scp207PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp244Pedestal, "Scp244PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp268Pedestal, "Scp268PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp500Pedestal, "Scp500PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1576Pedestal, "Scp1576PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1853Pedestal, "Scp1853PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp2176Pedestal, "Scp2176PedestalStructure Variant"},
+            {StructureObject.StructureType.SportTarget, "sportTargetPrefab"},
+            {StructureObject.StructureType.Workstation, "Spawnable Work Station Structure"},
+            {StructureObject.StructureType.HczBulkDoor, "HCZ BulkDoor"},
+            {StructureObject.StructureType.SimpleBoxesOpenConnector, "Simple Boxes Open Connector"},
+            {StructureObject.StructureType.PipesShortOpenConnector, "Pipes Short Open Connector"},
+            {StructureObject.StructureType.BoxesLadderOpenConnector, "Boxes Ladder Open Connector"},
+            {StructureObject.StructureType.TankSupportedShelfOpenConnector, "Tank-Supported Shelf Open Connector"},
+            {StructureObject.StructureType.AngledFencesOpenConnector, "Angled Fences Open Connector"},
+            {StructureObject.StructureType.HugeOrangePipesOpenConnector, "Huge Orange Pipes Open Connector"},
+            {StructureObject.StructureType.PipesLongOpenConnector, "Pipes Long Open Connector"},
+            {StructureObject.StructureType.AntiScp207Pedestal, "AntiScp207PedestalStructure Variant"},
+            {StructureObject.StructureType.Scp1344Pedestal, "Scp1344PedestalStructure Variant"},
+            {StructureObject.StructureType.ExperimentalWeaponLocker, "Experimental Weapon Locker"},
+            {StructureObject.StructureType.UnsecuredPryableGate, "Spawnable Unsecured Pryable GateDoor"}
+        };
+
+        public static readonly Dictionary<Scp079CameraType, string> CameraPrefabNames = new()
+        {
+            {Scp079CameraType.EntranceZoneArm, "EzArmCameraToy"},
+            {Scp079CameraType.EntranceZone, "EzCameraToy"},
+            {Scp079CameraType.HeavyContainmentZone, "HczCameraToy"},
+            {Scp079CameraType.LightContainmentZone, "LczCameraToy"},
+            {Scp079CameraType.SurfaceZone, "SzCameraToy"}
+        };
+
         private static GameObject CreateCapybara(GameObject parent, CapybaraObject capybara)
         {
-            if (!PrefabExtensions.TryLoadAsset(CapybaraIdentifier.CapybaraGuid, out var prefab))
+            if (!PrefabExtensions.TryLoadPrefabByName(CapybaraIdentifier.CapybaraPrefabName, out var prefab))
                 return null;
             var o = prefab.InstantiatePrefab();
             o.ApplyCommonData(capybara, parent);
@@ -218,7 +266,7 @@ namespace slocExporter
 
         private static GameObject CreateStructure(GameObject parent, StructureObject structure)
         {
-            if (!StructureGuids.TryGetValue(structure.Structure, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
+            if (!StructurePrefabNames.TryGetValue(structure.Structure, out var name) || !PrefabExtensions.TryLoadPrefabByName(name, out var prefab))
                 return null;
             var o = prefab.InstantiatePrefab();
             o.ApplyCommonData(structure, parent);
@@ -248,7 +296,7 @@ namespace slocExporter
 
         private static GameObject CreateCamera(GameObject parent, Scp079CameraObject camera)
         {
-            if (!CameraGuids.TryGetValue(camera.CameraType, out var guidString) || !PrefabExtensions.TryLoadAsset(guidString, out var prefab))
+            if (!CameraPrefabNames.TryGetValue(camera.CameraType, out var name) || !PrefabExtensions.TryLoadPrefabByName(name, out var prefab))
                 return null;
             var o = prefab.InstantiatePrefab();
             o.ApplyCommonData(camera, parent);
@@ -349,6 +397,8 @@ namespace slocExporter
                         CreatedInstances[o.InstanceId] = gameObject;
                         created++;
                     }
+                    else
+                        Debug.LogWarning($"Failed creating object {o}");
 
                     processed++;
                     updateProgress?.Invoke($"Creating objects ({processed}{(isCountKnown ? $" of {total}" : "")})", isCountKnown ? processed / floatTotal : -1);

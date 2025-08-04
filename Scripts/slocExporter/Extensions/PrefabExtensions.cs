@@ -1,4 +1,5 @@
-﻿using slocExporter.Serialization.Exporting.Identifiers;
+﻿using System;
+using slocExporter.Serialization.Exporting.Identifiers;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,6 +28,27 @@ namespace slocExporter.Extensions
             return true;
         }
 
+        public static bool TryGetPrefabName(this GameObject o, out string name, bool validateRoot = true)
+        {
+            if (validateRoot && !PrefabUtility.IsAnyPrefabInstanceRoot(o))
+            {
+                name = null;
+                return false;
+            }
+
+            var prefab = PrefabUtility.GetCorrespondingObjectFromSource(o);
+            if (!prefab)
+            {
+                name = null;
+
+                return false;
+            }
+
+            name = prefab.name;
+            return true;
+        }
+
+        [Obsolete("Parse the GUID and invoke the GUID overload instead.")]
         public static bool TryLoadAsset(string guidString, out GameObject prefab)
         {
             if (GUID.TryParse(guidString, out var guid))
@@ -48,6 +70,15 @@ namespace slocExporter.Extensions
             return prefab != null;
         }
 
+        public static bool TryLoadPrefabByName(string name, out GameObject prefab)
+        {
+            var path = $"Assets/GameObject/{name}.prefab";
+            if (AssetDatabase.AssetPathExists(path))
+                return prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            prefab = null;
+            return false;
+        }
+
         public static GameObject InstantiatePrefab(this GameObject prefab)
             => (GameObject) PrefabUtility.InstantiatePrefab(prefab);
 
@@ -62,12 +93,11 @@ namespace slocExporter.Extensions
             if (!gameObject.IsChildOfAnyPrefab(false, out var isRoot))
                 return false;
             var root = isRoot ? gameObject : PrefabUtility.GetNearestPrefabInstanceRoot(gameObject);
-            if (!root.TryGetPrefabGuid(out var guid, false))
-                return false;
-            if (guid == CapybaraIdentifier.CapybaraGuid)
-                return true;
-            var guidString = guid.ToString();
-            return Identify.CameraGuids.ContainsKey(guidString) || Identify.StructureGuids.ContainsKey(guidString);
+            return root.TryGetPrefabName(out var name, false) && (
+                name == CapybaraIdentifier.CapybaraPrefabName
+                || Identify.CameraPrefabNames.ContainsKey(name)
+                || Identify.StructurePrefabNames.ContainsKey(name)
+            );
         }
 
     }

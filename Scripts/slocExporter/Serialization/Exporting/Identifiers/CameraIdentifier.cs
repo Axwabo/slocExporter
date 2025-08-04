@@ -14,7 +14,7 @@ namespace slocExporter.Serialization.Exporting.Identifiers
                 ? null
                 : properties.typeOverride != Scp079CameraType.None
                     ? new CameraExportable {Type = properties.typeOverride, Properties = properties}
-                    : o.TryGetPrefabGuid(out var guid) && Identify.CameraGuids.TryGetValue(guid.ToString(), out var type)
+                    : o.TryGetPrefabName(out var name) && Identify.CameraPrefabNames.TryGetValue(name, out var type)
                         ? new CameraExportable {Type = type, Properties = properties}
                         : null;
 
