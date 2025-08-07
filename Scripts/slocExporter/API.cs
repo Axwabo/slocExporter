@@ -24,7 +24,7 @@ namespace slocExporter
 
         public const ushort slocVersion = 6;
 
-        public static string CurrentVersion = "6.0.3";
+        public static string CurrentVersion = "6.0.4";
 
         #region Reader Declarations
 
@@ -165,7 +165,7 @@ namespace slocExporter
             {StructureObject.StructureType.EzBreakableDoor, "EZ BreakableDoor"},
             {StructureObject.StructureType.Generator, "GeneratorStructure"},
             {StructureObject.StructureType.HczBreakableDoor, "HCZ BreakableDoor"},
-            {StructureObject.StructureType.LargeGunLocker, "LargeGunLocker"},
+            {StructureObject.StructureType.LargeGunLocker, "LargeGunLockerStructure"},
             {StructureObject.StructureType.LczBreakableDoor, "LCZ BreakableDoor"},
             {StructureObject.StructureType.Medkit, "RegularMedkitStructure"},
             {StructureObject.StructureType.MiscellaneousLocker, "MiscLocker"},
